@@ -13,7 +13,7 @@ SS7 = ProtocolSpec(
     name="ss7",
     train_module="ss7_training_v7",
     sim_module="ss7_simulator_v7",
-    data_path="ss7_dataset_v6.csv",
+    data_path="ss7_dataset_v7.csv",
     compromise_attack="slave_compromise",
     attack_types=["sms_intercept", "location_track", "signaling_dos",
                   "irsf", "slave_compromise"],

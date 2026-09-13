@@ -1231,5 +1231,39 @@ def main():
     return df
 
 
+# ---------------------------------------------------------------------------
+# Исправленный backend
+# ---------------------------------------------------------------------------
+# Реализация из fix.py разделена по логическим модулям внутри одного файла.
+# Этот фасад сохраняет имя текущего симулятора и контракт main() -> DataFrame,
+# которым пользуется ss7/ms_multiseed_core.py.
+try:
+    from . import fix as _fixed
+except ImportError:
+    import fix as _fixed
+
+RngBook = _fixed.RngBook
+Priors = _fixed.Priors
+SimConfig = _fixed.SimConfig
+SimulationConfig = _fixed.SimConfig
+FixedNodeType = _fixed.NodeType
+FixedNodeRole = _fixed.NodeRole
+KeyCustody = _fixed.KeyCustody
+Sophistication = _fixed.Sophistication
+Ss7Sim = _fixed.Ss7Sim
+Episode = _fixed.Episode
+FEATURE_SETS = _fixed.FEATURE_SETS
+
+
+def main(argv=None):
+    """Generate the corrected SS7 dataset while preserving the old API."""
+    config = SimulationConfig(seed=42, days=6.0)
+    dataframe, _, _ = _fixed.build_dataset(config)
+    return dataframe
+
+
 if __name__ == "__main__":
-    df = main()
+    result = main()
+    output_path = "ss7_dataset_v7.csv"
+    result.to_csv(output_path, index=False)
+    print(f"Dataset saved to {output_path}; shape={result.shape}")
