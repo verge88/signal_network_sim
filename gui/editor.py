@@ -17,26 +17,32 @@ gui/editor.py — GUI создания, визуализации и редакт
 """
 from __future__ import annotations
 
-import io
 import json
 import os
 import queue
-import sys
+import tempfile
 import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, simpledialog
 
 from .model import PROTOCOLS, Topology, Node, Link, Scenario, link_key, template
-
-NODE_R = 22.0
-BG = "#f7f8fa"
-GRID = "#e6e9ef"
+from .theme import (THEMES, WINDOW_PRESETS, ViewSettings, apply_ttk_theme,
+                    apply_ui_scale, node_fill, palette_of, style_menu,
+                    style_text, zone_color)
+from .view_settings import ViewSettingsDialog
 
 
 class TopologyEditor(tk.Frame):
     def __init__(self, master: tk.Tk):
         super().__init__(master)
         self.pack(fill="both", expand=True)
+        self.view = ViewSettings.load()
+        self.pal = self.view.palette()
+        self._texts: list[tk.Text] = []
+        self._menus: list[tk.Menu] = []
+        self._fullscreen = False
+        apply_ui_scale(master, self.view.ui_scale, self.view.font_scale)
+        apply_ttk_theme(master, self.pal)
         self.topo = template("diameter")
         self.path: str | None = None
         self.dirty = False
@@ -47,6 +53,7 @@ class TopologyEditor(tk.Frame):
         self.new_type = tk.StringVar(value=self.topo.node_type_names()[0])
         self.color_by_zone = tk.BooleanVar(value=False)
         self.show_labels = tk.BooleanVar(value=True)
+        self.theme_var = tk.StringVar(value=self.view.theme)
         self.selection: tuple[str, object] | None = None
         self._pending_link: int | None = None
         self._drag: dict | None = None
@@ -56,7 +63,7 @@ class TopologyEditor(tk.Frame):
         self._build_toolbar()
         self._build_body()
         self._bind_events()
-        self.redraw()
+        self.apply_view(self.view, initial=True)
         self.after(200, self._drain_log)
 
     # ── интерфейс ──────────────────────────────────────────────────
@@ -95,6 +102,36 @@ class TopologyEditor(tk.Frame):
         r.add_command(label="Показать сводку по сети", command=self.show_summary)
         m.add_cascade(label="Симуляция", menu=r)
 
+        v = tk.Menu(m, tearoff=0)
+        for key, spec in THEMES.items():
+            v.add_radiobutton(label=spec["label"], value=key,
+                              variable=self.theme_var,
+                              command=lambda: self.set_theme(self.theme_var.get()))
+        v.add_separator()
+        v.add_command(label="Настройки отображения…", accelerator="Ctrl+,",
+                      command=self.open_view_settings)
+        v.add_separator()
+        v.add_command(label="Увеличить масштаб интерфейса", accelerator="Ctrl++",
+                      command=lambda: self.bump_ui_scale(+0.1))
+        v.add_command(label="Уменьшить масштаб интерфейса", accelerator="Ctrl+-",
+                      command=lambda: self.bump_ui_scale(-0.1))
+        v.add_command(label="Сбросить масштаб интерфейса", accelerator="Ctrl+0",
+                      command=lambda: self.bump_ui_scale(None))
+        v.add_separator()
+        size_menu = tk.Menu(v, tearoff=0)
+        for label, geometry in WINDOW_PRESETS:
+            size_menu.add_command(label=label, command=lambda g=geometry: self.set_geometry(g))
+        size_menu.add_separator()
+        size_menu.add_command(label="Развернуть на весь экран", command=lambda: self.set_geometry("maximize"))
+        v.add_cascade(label="Размер окна", menu=size_menu)
+        v.add_separator()
+        v.add_command(label="Боковая панель вкл/выкл", accelerator="F9", command=self.toggle_panel)
+        v.add_command(label="Панель инструментов вкл/выкл", accelerator="F8", command=self.toggle_toolbar)
+        v.add_command(label="Полный экран", accelerator="F11", command=self.toggle_fullscreen)
+        v.add_command(label="Только схема (презентация)", accelerator="F12", command=self.presentation_mode)
+        m.add_cascade(label="Вид", menu=v)
+        self._menus.extend([m, f, t, e, r, v, size_menu])
+
         self.master.config(menu=m)
         self.master.bind("<Control-n>", lambda e: self.new_network())
         self.master.bind("<Control-o>", lambda e: self.open_file())
@@ -102,6 +139,7 @@ class TopologyEditor(tk.Frame):
 
     def _build_toolbar(self) -> None:
         bar = ttk.Frame(self, padding=(6, 4))
+        self.bar = bar
         bar.pack(side="top", fill="x")
         ttk.Label(bar, text="Режим:").pack(side="left")
         for val, label in (("select", "Выбор"), ("node", "Узел"),
@@ -127,12 +165,13 @@ class TopologyEditor(tk.Frame):
 
         left = ttk.Frame(body)
         left.pack(side="left", fill="both", expand=True)
-        self.canvas = tk.Canvas(left, bg=BG, highlightthickness=0)
+        self.canvas = tk.Canvas(left, bg=self.pal["canvas_bg"], highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
-        self.status = ttk.Label(left, text="", anchor="w", padding=(6, 3))
+        self.status = ttk.Label(left, text="", anchor="w", padding=(6, 3), style="Status.TLabel")
         self.status.pack(fill="x")
 
-        right = ttk.Frame(body, width=340)
+        right = ttk.Frame(body, width=self.view.panel_width)
+        self.right = right
         right.pack(side="right", fill="y")
         right.pack_propagate(False)
 
@@ -151,6 +190,7 @@ class TopologyEditor(tk.Frame):
         self._build_sim_tab()
         self.log = tk.Text(self.log_tab, height=10, wrap="word", font=("TkFixedFont", 9))
         self.log.pack(fill="both", expand=True)
+        self._texts.append(self.log)
         self._show_properties()
 
     def _build_scenarios_tab(self) -> None:
@@ -165,7 +205,7 @@ class TopologyEditor(tk.Frame):
         btns.pack(fill="x", pady=6)
         ttk.Button(btns, text="Добавить", command=self.add_scenario).pack(side="left")
         ttk.Button(btns, text="Удалить", command=self.del_scenario).pack(side="left", padx=4)
-        ttk.Label(self.scen_tab, wraplength=310, foreground="#555",
+        ttk.Label(self.scen_tab, wraplength=310, style="Hint.TLabel",
                   text="Цели берутся из текущего выделения на схеме, если оно есть. "
                        "Интервалы — в единицах interval_s.").pack(fill="x")
 
@@ -180,7 +220,7 @@ class TopologyEditor(tk.Frame):
         r = len(self.sim_vars)
         ttk.Button(self.sim_tab, text="Применить", command=self.apply_sim_params).grid(
             row=r, column=0, columnspan=2, sticky="ew", pady=8)
-        self.metrics_lbl = ttk.Label(self.sim_tab, justify="left", foreground="#333")
+        self.metrics_lbl = ttk.Label(self.sim_tab, justify="left", style="Hint.TLabel")
         self.metrics_lbl.grid(row=r + 1, column=0, columnspan=2, sticky="w")
 
     def _bind_events(self) -> None:
@@ -200,8 +240,100 @@ class TopologyEditor(tk.Frame):
         self.master.bind("m", lambda e: self.toggle_master())
         self.master.bind("c", lambda e: self.toggle_compromised())
         self.master.bind("a", lambda e: self.do_layout("spring"))
+        self.master.bind("<F8>", lambda e: self.toggle_toolbar())
+        self.master.bind("<F9>", lambda e: self.toggle_panel())
+        self.master.bind("<F11>", lambda e: self.toggle_fullscreen())
+        self.master.bind("<F12>", lambda e: self.presentation_mode())
+        self.master.bind("<Control-comma>", lambda e: self.open_view_settings())
+        self.master.bind("<Control-plus>", lambda e: self.bump_ui_scale(+0.1))
+        self.master.bind("<Control-equal>", lambda e: self.bump_ui_scale(+0.1))
+        self.master.bind("<Control-minus>", lambda e: self.bump_ui_scale(-0.1))
+        self.master.bind("<Control-0>", lambda e: self.bump_ui_scale(None))
+        self.master.bind("<Control-KP_Add>", lambda e: self.bump_ui_scale(+0.1))
+        self.master.bind("<Control-KP_Subtract>", lambda e: self.bump_ui_scale(-0.1))
 
     # ── координаты ─────────────────────────────────────────────────
+    def apply_view(self, view: ViewSettings, initial: bool = False) -> None:
+        self.view = view
+        self.pal = palette_of(view.theme)
+        self.theme_var.set(view.theme)
+        apply_ui_scale(self.master, view.ui_scale, view.font_scale)
+        apply_ttk_theme(self.master, self.pal)
+        for menu in self._menus:
+            style_menu(menu, self.pal)
+        for text in self._texts:
+            style_text(text, self.pal)
+        self.canvas.configure(bg=self.pal["canvas_bg"])
+        self.right.configure(width=max(200, int(view.panel_width)))
+        if view.panel_visible and not self.right.winfo_ismapped():
+            self.right.pack(side="right", fill="y")
+        elif not view.panel_visible and self.right.winfo_ismapped():
+            self.right.pack_forget()
+        if view.toolbar_visible and not self.bar.winfo_ismapped():
+            self.bar.pack(side="top", fill="x")
+        elif not view.toolbar_visible and self.bar.winfo_ismapped():
+            self.bar.pack_forget()
+        if initial and view.window_geometry:
+            self.set_geometry(view.window_geometry)
+        self._show_properties()
+        self.redraw()
+
+    def set_theme(self, theme: str) -> None:
+        self.view.theme = theme
+        self.apply_view(self.view)
+        self.logln(f"тема: {THEMES[theme]['label']}")
+
+    def open_view_settings(self) -> None:
+        ViewSettingsDialog(self, self.view, on_apply=self.apply_view,
+                           on_geometry=self.set_geometry)
+
+    def bump_ui_scale(self, delta: float | None) -> None:
+        self.view.ui_scale = 1.0 if delta is None else max(0.6, min(3.0, self.view.ui_scale + delta))
+        self.view.font_scale = self.view.ui_scale
+        self.apply_view(self.view)
+
+    def set_geometry(self, geometry: str) -> None:
+        if geometry == "maximize":
+            try:
+                self.master.state("zoomed")
+            except tk.TclError:
+                self.master.attributes("-zoomed", True)
+            return
+        try:
+            self.master.state("normal")
+            self.master.geometry(geometry)
+            self.view.window_geometry = geometry
+        except tk.TclError:
+            messagebox.showerror("Размер окна", f"Некорректная геометрия: {geometry}")
+        self.after(60, self.fit_view)
+
+    def toggle_panel(self) -> None:
+        self.view.panel_visible = not self.view.panel_visible
+        self.apply_view(self.view)
+
+    def toggle_toolbar(self) -> None:
+        self.view.toolbar_visible = not self.view.toolbar_visible
+        self.apply_view(self.view)
+
+    def toggle_fullscreen(self) -> None:
+        self._fullscreen = not self._fullscreen
+        self.master.attributes("-fullscreen", self._fullscreen)
+        self.after(80, self.fit_view)
+
+    def presentation_mode(self) -> None:
+        hide = self.view.panel_visible or self.view.toolbar_visible
+        self.view.panel_visible = not hide
+        self.view.toolbar_visible = not hide
+        if hide != self._fullscreen:
+            self.toggle_fullscreen()
+        self.apply_view(self.view)
+        self.after(80, self.fit_view)
+
+    def style_text(self, widget: tk.Text) -> None:
+        if widget not in self._texts:
+            self._texts.append(widget)
+        style_text(widget, self.pal)
+
     def w2s(self, x: float, y: float) -> tuple[float, float]:
         return x * self.scale + self.offset[0], y * self.scale + self.offset[1]
 
@@ -211,7 +343,7 @@ class TopologyEditor(tk.Frame):
     def node_at(self, sx: float, sy: float) -> Node | None:
         for n in self.topo.nodes.values():
             nx_, ny_ = self.w2s(n.x, n.y)
-            if (nx_ - sx) ** 2 + (ny_ - sy) ** 2 <= (NODE_R * self.scale) ** 2:
+            if (nx_ - sx) ** 2 + (ny_ - sy) ** 2 <= (self.view.node_radius * self.scale) ** 2:
                 return n
         return None
 
@@ -235,20 +367,31 @@ class TopologyEditor(tk.Frame):
     # ── отрисовка ──────────────────────────────────────────────────
     def redraw(self) -> None:
         c = self.canvas
+        pal, view = self.pal, self.view
         c.delete("all")
         w = c.winfo_width() or 900
         h = c.winfo_height() or 700
-        step = 40 * self.scale
-        if step > 12:
+        step = max(6.0, view.grid_step) * self.scale
+        if view.show_grid and step > 10:
             ox, oy = self.offset[0] % step, self.offset[1] % step
+            major = step * 5
+            mx, my = self.offset[0] % major, self.offset[1] % major
             x = ox
             while x < w:
-                c.create_line(x, 0, x, h, fill=GRID)
+                c.create_line(x, 0, x, h, fill=pal["grid"])
                 x += step
             y = oy
             while y < h:
-                c.create_line(0, y, w, y, fill=GRID)
+                c.create_line(0, y, w, y, fill=pal["grid"])
                 y += step
+            x = mx
+            while x < w:
+                c.create_line(x, 0, x, h, fill=pal["grid_major"])
+                x += major
+            y = my
+            while y < h:
+                c.create_line(0, y, w, y, fill=pal["grid_major"])
+                y += major
 
         sel_kind, sel_obj = self.selection if self.selection else (None, None)
         import math
@@ -260,17 +403,19 @@ class TopologyEditor(tk.Frame):
             x2, y2 = self.w2s(b.x, b.y)
             width = 1.0 + min(4.0, math.log10(max(l.capacity_mbps, 0.01) / 0.05 + 1))
             sel = (sel_kind == "link" and sel_obj is l)
-            c.create_line(x1, y1, x2, y2, width=width * (2 if sel else 1),
-                          fill="#d04a4a" if sel else "#8d97a8")
+            c.create_line(x1, y1, x2, y2,
+                          width=max(1.0, width * view.link_width_scale * (2 if sel else 1)),
+                          fill=pal["link_hi"] if sel else pal["link"], capstyle="round")
 
         for n in self.topo.nodes.values():
             x, y = self.w2s(n.x, n.y)
-            r = NODE_R * self.scale
-            fill = (self._zone_color(n.zone_id) if self.color_by_zone.get()
-                    else self.topo.color_of(n))
+            r = view.node_radius * self.scale
+            base_color = (zone_color(n.zone_id, pal) if self.color_by_zone.get()
+                          else self.topo.color_of(n))
+            fill = node_fill(base_color, pal)
             sel = (sel_kind == "node" and sel_obj is n)
-            outline = "#d04a4a" if n.is_compromised else ("#1b1b1b" if n.is_master
-                                                          else "#5a6273")
+            outline = (pal["outline_compromised"] if n.is_compromised
+                       else pal["outline_master"] if n.is_master else pal["outline"])
             if n.is_master:
                 c.create_rectangle(x - r, y - r, x + r, y + r, fill=fill,
                                    outline=outline, width=4 if sel else 2.5)
@@ -279,25 +424,21 @@ class TopologyEditor(tk.Frame):
                               outline=outline, width=3 if sel else 1.4)
             if sel:
                 c.create_oval(x - r - 5, y - r - 5, x + r + 5, y + r + 5,
-                              outline="#d04a4a", dash=(3, 2))
+                              outline=pal["sel_ring"], dash=(3, 2))
             if self._pending_link == n.node_id:
                 c.create_oval(x - r - 9, y - r - 9, x + r + 9, y + r + 9,
-                              outline="#2f8f3f", width=2)
+                              outline=pal["pending"], width=2)
             if self.show_labels.get() and self.scale > 0.55:
-                c.create_text(x, y, text=str(n.node_id),
-                              fill="white", font=("TkDefaultFont", int(9 * self.scale)))
+                id_pt = max(6, int(view.id_pt * self.scale))
+                label_pt = max(6, int(view.label_pt * self.scale))
+                c.create_text(x, y, text=str(n.node_id), fill=pal["node_text"],
+                              font=("TkDefaultFont", id_pt, "bold"))
                 c.create_text(x, y + r + 11 * self.scale,
-                              text=f"{n.node_type}", fill="#333",
-                              font=("TkDefaultFont", int(8 * self.scale)))
+                              text=f"{n.node_type}", fill=pal["node_label"],
+                              font=("TkDefaultFont", label_pt))
         self._update_status()
         self._update_metrics()
         self._refresh_scenarios()
-
-    @staticmethod
-    def _zone_color(zone: int) -> str:
-        palette = ["#4a7fb5", "#b5744a", "#5aa06a", "#8a5ab5", "#b5525a",
-                   "#4aa8a8", "#9a9a4a", "#7a7a8a"]
-        return palette[zone % len(palette)]
 
     def _update_status(self) -> None:
         m = self.topo.metrics()
@@ -306,7 +447,9 @@ class TopologyEditor(tk.Frame):
             text=f"{PROTOCOLS[self.topo.protocol]['label']} | {name}"
                  f"{'*' if self.dirty else ''} | узлов: {m['nodes']}, "
                  f"линков: {m['links']}, мастеров: {m['masters']}, "
-                 f"компонент: {m['components']} | зум {self.scale:.2f}")
+                  f"компонент: {m['components']} | зум {self.scale:.2f} | "
+                  f"UI ×{self.view.ui_scale:.2f} | {THEMES[self.view.theme]['label']}",
+              style="Status.TLabel")
 
     def _update_metrics(self) -> None:
         m = self.topo.metrics()
@@ -478,9 +621,8 @@ class TopologyEditor(tk.Frame):
         self.mark_dirty()
 
     def do_layout(self, kind: str) -> None:
-        w = self.canvas.winfo_width() or 1000
-        h = self.canvas.winfo_height() or 700
-        self.topo.auto_layout(kind, width=w / self.scale, height=h / self.scale,
+        self.topo.auto_layout(kind, width=float(self.view.layout_width),
+                              height=float(self.view.layout_height),
                               seed=int(self.topo.sim_params.get("seed", 42)))
         self.fit_view()
         self.mark_dirty()
@@ -518,7 +660,7 @@ class TopologyEditor(tk.Frame):
         for w in self.prop_tab.winfo_children():
             w.destroy()
         if not self.selection:
-            ttk.Label(self.prop_tab, wraplength=300, foreground="#555",
+            ttk.Label(self.prop_tab, wraplength=300, style="Hint.TLabel",
                       text="Ничего не выбрано.\n\nВыберите узел или линк на схеме, "
                            "либо добавьте новый в режиме «Узел» / «Линк».").pack()
             return
@@ -563,9 +705,10 @@ class TopologyEditor(tk.Frame):
             txt.insert("1.0", json.dumps(n.interface_dist, indent=1))
             txt.grid(row=10, column=0, columnspan=2, sticky="ew")
             self._iface_text = txt
+            self.style_text(txt)
             deg = len(self.topo.neighbors(n.node_id))
             ttk.Label(self.prop_tab, text=f"степень узла: {deg}",
-                      foreground="#555").grid(row=11, column=0, columnspan=2, sticky="w")
+                      style="Hint.TLabel").grid(row=11, column=0, columnspan=2, sticky="w")
             ttk.Button(self.prop_tab, text="Применить",
                        command=self._apply_node).grid(row=12, column=0, columnspan=2,
                                                       sticky="ew", pady=8)
@@ -637,6 +780,7 @@ class TopologyEditor(tk.Frame):
         dlg.title("Новый сценарий")
         dlg.transient(self.master)
         dlg.grab_set()
+        dlg.configure(bg=self.pal["panel_bg"])
         kind = tk.StringVar(value="attack")
         name = tk.StringVar(value=prof["attacks"][0])
         targets = tk.StringVar(
@@ -756,22 +900,50 @@ class TopologyEditor(tk.Frame):
                                                     ("PostScript", "*.ps")])
         if not p:
             return
-        ps = self.canvas.postscript(colormode="color")
+        bbox = self.canvas.bbox("all")
+        if not bbox:
+            messagebox.showinfo("Экспорт", "Схема пуста.")
+            return
+        scale = max(1.0, float(self.view.export_scale))
+        pad = 24
+        x0, y0 = bbox[0] - pad, bbox[1] - pad
+        width = max(1, bbox[2] - bbox[0] + 2 * pad)
+        height = max(1, bbox[3] - bbox[1] + 2 * pad)
+        background = self.canvas.create_rectangle(x0, y0, x0 + width, y0 + height,
+                                                   fill=self.pal["canvas_bg"], outline="")
+        self.canvas.tag_lower(background)
+        try:
+            ps = self.canvas.postscript(colormode="color", x=x0, y=y0,
+                                        width=width, height=height,
+                                        pagewidth=f"{int(width * scale)}p",
+                                        pageheight=f"{int(height * scale)}p")
+        finally:
+            self.canvas.delete(background)
         if p.lower().endswith(".ps"):
             with open(p, "w", encoding="latin-1") as f:
                 f.write(ps)
-            self.logln(f"PS: {p}")
+            self.logln(f"PS: {p} ({int(width * scale)}×{int(height * scale)} px)")
             return
+        tmp = None
         try:
-            from PIL import Image  # опционально
-            Image.open(io.BytesIO(ps.encode("latin-1"))).save(p)
-            self.logln(f"PNG: {p}")
-        except Exception:
+            from PIL import Image
+            with tempfile.NamedTemporaryFile("w", suffix=".eps", delete=False,
+                                             encoding="latin-1") as stream:
+                stream.write(ps)
+                tmp = stream.name
+            image = Image.open(tmp)
+            image.load()
+            image.convert("RGB").save(p, dpi=(int(72 * scale), int(72 * scale)))
+            self.logln(f"PNG: {p} ({image.width}×{image.height} px, ×{scale:g})")
+        except Exception as exc:
             alt = os.path.splitext(p)[0] + ".ps"
             with open(alt, "w", encoding="latin-1") as f:
                 f.write(ps)
-            messagebox.showinfo("Экспорт", f"Pillow/ghostscript недоступны, "
-                                           f"сохранено как {alt}")
+            messagebox.showinfo("Экспорт", f"Pillow/ghostscript недоступны ({exc}).\n"
+                                           f"Векторный вариант сохранён: {alt}")
+        finally:
+            if tmp and os.path.exists(tmp):
+                os.unlink(tmp)
 
     # ── запуск симуляции ───────────────────────────────────────────
     def show_summary(self) -> None:
@@ -823,12 +995,21 @@ class TopologyEditor(tk.Frame):
 def main() -> None:
     root = tk.Tk()
     root.title("Signal Network Editor — signal_network_sim")
-    root.geometry("1400x860")
-    try:
-        ttk.Style().theme_use("clam")
-    except tk.TclError:
-        pass
-    TopologyEditor(root)
+    root.minsize(900, 600)
+    editor = TopologyEditor(root)
+
+    def on_close() -> None:
+        if editor.dirty and not messagebox.askokcancel(
+                "Выход", "Есть несохранённые изменения топологии. Выйти?"):
+            return
+        try:
+            editor.view.window_geometry = root.geometry().split("+")[0]
+            editor.view.save()
+        except Exception:
+            pass
+        root.destroy()
+
+    root.protocol("WM_DELETE_WINDOW", on_close)
     root.mainloop()
 
 
