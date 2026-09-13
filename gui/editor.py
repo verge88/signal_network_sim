@@ -105,6 +105,9 @@ class TopologyEditor(tk.Frame):
         r = tk.Menu(m, tearoff=0)
         r.add_command(label="Запустить симулятор…", command=self.run_simulation)
         r.add_command(label="Показать сводку по сети", command=self.show_summary)
+        r.add_separator()
+        r.add_command(label="Лаборатория моделей…", accelerator="Ctrl+L",
+                  command=self.open_ml_lab)
         m.add_cascade(label="Симуляция", menu=r)
 
         v = tk.Menu(m, tearoff=0)
@@ -148,6 +151,7 @@ class TopologyEditor(tk.Frame):
         self.master.bind("<Control-n>", lambda e: self.new_network())
         self.master.bind("<Control-o>", lambda e: self.open_file())
         self.master.bind("<Control-s>", lambda e: self.save_file())
+        self.master.bind("<Control-l>", lambda e: self.open_ml_lab())
 
     def _build_toolbar(self) -> None:
         bar = ttk.Frame(self, padding=(6, 4))
@@ -301,6 +305,13 @@ class TopologyEditor(tk.Frame):
     def open_view_settings(self) -> None:
         ViewSettingsDialog(self, self.view, on_apply=self.apply_view,
                            on_geometry=self.set_geometry)
+
+    def open_ml_lab(self) -> None:
+        from .ml.panel import MLLab
+        if getattr(self, "_lab", None) and self._lab.winfo_exists():
+            self._lab.lift()
+            return
+        self._lab = MLLab(self)
 
     def bump_ui_scale(self, delta: float | None) -> None:
         self.view.ui_scale = 1.0 if delta is None else max(0.6, min(3.0, self.view.ui_scale + delta))

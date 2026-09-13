@@ -1,0 +1,38 @@
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# Test, type-checking and lint caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Generated datasets from simulator runs
+/ss7_dataset_v*.csv
+/ss7/ss7_dataset_v*.csv
+/sip_dataset_v*.csv
+/diameter_dataset_v*.csv
+
+# Training outputs, plots and serialized model artifacts
+results_*/
+*_seed_runs/
+seed_runs/
+runs/
+*.pkl
+*.pickle
+*.joblib
+*.ckpt
+*.pt
+*.pth
+
+# Local GUI settings and exports
+gui_view.json
+*.topology.json

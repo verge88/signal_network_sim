@@ -135,6 +135,7 @@ class TrainingConfig:
     quick: bool = False
 
     # воспроизводимость / артефакты
+    data_path: str = ""
     out_dir: str = "ss7_runs"
     cache_dir: str = ".ss7_cache"
     use_cache: bool = True
@@ -863,6 +864,11 @@ def multiseed(cfg: TrainingConfig, seeds: Sequence[int],
 # =============================================================================
 
 def load_or_build(cfg: TrainingConfig) -> pd.DataFrame:
+    if cfg.data_path:
+        path = os.path.abspath(cfg.data_path)
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"датасет не найден: {path}")
+        return pd.read_csv(path)
     sc = cfg.sim_config()
     key = hashlib.sha256(
         json.dumps({"seed": sc.seed, "days": sc.days,
@@ -942,6 +948,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     df = load_or_build(cfg)
     cols = resolve_feature_columns(df, FEATURE_SETS[cfg.feature_set])
     assert_no_leakage(cols)
+    export_dir = os.environ.get("SNS_EXPORT_DIR")
+    if export_dir:
+        os.makedirs(export_dir, exist_ok=True)
+        with open(os.path.join(export_dir, "feature_cols.json"), "w",
+                  encoding="utf-8") as stream:
+            json.dump(cols, stream, ensure_ascii=False, indent=2)
     print(f"    окон={len(df)}  узлов={df['nid'].nunique()}  "
           f"доля аномальных окон={df['label'].mean():.5f}  признаков={len(cols)}")
     print(f"    guard: OK, все {len(cols)} столбцов выводятся из реестра")
