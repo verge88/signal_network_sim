@@ -77,25 +77,46 @@ def zone_color(zone_id: int, pal: dict) -> str:
     return zones[int(zone_id) % len(zones)]
 
 
-_BASE_FONTS: dict[str, int] = {}
+_BASE_PT: dict[str, float] = {}
+_CAPTURE_DPI = 96.0
 _FONT_NAMES = ("TkDefaultFont", "TkTextFont", "TkMenuFont", "TkHeadingFont",
                "TkFixedFont", "TkSmallCaptionFont", "TkCaptionFont",
                "TkTooltipFont", "TkIconFont")
 
 
-def apply_ui_scale(root: tk.Misc, ui_scale: float, font_scale: float) -> None:
-    try:
-        root.tk.call("tk", "scaling", 1.3333333 * max(0.5, float(ui_scale)))
-    except tk.TclError:
-        pass
+def capture_base_fonts(root: tk.Misc, dpi: float) -> None:
+    global _CAPTURE_DPI
+    if _BASE_PT:
+        return
+    _CAPTURE_DPI = max(48.0, float(dpi))
     for name in _FONT_NAMES:
         try:
-            font = tkfont.Font(root=root, name=name, exists=True)
+            font = tkfont.nametofont(name, root=root)
         except tk.TclError:
             continue
-        if name not in _BASE_FONTS:
-            _BASE_FONTS[name] = abs(int(font.cget("size"))) or 9
-        font.configure(size=max(6, int(round(_BASE_FONTS[name] * float(font_scale)))))
+        size = int(font.cget("size"))
+        _BASE_PT[name] = float(size) if size > 0 else abs(size) * 72.0 / _CAPTURE_DPI if size < 0 else 9.0
+
+
+def apply_ui_scale(root: tk.Misc, dpi: float = 96.0, ui_scale: float = 1.0,
+                   font_scale: float = 1.0) -> float:
+    dpi = max(48.0, float(dpi))
+    ui_scale = max(0.5, min(4.0, float(ui_scale)))
+    font_scale = max(0.5, min(4.0, float(font_scale)))
+    capture_base_fonts(root, dpi)
+    geometry_scale = dpi / 96.0 * ui_scale
+    try:
+        root.tk.call("tk", "scaling", (dpi / 72.0) * ui_scale)
+    except tk.TclError:
+        pass
+    for name, points in _BASE_PT.items():
+        try:
+            font = tkfont.nametofont(name, root=root)
+        except tk.TclError:
+            continue
+        pixels = points * dpi / 72.0 * ui_scale * font_scale
+        font.configure(size=-max(7, int(round(pixels))))
+    return geometry_scale
 
 
 def apply_ttk_theme(root: tk.Misc, pal: dict) -> None:
@@ -129,7 +150,12 @@ def apply_ttk_theme(root: tk.Misc, pal: dict) -> None:
     style.configure("TNotebook", background=bg, borderwidth=0)
     style.configure("TNotebook.Tab", background=pal["tab_bg"], foreground=fg, padding=(10, 5), borderwidth=0)
     style.map("TNotebook.Tab", background=[("selected", bg), ("active", shade(pal["tab_bg"], 1.15))], foreground=[("selected", accent)])
-    style.configure("Treeview", background=field, fieldbackground=field, foreground=fg, bordercolor=pal["grid_major"])
+    try:
+        line = tkfont.nametofont("TkDefaultFont", root=root).metrics("linespace")
+    except tk.TclError:
+        line = 16
+    style.configure("Treeview", background=field, fieldbackground=field, foreground=fg,
+                    bordercolor=pal["grid_major"], rowheight=int(line * 1.45))
     style.configure("Treeview.Heading", background=pal["tab_bg"], foreground=fg, relief="flat")
     style.map("Treeview", background=[("selected", accent)], foreground=[("selected", "#ffffff")])
     style.configure("TSeparator", background=pal["grid_major"])
@@ -168,7 +194,8 @@ class ViewSettings:
     theme: str = "light"
     ui_scale: float = 1.0
     font_scale: float = 1.0
-    window_geometry: str = "1400x860"
+    auto_dpi: bool = True
+    window_geometry: str = ""
     panel_width: int = 340
     panel_visible: bool = True
     toolbar_visible: bool = True

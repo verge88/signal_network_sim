@@ -6,6 +6,7 @@ from dataclasses import asdict
 from tkinter import messagebox, ttk
 from typing import Callable
 
+from . import hidpi
 from .theme import THEMES, WINDOW_PRESETS, ViewSettings
 
 
@@ -61,19 +62,25 @@ class ViewSettingsDialog(tk.Toplevel):
         self._heading(frame, 0, "Масштаб интерфейса (DPI)")
         self._spin(frame, 1, "Плотность пикселей ×", "ui_scale", 0.6, 3.0, 0.05)
         self._spin(frame, 2, "Размер шрифтов ×", "font_scale", 0.6, 3.0, 0.05)
-        ttk.Separator(frame).grid(row=3, column=0, columnspan=2, sticky="ew", pady=8)
-        self._heading(frame, 4, "Размер окна")
+        self._check(frame, 3, "Определять масштаб по DPI монитора", "auto_dpi")
+        dpi = hidpi.get_dpi(self)
+        ttk.Label(frame, style="Hint.TLabel", wraplength=330, justify="left",
+                  text=f"Текущий DPI: {dpi:.0f} ({dpi / 96 * 100:.0f}% Windows). "
+                       "Автоопределение применяется поверх системного масштаба.").grid(
+            row=4, column=0, columnspan=2, sticky="w", pady=(4, 10))
+        ttk.Separator(frame).grid(row=5, column=0, columnspan=2, sticky="ew", pady=8)
+        self._heading(frame, 6, "Размер окна")
         geometry = tk.StringVar(value=self.view.window_geometry)
         self.vars["window_geometry"] = geometry
-        ttk.Combobox(frame, textvariable=geometry, width=32, values=[g for _, g in WINDOW_PRESETS]).grid(row=5, column=0, columnspan=2, sticky="ew", pady=4)
-        ttk.Button(frame, text="Применить размер окна", command=lambda: self.on_geometry(geometry.get())).grid(row=6, column=0, sticky="w")
-        ttk.Button(frame, text="Развернуть на весь экран", command=lambda: self.on_geometry("maximize")).grid(row=6, column=1, sticky="e")
-        ttk.Separator(frame).grid(row=7, column=0, columnspan=2, sticky="ew", pady=8)
-        self._heading(frame, 8, "Область просмотра и раскладки")
-        self._spin(frame, 9, "Логическая ширина поля, px", "layout_width", 400, 8000, 100)
-        self._spin(frame, 10, "Логическая высота поля, px", "layout_height", 400, 8000, 100)
-        self._spin(frame, 11, "Ширина боковой панели, px", "panel_width", 220, 700, 10)
-        self._spin(frame, 12, "Кратность экспорта PNG ×", "export_scale", 1.0, 8.0, 0.5)
+        ttk.Combobox(frame, textvariable=geometry, width=32, values=[g for _, g in WINDOW_PRESETS]).grid(row=7, column=0, columnspan=2, sticky="ew", pady=4)
+        ttk.Button(frame, text="Применить размер окна", command=lambda: self.on_geometry(geometry.get())).grid(row=8, column=0, sticky="w")
+        ttk.Button(frame, text="Развернуть на весь экран", command=lambda: self.on_geometry("maximize")).grid(row=8, column=1, sticky="e")
+        ttk.Separator(frame).grid(row=9, column=0, columnspan=2, sticky="ew", pady=8)
+        self._heading(frame, 10, "Область просмотра и раскладки")
+        self._spin(frame, 11, "Логическая ширина поля, px", "layout_width", 400, 8000, 100)
+        self._spin(frame, 12, "Логическая высота поля, px", "layout_height", 400, 8000, 100)
+        self._spin(frame, 13, "Ширина боковой панели, px", "panel_width", 220, 700, 10)
+        self._spin(frame, 14, "Кратность экспорта PNG ×", "export_scale", 1.0, 8.0, 0.5)
         return frame
 
     def _tab_geometry(self, notebook) -> ttk.Frame:

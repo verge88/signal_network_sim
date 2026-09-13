@@ -25,6 +25,7 @@ import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, simpledialog
 
+from . import hidpi
 from .model import PROTOCOLS, Topology, Node, Link, Scenario, link_key, template
 from .theme import (THEMES, WINDOW_PRESETS, ViewSettings, apply_ttk_theme,
                     apply_ui_scale, node_fill, palette_of, style_menu,
@@ -41,7 +42,9 @@ class TopologyEditor(tk.Frame):
         self._texts: list[tk.Text] = []
         self._menus: list[tk.Menu] = []
         self._fullscreen = False
-        apply_ui_scale(master, self.view.ui_scale, self.view.font_scale)
+        self.dpi = hidpi.get_dpi(master)
+        self.gs = apply_ui_scale(master, self.dpi if self.view.auto_dpi else 96.0,
+                     self.view.ui_scale, self.view.font_scale)
         apply_ttk_theme(master, self.pal)
         self.topo = template("diameter")
         self.path: str | None = None
@@ -64,6 +67,7 @@ class TopologyEditor(tk.Frame):
         self._build_body()
         self._bind_events()
         self.apply_view(self.view, initial=True)
+        self.dpi_watcher = hidpi.DpiWatcher(self, self._on_dpi_change)
         self.after(200, self._drain_log)
 
     # ── интерфейс ──────────────────────────────────────────────────
@@ -77,6 +81,7 @@ class TopologyEditor(tk.Frame):
         f.add_separator()
         f.add_command(label="Экспорт GraphML…", command=self.export_graphml)
         f.add_command(label="Экспорт PNG/PS…", command=self.export_image)
+        f.add_command(label="Экспорт SVG…", command=self.export_svg)
         f.add_separator()
         f.add_command(label="Выход", command=self.master.destroy)
         m.add_cascade(label="Файл", menu=f)
@@ -122,6 +127,11 @@ class TopologyEditor(tk.Frame):
         for label, geometry in WINDOW_PRESETS:
             size_menu.add_command(label=label, command=lambda g=geometry: self.set_geometry(g))
         size_menu.add_separator()
+        size_menu.add_command(label="Под экран (85%)",
+                      command=lambda: self.set_geometry(hidpi.default_geometry(self.master, 0.85)))
+        size_menu.add_command(label="Под экран (100%)",
+                      command=lambda: self.set_geometry(hidpi.default_geometry(self.master, 1.0)))
+        size_menu.add_separator()
         size_menu.add_command(label="Развернуть на весь экран", command=lambda: self.set_geometry("maximize"))
         v.add_cascade(label="Размер окна", menu=size_menu)
         v.add_separator()
@@ -129,6 +139,8 @@ class TopologyEditor(tk.Frame):
         v.add_command(label="Панель инструментов вкл/выкл", accelerator="F8", command=self.toggle_toolbar)
         v.add_command(label="Полный экран", accelerator="F11", command=self.toggle_fullscreen)
         v.add_command(label="Только схема (презентация)", accelerator="F12", command=self.presentation_mode)
+        v.add_separator()
+        v.add_command(label="Диагностика HiDPI…", command=self.show_dpi_info)
         m.add_cascade(label="Вид", menu=v)
         self._menus.extend([m, f, t, e, r, v, size_menu])
 
@@ -188,7 +200,7 @@ class TopologyEditor(tk.Frame):
 
         self._build_scenarios_tab()
         self._build_sim_tab()
-        self.log = tk.Text(self.log_tab, height=10, wrap="word", font=("TkFixedFont", 9))
+        self.log = tk.Text(self.log_tab, height=10, wrap="word", font="TkFixedFont", relief="flat")
         self.log.pack(fill="both", expand=True)
         self._texts.append(self.log)
         self._show_properties()
@@ -257,14 +269,17 @@ class TopologyEditor(tk.Frame):
         self.view = view
         self.pal = palette_of(view.theme)
         self.theme_var.set(view.theme)
-        apply_ui_scale(self.master, view.ui_scale, view.font_scale)
+        self.dpi = hidpi.get_dpi(self.master)
+        base_dpi = self.dpi if view.auto_dpi else 96.0
+        self.gs = apply_ui_scale(self.master, base_dpi, view.ui_scale, view.font_scale)
         apply_ttk_theme(self.master, self.pal)
         for menu in self._menus:
             style_menu(menu, self.pal)
         for text in self._texts:
             style_text(text, self.pal)
         self.canvas.configure(bg=self.pal["canvas_bg"])
-        self.right.configure(width=max(200, int(view.panel_width)))
+        self.right.configure(width=max(200, int(view.panel_width * self.gs)))
+        self.master.minsize(int(760 * self.gs), int(520 * self.gs))
         if view.panel_visible and not self.right.winfo_ismapped():
             self.right.pack(side="right", fill="y")
         elif not view.panel_visible and self.right.winfo_ismapped():
@@ -273,8 +288,8 @@ class TopologyEditor(tk.Frame):
             self.bar.pack(side="top", fill="x")
         elif not view.toolbar_visible and self.bar.winfo_ismapped():
             self.bar.pack_forget()
-        if initial and view.window_geometry:
-            self.set_geometry(view.window_geometry)
+        if initial:
+            self.set_geometry(view.window_geometry or hidpi.default_geometry(self.master))
         self._show_properties()
         self.redraw()
 
@@ -291,6 +306,16 @@ class TopologyEditor(tk.Frame):
         self.view.ui_scale = 1.0 if delta is None else max(0.6, min(3.0, self.view.ui_scale + delta))
         self.view.font_scale = self.view.ui_scale
         self.apply_view(self.view)
+
+    def show_dpi_info(self) -> None:
+        info = hidpi.diagnostics(self.master, self.view.ui_scale)
+        messagebox.showinfo("Диагностика HiDPI", info)
+        self.logln(info)
+
+    def _on_dpi_change(self, dpi: float) -> None:
+        self.logln(f"DPI изменился: {self.dpi:.0f} → {dpi:.0f}")
+        self.apply_view(self.view)
+        self.after(60, self.fit_view)
 
     def set_geometry(self, geometry: str) -> None:
         if geometry == "maximize":
@@ -343,7 +368,7 @@ class TopologyEditor(tk.Frame):
     def node_at(self, sx: float, sy: float) -> Node | None:
         for n in self.topo.nodes.values():
             nx_, ny_ = self.w2s(n.x, n.y)
-            if (nx_ - sx) ** 2 + (ny_ - sy) ** 2 <= (self.view.node_radius * self.scale) ** 2:
+            if (nx_ - sx) ** 2 + (ny_ - sy) ** 2 <= (self.view.node_radius * self.gs * self.scale) ** 2:
                 return n
         return None
 
@@ -371,7 +396,7 @@ class TopologyEditor(tk.Frame):
         c.delete("all")
         w = c.winfo_width() or 900
         h = c.winfo_height() or 700
-        step = max(6.0, view.grid_step) * self.scale
+        step = max(6.0, view.grid_step) * self.gs * self.scale
         if view.show_grid and step > 10:
             ox, oy = self.offset[0] % step, self.offset[1] % step
             major = step * 5
@@ -401,15 +426,15 @@ class TopologyEditor(tk.Frame):
                 continue
             x1, y1 = self.w2s(a.x, a.y)
             x2, y2 = self.w2s(b.x, b.y)
-            width = 1.0 + min(4.0, math.log10(max(l.capacity_mbps, 0.01) / 0.05 + 1))
+            width = (1.0 + min(4.0, math.log10(max(l.capacity_mbps, 0.01) / 0.05 + 1))) * view.link_width_scale * self.gs
             sel = (sel_kind == "link" and sel_obj is l)
             c.create_line(x1, y1, x2, y2,
-                          width=max(1.0, width * view.link_width_scale * (2 if sel else 1)),
+                          width=max(1.0, width * (2 if sel else 1)),
                           fill=pal["link_hi"] if sel else pal["link"], capstyle="round")
 
         for n in self.topo.nodes.values():
             x, y = self.w2s(n.x, n.y)
-            r = view.node_radius * self.scale
+            r = view.node_radius * self.gs * self.scale
             base_color = (zone_color(n.zone_id, pal) if self.color_by_zone.get()
                           else self.topo.color_of(n))
             fill = node_fill(base_color, pal)
@@ -433,7 +458,7 @@ class TopologyEditor(tk.Frame):
                 label_pt = max(6, int(view.label_pt * self.scale))
                 c.create_text(x, y, text=str(n.node_id), fill=pal["node_text"],
                               font=("TkDefaultFont", id_pt, "bold"))
-                c.create_text(x, y + r + 11 * self.scale,
+                c.create_text(x, y + r + 11 * self.gs * self.scale,
                               text=f"{n.node_type}", fill=pal["node_label"],
                               font=("TkDefaultFont", label_pt))
         self._update_status()
@@ -701,7 +726,7 @@ class TopologyEditor(tk.Frame):
             self._compromised_var = cvar
             ttk.Label(self.prop_tab, text="interface_dist (JSON)").grid(
                 row=9, column=0, columnspan=2, sticky="w", pady=(6, 0))
-            txt = tk.Text(self.prop_tab, height=7, width=36, font=("TkFixedFont", 9))
+            txt = tk.Text(self.prop_tab, height=7, width=34, font="TkFixedFont")
             txt.insert("1.0", json.dumps(n.interface_dist, indent=1))
             txt.grid(row=10, column=0, columnspan=2, sticky="ew")
             self._iface_text = txt
@@ -894,6 +919,144 @@ class TopologyEditor(tk.Frame):
         except Exception as exc:
             messagebox.showerror("Ошибка экспорта", str(exc))
 
+    def export_svg(self) -> None:
+        p = filedialog.asksaveasfilename(
+            defaultextension=".svg",
+            filetypes=[("SVG", "*.svg")],
+        )
+        if not p:
+            return
+        if not self.topo.nodes:
+            messagebox.showinfo("Экспорт SVG", "Схема пуста.")
+            return
+
+        pad = 24 * self.gs
+        positions = {
+            node.node_id: self.w2s(node.x, node.y)
+            for node in self.topo.nodes.values()
+        }
+        radius = self.view.node_radius * self.gs * self.scale
+        label_gap = 11 * self.gs * self.scale
+        xs = [position[0] for position in positions.values()]
+        ys = [position[1] for position in positions.values()]
+        x0 = min(xs) - radius - pad
+        y0 = min(ys) - radius - pad
+        x1 = max(xs) + radius + pad
+        y1 = max(ys) + radius + label_gap + pad
+        width = max(1.0, x1 - x0)
+        height = max(1.0, y1 - y0)
+
+        def esc(value: object) -> str:
+            from html import escape
+            return escape(str(value), quote=True)
+
+        def point(value: float) -> str:
+            return f"{value:.2f}"
+
+        svg: list[str] = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
+            f'width="{point(width)}" height="{point(height)}" '
+            f'viewBox="{point(x0)} {point(y0)} {point(width)} {point(height)}">',
+            f'<rect x="{point(x0)}" y="{point(y0)}" width="{point(width)}" '
+            f'height="{point(height)}" fill="{esc(self.pal["canvas_bg"])}"/>',
+        ]
+
+        if self.view.show_grid:
+            step = max(6.0, self.view.grid_step) * self.gs * self.scale
+            if step > 10:
+                start_x = x0 - (x0 % step)
+                start_y = y0 - (y0 % step)
+                x = start_x
+                while x <= x1:
+                    svg.append(
+                        f'<path d="M {point(x)} {point(y0)} V {point(y1)}" '
+                        f'stroke="{esc(self.pal["grid"])}" stroke-width="1"/>'
+                    )
+                    x += step
+                y = start_y
+                while y <= y1:
+                    svg.append(
+                        f'<path d="M {point(x0)} {point(y)} H {point(x1)}" '
+                        f'stroke="{esc(self.pal["grid"])}" stroke-width="1"/>'
+                    )
+                    y += step
+
+        sel_kind, sel_obj = self.selection if self.selection else (None, None)
+        import math
+        for link in self.topo.links.values():
+            if link.src not in positions or link.dst not in positions:
+                continue
+            sx, sy = positions[link.src]
+            tx, ty = positions[link.dst]
+            base = 1.0 + min(4.0, math.log10(max(link.capacity_mbps, 0.01) / 0.05 + 1))
+            selected = sel_kind == "link" and sel_obj is link
+            stroke_width = base * self.view.link_width_scale * self.gs * (2 if selected else 1)
+            color = self.pal["link_hi"] if selected else self.pal["link"]
+            svg.append(
+                f'<line x1="{point(sx)}" y1="{point(sy)}" x2="{point(tx)}" y2="{point(ty)}" '
+                f'stroke="{esc(color)}" stroke-width="{point(stroke_width)}" '
+                'stroke-linecap="round"/>'
+            )
+
+        for node in self.topo.nodes.values():
+            x, y = positions[node.node_id]
+            fill = node_fill(
+                zone_color(node.zone_id, self.pal) if self.color_by_zone.get()
+                else self.topo.color_of(node), self.pal
+            )
+            selected = sel_kind == "node" and sel_obj is node
+            outline = (self.pal["outline_compromised"] if node.is_compromised
+                       else self.pal["outline_master"] if node.is_master
+                       else self.pal["outline"])
+            shape = "rect" if node.is_master else "circle"
+            if shape == "rect":
+                svg.append(
+                    f'<rect x="{point(x - radius)}" y="{point(y - radius)}" '
+                    f'width="{point(radius * 2)}" height="{point(radius * 2)}" '
+                    f'fill="{esc(fill)}" stroke="{esc(outline)}" '
+                    f'stroke-width="{point(4 if selected else 2.5)}"/>'
+                )
+            else:
+                svg.append(
+                    f'<circle cx="{point(x)}" cy="{point(y)}" r="{point(radius)}" '
+                    f'fill="{esc(fill)}" stroke="{esc(outline)}" '
+                    f'stroke-width="{point(3 if selected else 1.4)}"/>'
+                )
+            if selected:
+                svg.append(
+                    f'<circle cx="{point(x)}" cy="{point(y)}" r="{point(radius + 5)}" '
+                    f'fill="none" stroke="{esc(self.pal["sel_ring"])}" '
+                    'stroke-width="2" stroke-dasharray="3 2"/>'
+                )
+            if self._pending_link == node.node_id:
+                svg.append(
+                    f'<circle cx="{point(x)}" cy="{point(y)}" r="{point(radius + 9)}" '
+                    f'fill="none" stroke="{esc(self.pal["pending"])}" stroke-width="2"/>'
+                )
+            if self.show_labels.get() and self.scale > 0.55:
+                id_size = max(6, int(self.view.id_pt * self.scale))
+                label_size = max(6, int(self.view.label_pt * self.scale))
+                svg.append(
+                    f'<text x="{point(x)}" y="{point(y + id_size * 0.35)}" '
+                    f'fill="{esc(self.pal["node_text"])}" font-family="sans-serif" '
+                    f'font-size="{id_size}" font-weight="bold" text-anchor="middle">'
+                    f'{esc(node.node_id)}</text>'
+                )
+                svg.append(
+                    f'<text x="{point(x)}" y="{point(y + radius + label_gap + label_size * 0.35)}" '
+                    f'fill="{esc(self.pal["node_label"])}" font-family="sans-serif" '
+                    f'font-size="{label_size}" text-anchor="middle">{esc(node.node_type)}</text>'
+                )
+        svg.append("</svg>")
+        try:
+            with open(p, "w", encoding="utf-8") as stream:
+                stream.write("\n".join(svg))
+        except OSError as exc:
+            messagebox.showerror("Ошибка экспорта SVG", str(exc))
+            return
+        self.logln(f"SVG: {p} ({int(width)}×{int(height)} px, вектор)")
+
     def export_image(self) -> None:
         p = filedialog.asksaveasfilename(defaultextension=".png",
                                          filetypes=[("PNG", "*.png"),
@@ -993,9 +1156,9 @@ class TopologyEditor(tk.Frame):
 
 
 def main() -> None:
+    hidpi.enable_dpi_awareness()
     root = tk.Tk()
     root.title("Signal Network Editor — signal_network_sim")
-    root.minsize(900, 600)
     editor = TopologyEditor(root)
 
     def on_close() -> None:
@@ -1010,6 +1173,9 @@ def main() -> None:
         root.destroy()
 
     root.protocol("WM_DELETE_WINDOW", on_close)
+    editor.logln(f"DPI-awareness: {hidpi.process_awareness()} / "
+                 f"DPI={hidpi.get_dpi(root):.0f}, "
+                 f"экран {root.winfo_screenwidth()}×{root.winfo_screenheight()}")
     root.mainloop()
 
 
