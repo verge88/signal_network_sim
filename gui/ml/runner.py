@@ -23,6 +23,7 @@ class JobState:
     started: float = 0.0
     finished: float = 0.0
     error: str = ""
+    traceback: str = ""
     proc: Optional[subprocess.Popen] = field(default=None, repr=False)
 
     @property
@@ -97,15 +98,17 @@ class JobRunner:
         env["PYTHONPATH"] = os.pathsep.join(
             [self.repo_root, env.get("PYTHONPATH", "")]).strip(os.pathsep)
         env["PYTHONUNBUFFERED"] = "1"
+        env["PYTHONUTF8"] = "1"
+        env["PYTHONIOENCODING"] = "utf-8:replace"
         env["MPLBACKEND"] = "Agg"
         kwargs: dict = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if sys.platform == "win32" else {"start_new_session": True}
         state.started = time.time()
         self.events.put(("started", state, {}))
         try:
             state.proc = subprocess.Popen(
-                [sys.executable, "-u", "-m", "gui.ml.harness", config_path],
+                [sys.executable, "-X", "utf8", "-u", "-m", "gui.ml.harness", config_path],
                 cwd=self.repo_root, env=env, stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT, text=True, errors="replace", bufsize=1,
+                stderr=subprocess.STDOUT, encoding="utf-8", errors="replace", bufsize=1,
                 **kwargs)
         except OSError as exc:
             state.status, state.error = "error", str(exc)
@@ -126,6 +129,7 @@ class JobRunner:
                 state.progress = float(event.get("value", 0.0))
             elif kind == "failed":
                 state.error = str(event.get("error", ""))
+                state.traceback = str(event.get("traceback", ""))
             self.events.put((kind, state, event))
         code = state.proc.wait()
         state.finished = time.time()

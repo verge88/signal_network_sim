@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import asdict, dataclass, field
 from typing import Any, Optional
 
@@ -36,10 +37,31 @@ class JobSpec:
         return cls(**json.loads(text.lstrip("\ufeff")))
 
 
+def _write_line(stream, line: str) -> None:
+    """Write one line without allowing output errors to break the job."""
+    if stream is None:
+        return
+    try:
+        stream.write(line + "\n")
+        stream.flush()
+    except UnicodeEncodeError:
+        encoding = getattr(stream, "encoding", None) or "utf-8"
+        try:
+            stream.write(line.encode(encoding, "replace").decode(encoding, "replace") + "\n")
+            stream.flush()
+        except Exception:
+            pass
+    except Exception:
+        pass
+
+
 def emit(event: str, **payload: Any) -> None:
-    print(EVENT_PREFIX + json.dumps({"event": event, **payload},
-                                    ensure_ascii=False, default=str),
-          flush=True)
+    try:
+        body = json.dumps({"event": event, **payload}, ensure_ascii=False,
+                          default=str)
+    except Exception:
+        body = json.dumps({"event": event, "payload": "<не сериализуется>"})
+    _write_line(sys.__stdout__ or sys.stdout, EVENT_PREFIX + body)
 
 
 def parse(line: str) -> Optional[dict[str, Any]]:

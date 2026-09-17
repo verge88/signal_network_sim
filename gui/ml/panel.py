@@ -8,6 +8,7 @@ from tkinter import filedialog, messagebox, ttk
 import pandas as pd
 
 from ..theme import style_text
+from ..widgets import LogView
 from .protocol import JobSpec
 from .registry import (aggregate_seeds, list_runs, metrics_frame, new_run_dir,
                        transfer_matrix, write_manifest)
@@ -94,7 +95,8 @@ class MLLab(tk.Toplevel):
         buttons = ttk.Frame(frame); buttons.pack(fill="x", pady=6)
         ttk.Button(buttons, text="Отменить выбранный", command=self.cancel_selected).pack(side="left")
         ttk.Button(buttons, text="Отменить все", command=self.runner.cancel_all).pack(side="left", padx=6)
-        self.qlog = tk.Text(frame, wrap="none", font="TkFixedFont", height=18); self.qlog.pack(fill="both", expand=True); style_text(self.qlog, self.pal)
+        self.qlog = LogView(frame, self.pal, height=18)
+        self.qlog.pack(fill="both", expand=True)
         return frame
 
     def _results_tab(self, notebook):
@@ -109,7 +111,8 @@ class MLLab(tk.Toplevel):
         ttk.Button(buttons, text="Метрики", command=self.show_metrics).pack(side="left", padx=6)
         ttk.Button(buttons, text="Свести по сидам", command=self.aggregate).pack(side="left")
         ttk.Button(buttons, text="Экспорт CSV", command=self.export_results).pack(side="left", padx=6)
-        self.rinfo = tk.Text(frame, height=8, wrap="none", font="TkFixedFont"); self.rinfo.pack(fill="both", expand=True); style_text(self.rinfo, self.pal)
+        self.rinfo = LogView(frame, self.pal, height=8)
+        self.rinfo.pack(fill="both", expand=True)
         self.refresh_runs()
         return frame
 
@@ -126,7 +129,8 @@ class MLLab(tk.Toplevel):
         buttons = ttk.Frame(frame); buttons.grid(row=3, column=0, columnspan=3, sticky="w", pady=8)
         ttk.Button(buttons, text="Оценить", command=self.run_transfer).pack(side="left")
         ttk.Button(buttons, text="Матрица переноса", command=self.show_matrix).pack(side="left", padx=6)
-        self.tinfo = tk.Text(frame, height=20, wrap="none", font="TkFixedFont"); self.tinfo.grid(row=4, column=0, columnspan=3, sticky="nsew"); style_text(self.tinfo, self.pal)
+        self.tinfo = LogView(frame, self.pal, height=20)
+        self.tinfo.grid(row=4, column=0, columnspan=3, sticky="nsew")
         frame.columnconfigure(1, weight=1); frame.rowconfigure(4, weight=1)
         return frame
 
@@ -188,12 +192,16 @@ class MLLab(tk.Toplevel):
     def show_metrics(self):
         selected = self.rtree.selection()
         if not selected: return
-        frame = metrics_frame(selected[0]); self.rinfo.delete("1.0", "end"); self.rinfo.insert("1.0", frame.to_string(index=False) if frame is not None else "таблица метрик не найдена")
+        frame = metrics_frame(selected[0])
+        self.rinfo.clear()
+        self.rinfo.append(frame.to_string(index=False) if frame is not None else "таблица метрик не найдена")
 
     def aggregate(self):
         selected = list(self.rtree.selection())
         if len(selected) < 2: messagebox.showinfo("Сводка", "Выберите два прогона или больше.", parent=self); return
-        frame = aggregate_seeds(selected); self.rinfo.delete("1.0", "end"); self.rinfo.insert("1.0", frame.to_string(index=False) if not frame.empty else "нет сопоставимых метрик")
+        frame = aggregate_seeds(selected)
+        self.rinfo.clear()
+        self.rinfo.append(frame.to_string(index=False) if not frame.empty else "нет сопоставимых метрик")
 
     def export_results(self):
         path = filedialog.asksaveasfilename(parent=self, defaultextension=".csv", filetypes=[("CSV", "*.csv")])
@@ -204,10 +212,14 @@ class MLLab(tk.Toplevel):
         if not self.test_run.get() or not self.test_data.get(): messagebox.showerror("Тест", "Укажите каталог прогона и CSV.", parent=self); return
         try: rows = evaluate_run(self.test_run.get(), self.test_data.get())
         except Exception as exc: messagebox.showerror("Тест не выполнен", f"{type(exc).__name__}: {exc}", parent=self); return
-        frame = pd.DataFrame(rows); self.tinfo.delete("1.0", "end"); self.tinfo.insert("1.0", frame.to_string(index=False))
+        frame = pd.DataFrame(rows)
+        self.tinfo.clear()
+        self.tinfo.append(frame.to_string(index=False))
 
     def show_matrix(self):
-        frame = transfer_matrix(self.runs_root); self.tinfo.delete("1.0", "end"); self.tinfo.insert("1.0", frame.to_string() if not frame.empty else "нет результатов переноса")
+        frame = transfer_matrix(self.runs_root)
+        self.tinfo.clear()
+        self.tinfo.append(frame.to_string() if not frame.empty else "нет результатов переноса")
 
     def _pump(self):
         self.runner.drain(self._on_event)
@@ -220,10 +232,17 @@ class MLLab(tk.Toplevel):
         if kind == "log": self._log(f"[{state.spec.seed}] {payload.get('line', '')}")
         elif kind == "stage": self._log(f"[{state.spec.seed}] этап {payload.get('name')}: {payload.get('status')}")
         elif kind == "warn": self._log(f"[{state.spec.seed}] ВНИМАНИЕ: {payload.get('msg')}")
-        elif kind == "done": self._log(f"[{state.spec.seed}] завершено: {state.status}"); self.refresh_runs()
+        elif kind == "done":
+            status = payload.get("status", state.status)
+            self._log(f"[{state.spec.seed}] завершено: {status} ({state.elapsed:.0f} с)")
+            if state.traceback:
+                self._log(state.traceback)
+            elif state.error:
+                self._log(f"[{state.spec.seed}] {state.error}")
+            self.refresh_runs()
 
     def _log(self, message):
-        self.qlog.insert("end", message + "\n"); self.qlog.see("end")
+        self.qlog.append(message)
 
     def _close(self):
         self.runner.shutdown(); self.destroy()

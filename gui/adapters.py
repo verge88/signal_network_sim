@@ -9,6 +9,7 @@ gui/adapters.py — мост между GUI-моделью и симулятор
 from __future__ import annotations
 
 import importlib
+import inspect
 import os
 import sys
 from typing import Callable, Optional
@@ -154,7 +155,15 @@ def run_with_topology(topo: Topology, sim_dir: str,
             "сценарии из GUI сохранены в JSON, но не переданы в main()")
 
     try:
-        result = module.main()
+        try:
+            parameters = inspect.signature(module.main).parameters
+        except (TypeError, ValueError):
+            parameters = {}
+        if parameters:
+            config = getattr(sim_topo, "config", None)
+            result = module.main(config) if config is not None else module.main()
+        else:
+            result = module.main()
     finally:
         setattr(module, prof["topology_class"], orig_cls)
         if patched_gen and orig_gen is not None:

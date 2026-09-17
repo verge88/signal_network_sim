@@ -16,7 +16,7 @@ import traceback
 from dataclasses import fields as dc_fields
 from typing import Any
 
-from .protocol import JobSpec, emit
+from .protocol import JobSpec, _write_line, emit
 
 TRAIN_MODULES = {
     "diameter": "diameter_training_v1",
@@ -105,26 +105,73 @@ _EPOCH_RE = re.compile(r"[Ee]poch\s+(\d+)\s*/\s*(\d+)")
 
 
 class _Tee:
-    def __init__(self, stream: Any, log_path: str):
-        self.stream = stream
-        self.file = open(log_path, "a", encoding="utf-8", errors="replace")
+    """Duplicate script output while keeping write() non-throwing."""
+
+    def __init__(self, raw: Any, log_path: str):
+        self.raw = raw
+        try:
+            self.file = open(log_path, "a", encoding="utf-8", errors="replace", newline="")
+        except OSError:
+            self.file = None
 
     def write(self, data: str) -> int:
-        self.stream.write(data)
-        self.file.write(data)
-        match = _EPOCH_RE.search(data)
-        if match:
-            current, total = map(int, match.groups())
-            emit("progress", stage="train", value=current / max(1, total),
-                 text=f"эпоха {current}/{total}")
+        if not isinstance(data, str):
+            data = str(data)
+        if self.file is not None:
+            try:
+                self.file.write(data)
+                self.file.flush()
+            except Exception:
+                pass
+        _write_line_nonl(self.raw, data)
+        try:
+            match = _EPOCH_RE.search(data)
+            if match:
+                current, total = map(int, match.groups())
+                emit("progress", stage="train", value=current / max(1, total),
+                     text=f"эпоха {current}/{total}")
+        except Exception:
+            pass
         return len(data)
 
     def flush(self) -> None:
-        self.stream.flush()
-        self.file.flush()
+        for stream in (self.file, self.raw):
+            try:
+                if stream is not None:
+                    stream.flush()
+            except Exception:
+                pass
 
     def close(self) -> None:
-        self.file.close()
+        try:
+            if self.file is not None:
+                self.file.close()
+        except Exception:
+            pass
+
+    def isatty(self) -> bool:
+        return False
+
+    @property
+    def encoding(self) -> str:
+        return "utf-8"
+
+
+def _write_line_nonl(stream: Any, text: str) -> None:
+    if stream is None:
+        return
+    try:
+        stream.write(text)
+        stream.flush()
+    except UnicodeEncodeError:
+        encoding = getattr(stream, "encoding", None) or "utf-8"
+        try:
+            stream.write(text.encode(encoding, "replace").decode(encoding, "replace"))
+            stream.flush()
+        except Exception:
+            pass
+    except Exception:
+        pass
 
 
 def stage_simulate(job: JobSpec) -> str:
@@ -216,6 +263,11 @@ def stage_evaluate(job: JobSpec) -> None:
 
 
 def main(argv: list[str]) -> int:
+    for stream in (sys.__stdout__, sys.__stderr__):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+        except (AttributeError, ValueError, OSError):
+            pass
     if len(argv) != 2:
         print("usage: python -m gui.ml.harness JOB_JSON", file=sys.stderr)
         return 2
@@ -247,11 +299,12 @@ def main(argv: list[str]) -> int:
                 summary["artifacts"] = capture.dump(job.run_dir)
         stage_evaluate(job)
         summary["status"] = "ok"
-    except Exception as exc:  # noqa: BLE001
+    except BaseException as exc:  # noqa: BLE001
         summary["status"] = "error"
         summary["error"] = f"{type(exc).__name__}: {exc}"
-        traceback.print_exc()
-        emit("failed", error=summary["error"])
+        summary["traceback"] = traceback.format_exc()
+        _write_line(sys.__stderr__, summary["traceback"])
+        emit("failed", error=summary["error"], traceback=summary["traceback"])
     finally:
         summary["finished"] = time.strftime("%Y-%m-%d %H:%M:%S")
         with open(os.path.join(job.run_dir, "summary.json"), "w", encoding="utf-8") as stream:
