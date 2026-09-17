@@ -725,28 +725,35 @@ class TopologyEditor(tk.Frame):
             self._fields["role"] = rvar
             ttk.Combobox(self.prop_tab, textvariable=rvar, state="readonly", width=18,
                          values=["MASTER", "SLAVE"]).grid(row=2, column=1, sticky="e")
-            row(3, "hostname", "hostname", n.hostname)
-            row(4, "realm", "realm", n.realm)
-            row(5, "base_rate (msg/interval)", "base_rate", n.base_rate)
-            row(6, "zone_id", "zone_id", n.zone_id)
-            row(7, "master_id", "master_id",
+            point_code = self.topo.protocol == "ss7"
+            row(3, "point_code" if point_code else "hostname", "hostname", n.hostname)
+            next_row = 4
+            if not point_code:
+                row(next_row, "realm", "realm", n.realm)
+                next_row += 1
+            row(next_row, "base_rate (msg/interval)", "base_rate", n.base_rate)
+            next_row += 1
+            row(next_row, "zone_id", "zone_id", n.zone_id)
+            next_row += 1
+            row(next_row, "master_id", "master_id",
                 "" if n.master_id is None else n.master_id)
+            next_row += 1
             cvar = tk.BooleanVar(value=n.is_compromised)
             ttk.Checkbutton(self.prop_tab, text="is_compromised",
-                            variable=cvar).grid(row=8, column=0, columnspan=2, sticky="w")
+                            variable=cvar).grid(row=next_row, column=0, columnspan=2, sticky="w")
             self._compromised_var = cvar
             ttk.Label(self.prop_tab, text="interface_dist (JSON)").grid(
-                row=9, column=0, columnspan=2, sticky="w", pady=(6, 0))
+                row=next_row + 1, column=0, columnspan=2, sticky="w", pady=(6, 0))
             txt = tk.Text(self.prop_tab, height=7, width=34, font="TkFixedFont")
             txt.insert("1.0", json.dumps(n.interface_dist, indent=1))
-            txt.grid(row=10, column=0, columnspan=2, sticky="ew")
+            txt.grid(row=next_row + 2, column=0, columnspan=2, sticky="ew")
             self._iface_text = txt
             self.style_text(txt)
             deg = len(self.topo.neighbors(n.node_id))
             ttk.Label(self.prop_tab, text=f"степень узла: {deg}",
-                      style="Hint.TLabel").grid(row=11, column=0, columnspan=2, sticky="w")
+                      style="Hint.TLabel").grid(row=next_row + 3, column=0, columnspan=2, sticky="w")
             ttk.Button(self.prop_tab, text="Применить",
-                       command=self._apply_node).grid(row=12, column=0, columnspan=2,
+                       command=self._apply_node).grid(row=next_row + 4, column=0, columnspan=2,
                                                       sticky="ew", pady=8)
         else:
             l: Link = obj
@@ -766,7 +773,8 @@ class TopologyEditor(tk.Frame):
             n.node_type = self._fields["node_type"].get()
             n.role = self._fields["role"].get()
             n.hostname = self._fields["hostname"].get()
-            n.realm = self._fields["realm"].get()
+            if "realm" in self._fields:
+                n.realm = self._fields["realm"].get()
             n.base_rate = float(self._fields["base_rate"].get())
             n.zone_id = int(self._fields["zone_id"].get())
             mid = self._fields["master_id"].get().strip()

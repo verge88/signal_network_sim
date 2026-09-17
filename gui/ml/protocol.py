@@ -24,6 +24,10 @@ class JobSpec:
     do_train: bool = True
     train_module: Optional[str] = None
     train_overrides: dict[str, Any] = field(default_factory=dict)
+    cli_args: list[str] = field(default_factory=list)
+    train_script: Optional[str] = None
+    train_options: dict[str, Any] = field(default_factory=dict)
+    train_extra_args: str = ""
     models: list[str] = field(default_factory=list)
     test_datasets: list[str] = field(default_factory=list)
     capture_models: bool = True

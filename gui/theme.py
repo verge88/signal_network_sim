@@ -134,6 +134,7 @@ def apply_ttk_theme(root: tk.Misc, pal: dict) -> None:
     style.configure("TLabelframe.Label", background=bg, foreground=fg)
     style.configure("TLabel", background=bg, foreground=fg)
     style.configure("Hint.TLabel", background=bg, foreground=pal["hint_fg"])
+    style.configure("Warning.TCheckbutton", background=bg, foreground="#c0392b")
     style.configure("Status.TLabel", background=bg, foreground=pal["status_fg"])
     style.configure("Title.TLabel", background=bg, foreground=accent)
     style.configure("TButton", background=pal["button_bg"], foreground=fg,

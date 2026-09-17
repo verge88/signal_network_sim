@@ -914,6 +914,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--no-torch", action="store_true")
     ap.add_argument("--no-cache", action="store_true")
     ap.add_argument("--quick", action="store_true")
+    ap.add_argument("--data", default="", help="CSV датасета")
     ap.add_argument("--out-dir", default="ss7_runs")
     ap.add_argument("--i-know-results-are-untrusted", action="store_true",
                     dest="untrusted",
@@ -933,7 +934,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                          alerts_per_day=a.alerts_per_day,
                          op_prevalence=a.op_prevalence,
                          use_torch=not a.no_torch, use_cache=not a.no_cache,
-                         quick=a.quick, out_dir=a.out_dir)
+                         quick=a.quick, data_path=a.data, out_dir=a.out_dir)
     run_dir = os.path.join(cfg.out_dir, f"{cfg.fingerprint()}_seed{cfg.seed}")
     os.makedirs(run_dir, exist_ok=True)
     save = lambda name, obj: (obj.to_csv(os.path.join(run_dir, name), index=False)

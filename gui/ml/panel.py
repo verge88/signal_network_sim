@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import os
+import shlex
+import subprocess
+import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
@@ -48,6 +51,18 @@ class MLLab(tk.Toplevel):
             "capture": tk.BooleanVar(value=True),
             "threads": tk.StringVar(value="0"),
             "parallel": tk.StringVar(value="1"),
+            "cli": tk.StringVar(value=""),
+            "days": tk.StringVar(value="6.0"),
+            "feature_set": tk.StringVar(value="OWN+INV"),
+            "soph": tk.StringVar(value="adaptive"),
+            "custody": tk.StringVar(value="node_software"),
+            "alerts_per_day": tk.StringVar(value="20"),
+            "op_prevalence": tk.StringVar(value="0.0001"),
+            "metric": tk.StringVar(value="episode_recall"),
+            "quick": tk.BooleanVar(value=False),
+            "no_torch": tk.BooleanVar(value=False),
+            "no_cache": tk.BooleanVar(value=False),
+            "untrusted": tk.BooleanVar(value=False),
         }
         row = 0
         ttk.Label(frame, text=f"Протокол: {self.editor.topo.protocol}", style="Title.TLabel").grid(row=row, column=0, columnspan=3, sticky="w", pady=(0, 8))
@@ -61,6 +76,24 @@ class MLLab(tk.Toplevel):
         ttk.Checkbutton(frame, text="Сохранять обученные модели", variable=self.vars["capture"]).grid(row=row, column=1, sticky="w"); row += 1
         self._entry_row(frame, row, "Потоков на прогон (0 = все)", "threads"); row += 1
         self._entry_row(frame, row, "Прогонов параллельно", "parallel"); row += 1
+        self._entry_row(frame, row, "Доп. аргументы CLI пайплайна", "cli")
+        ttk.Button(frame, text="--help", command=self.show_help).grid(row=row, column=2)
+        row += 1
+        self._entry_row(frame, row, "Дни", "days"); row += 1
+        ttk.Label(frame, text="Набор признаков").grid(row=row, column=0, sticky="w", pady=3)
+        ttk.Combobox(frame, textvariable=self.vars["feature_set"], state="readonly",
+                 values=("OWN_only", "INV_only", "OWN+INV", "ALL"), width=49).grid(row=row, column=1, sticky="ew"); row += 1
+        self._entry_row(frame, row, "Sophistication", "soph"); row += 1
+        self._entry_row(frame, row, "Key custody", "custody"); row += 1
+        self._entry_row(frame, row, "Тревог в сутки", "alerts_per_day"); row += 1
+        self._entry_row(frame, row, "Априорная частота", "op_prevalence"); row += 1
+        self._entry_row(frame, row, "Метрика", "metric"); row += 1
+        ttk.Checkbutton(frame, text="Быстрый прогон", variable=self.vars["quick"]).grid(row=row, column=0, sticky="w")
+        ttk.Checkbutton(frame, text="Без torch", variable=self.vars["no_torch"]).grid(row=row, column=1, sticky="w"); row += 1
+        ttk.Checkbutton(frame, text="Без кэша", variable=self.vars["no_cache"]).grid(row=row, column=0, sticky="w")
+        ttk.Checkbutton(frame, text="Я понимаю: результаты недоверенные", variable=self.vars["untrusted"],
+                style="Warning.TCheckbutton").grid(row=row, column=1, sticky="w"); row += 1
+        ttk.Button(frame, text="Проверить датасет", command=self.preflight_dataset).grid(row=row, column=0, sticky="w"); row += 1
         ttk.Label(frame, text="Переопределения TrainingConfig (ключ=значение, по одному в строке)", style="Hint.TLabel").grid(row=row, column=0, columnspan=3, sticky="w", pady=(10, 2)); row += 1
         self.over_text = tk.Text(frame, height=7, width=64, font="TkFixedFont")
         self.over_text.insert("1.0", "")
@@ -156,6 +189,23 @@ class MLLab(tk.Toplevel):
                 except ValueError: result[key] = {"true": True, "false": False}.get(raw.lower(), raw)
         return result
 
+    def _training_options(self):
+        options = {key: self.vars[key].get() for key in
+                   ("days", "feature_set", "soph", "custody", "alerts_per_day",
+                    "op_prevalence", "metric")}
+        options.update({"quick": self.vars["quick"].get(),
+                        "no_torch": self.vars["no_torch"].get(),
+                        "no_cache": self.vars["no_cache"].get(),
+                        "i_know_results_are_untrusted": self.vars["untrusted"].get()})
+        for key, value in list(options.items()):
+            if isinstance(value, str):
+                try:
+                    options[key] = float(value) if "." in value else int(value)
+                except ValueError:
+                    pass
+        options.update(self._overrides())
+        return options
+
     def enqueue(self, single=False):
         if self.vars["make_dataset"].get() and any(item.startswith("ERROR") for item in self.editor.topo.validate()):
             messagebox.showerror("Топология некорректна", "Исправьте ошибки топологии перед запуском.", parent=self); return
@@ -166,13 +216,13 @@ class MLLab(tk.Toplevel):
             messagebox.showerror("Сиды", "Список сидов должен состоять из целых чисел.", parent=self); return
         if single: seeds = seeds[:1]
         self.runner.max_parallel = max(1, int(self.vars["parallel"].get() or 1))
-        protocol, tag, overrides = self.editor.topo.protocol, self.vars["tag"].get(), self._overrides()
+        protocol, tag, overrides = self.editor.topo.protocol, self.vars["tag"].get(), self._training_options()
         for seed in seeds:
             run_dir = new_run_dir(self.runs_root, protocol, f"{tag}_s{seed}")
             topology_path = os.path.join(run_dir, "topology.json")
             self.editor.topo.save(topology_path)
             write_manifest(run_dir, protocol=protocol, seed=seed, tag=tag, topology_path=topology_path, topology_snapshot=self.editor.topo.to_dict(), overrides=overrides, notes=self.editor.topo.notes)
-            spec = JobSpec(job_id=os.path.basename(run_dir), protocol=protocol, sim_dir=self.vars["sim_dir"].get(), run_dir=run_dir, seed=seed, make_dataset=bool(self.vars["make_dataset"].get()), topology_path=topology_path, dataset_path=self.vars["dataset"].get(), do_train=bool(self.vars["do_train"].get()), train_overrides=overrides, capture_models=bool(self.vars["capture"].get()), threads=int(self.vars["threads"].get() or 0))
+            spec = JobSpec(job_id=os.path.basename(run_dir), protocol=protocol, sim_dir=self.vars["sim_dir"].get(), run_dir=run_dir, seed=seed, make_dataset=bool(self.vars["make_dataset"].get()), topology_path=topology_path, dataset_path=self.vars["dataset"].get(), do_train=bool(self.vars["do_train"].get()), train_overrides=overrides, train_options=overrides, train_extra_args=self.vars["cli"].get(), capture_models=bool(self.vars["capture"].get()), threads=int(self.vars["threads"].get() or 0))
             state = self.runner.submit(spec)
             iid = self.qtree.insert("", "end", values=(spec.job_id, seed, "queued", "", "0%", "0s"))
             state.tree_iid = iid  # type: ignore[attr-defined]
@@ -207,6 +257,30 @@ class MLLab(tk.Toplevel):
         path = filedialog.asksaveasfilename(parent=self, defaultextension=".csv", filetypes=[("CSV", "*.csv")])
         if path: pd.DataFrame(list_runs(self.runs_root)).to_csv(path, index=False)
 
+    def show_help(self) -> None:
+        from .harness import TRAIN_MODULES
+        module_name = TRAIN_MODULES.get(self.editor.topo.protocol, "")
+        script = os.path.join(self.vars["sim_dir"].get(), module_name + ".py")
+        try:
+            result = subprocess.run([sys.executable, script, "--help"],
+                                    capture_output=True, text=True, encoding="utf-8",
+                                    errors="replace", timeout=60,
+                                    cwd=self.vars["sim_dir"].get())
+            self._log((result.stdout or "") + (result.stderr or ""))
+        except Exception as exc:  # noqa: BLE001
+            self._log(f"не удалось получить --help: {exc}")
+
+    def preflight_dataset(self) -> None:
+        path = self.vars["dataset"].get()
+        if not path:
+            self._log("Укажите CSV в поле «Или готовый CSV» для preflight-проверки")
+            return
+        try:
+            from .preflight import dataset_report
+            dataset_report(path, emit=self._log)
+        except Exception as exc:  # noqa: BLE001
+            self._log(f"не удалось проверить датасет: {type(exc).__name__}: {exc}")
+
     def run_transfer(self):
         from .evaluate import evaluate_run
         if not self.test_run.get() or not self.test_data.get(): messagebox.showerror("Тест", "Укажите каталог прогона и CSV.", parent=self); return
@@ -235,9 +309,7 @@ class MLLab(tk.Toplevel):
         elif kind == "done":
             status = payload.get("status", state.status)
             self._log(f"[{state.spec.seed}] завершено: {status} ({state.elapsed:.0f} с)")
-            if state.traceback:
-                self._log(state.traceback)
-            elif state.error:
+            if state.error:
                 self._log(f"[{state.spec.seed}] {state.error}")
             self.refresh_runs()
 

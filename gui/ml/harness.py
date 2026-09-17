@@ -10,10 +10,13 @@ import json
 import os
 import pickle
 import re
+import runpy
+import shlex
 import sys
 import time
 import traceback
 from dataclasses import fields as dc_fields
+from pathlib import Path
 from typing import Any
 
 from .protocol import JobSpec, _write_line, emit
@@ -205,49 +208,95 @@ def stage_train(job: JobSpec, dataset: str, capture: _Capture) -> dict[str, Any]
     if not module_name:
         raise RuntimeError(f"не задан модуль обучения для {job.protocol}")
     module = importlib.import_module(module_name)
-    config_class = getattr(module, "TrainingConfig", None)
-    if config_class is None:
-        raise RuntimeError(f"{module_name}: нет класса TrainingConfig")
     emit("stage", name="train", status="start", module=module.__file__)
-    allowed = {field.name for field in dc_fields(config_class)}
-    overrides = {key: value for key, value in job.train_overrides.items() if key in allowed}
-    unknown = sorted(set(job.train_overrides) - allowed)
-    if unknown:
-        emit("warn", msg=f"игнорирую неизвестные параметры: {unknown}")
-    overrides.setdefault("seed", job.seed)
-    if "data_path" in allowed:
-        overrides["data_path"] = dataset
-    if "results_dir" in allowed:
-        overrides["results_dir"] = os.path.join(job.run_dir, "results")
-    if "plots_dir" in allowed:
-        overrides["plots_dir"] = os.path.join(job.run_dir, "results", "plots")
-    if "out_dir" in allowed:
-        overrides["out_dir"] = os.path.join(job.run_dir, "results")
-    config = config_class(**overrides)
-    module.TrainingConfig = lambda **_kwargs: config
+    main = getattr(module, "main", None)
+    if main is None:
+        raise RuntimeError(f"{module_name}: нет функции main()")
+    parameters = list(inspect.signature(main).parameters.values())
+    takes_config = bool(parameters) and parameters[0].name in {"cfg", "config", "training_config"}
+    results_dir = os.path.join(job.run_dir, "results")
+    os.makedirs(results_dir, exist_ok=True)
     export_dir = os.path.join(job.run_dir, "artifacts")
     os.makedirs(export_dir, exist_ok=True)
     os.environ["SNS_EXPORT_DIR"] = export_dir
-    with open(os.path.join(job.run_dir, "train_config.json"), "w", encoding="utf-8") as stream:
-        json.dump({key: getattr(config, key, None) for key in allowed}, stream,
-                  ensure_ascii=False, indent=2, default=str)
-    if job.capture_models:
-        capture.install()
     started = time.time()
-    try:
-        main = getattr(module, "main", None)
-        if main is None:
-            raise RuntimeError(f"{module_name}: нет функции main()")
-        parameters = list(inspect.signature(main).parameters.values())
-        if not parameters:
-            result = main()
-        elif parameters[0].name in {"cfg", "config", "training_config"}:
-            result = main(config)
+    script = Path(job.train_script or module.__file__).resolve()
+    from .cli_args import build_argv
+    options = {"data": dataset, "out_dir": results_dir, "seed": job.seed,
+               **(job.train_options or job.train_overrides)}
+    argv = build_argv(str(script), options, log=lambda message: emit("warn", msg=message))
+    argv += shlex.split(job.train_extra_args or "")
+    argv += list(job.cli_args)
+    if argv and not takes_config:
+        emit("info", msg="аргументы обучения: " + " ".join(argv))
+        with open(os.path.join(job.run_dir, "argv.txt"), "w", encoding="utf-8") as stream:
+            stream.write(" ".join(argv))
+        if job.capture_models:
+            capture.install()
+        old_argv = sys.argv
+        sys.argv = [str(script)] + argv
+        try:
+            result = runpy.run_path(str(script), run_name="__main__")
+            capture.collect_torch(module)
+        finally:
+            sys.argv = old_argv
+            capture.restore()
+        emit("stage", name="train", status="done", seconds=round(time.time() - started, 1))
+        return {"out_dir": results_dir, "argv": argv,
+                "trusted": "--i-know-results-are-untrusted" not in argv,
+                "result_repr": repr(result)[:2000]}
+    if parameters and not takes_config:
+        argv = list(job.cli_args)
+        if job.protocol == "ss7":
+            data_flag, out_flag = "--data", "--out-dir"
         else:
-            result = main([])
-        capture.collect_torch(module)
-    finally:
-        capture.restore()
+            data_flag, out_flag = "--data", "--out"
+        if not any(item == data_flag or item.startswith(data_flag + "=") for item in argv):
+            argv += [data_flag, dataset]
+        if not any(item == out_flag or item.startswith(out_flag + "=") for item in argv):
+            argv += [out_flag, results_dir]
+        if not any(item == "--seed" or item.startswith("--seed=") for item in argv):
+            argv += ["--seed", str(job.seed)]
+        emit("info", msg="argv: " + " ".join(argv))
+        with open(os.path.join(job.run_dir, "argv.txt"), "w", encoding="utf-8") as stream:
+            stream.write(" ".join(argv))
+        if job.capture_models:
+            capture.install()
+        try:
+            result = main(argv)
+            capture.collect_torch(module)
+        finally:
+            capture.restore()
+    else:
+        config_class = getattr(module, "TrainingConfig", None)
+        if config_class is None:
+            raise RuntimeError(f"{module_name}: нет класса TrainingConfig")
+        allowed = {field.name for field in dc_fields(config_class)}
+        overrides = {key: value for key, value in job.train_overrides.items() if key in allowed}
+        unknown = sorted(set(job.train_overrides) - allowed)
+        if unknown:
+            emit("warn", msg=f"игнорирую неизвестные параметры: {unknown}")
+        overrides.setdefault("seed", job.seed)
+        if "data_path" in allowed:
+            overrides["data_path"] = dataset
+        if "results_dir" in allowed:
+            overrides["results_dir"] = results_dir
+        if "plots_dir" in allowed:
+            overrides["plots_dir"] = os.path.join(results_dir, "plots")
+        if "out_dir" in allowed:
+            overrides["out_dir"] = results_dir
+        config = config_class(**overrides)
+        module.TrainingConfig = lambda **_kwargs: config
+        with open(os.path.join(job.run_dir, "train_config.json"), "w", encoding="utf-8") as stream:
+            json.dump({key: getattr(config, key, None) for key in allowed}, stream,
+                      ensure_ascii=False, indent=2, default=str)
+        if job.capture_models:
+            capture.install()
+        try:
+            result = main(config) if takes_config else main()
+            capture.collect_torch(module)
+        finally:
+            capture.restore()
     emit("stage", name="train", status="done", seconds=round(time.time() - started, 1))
     return {"result_repr": repr(result)[:2000] if result is not None else None}
 
