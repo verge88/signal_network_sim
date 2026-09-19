@@ -185,12 +185,22 @@ class Route:
 
 class Topology:
     def __init__(self, cfg: SimConfig, rng: np.random.Generator):
-        p = cfg.priors
+        self._init_containers()
+        self._build_random(cfg, rng)
+
+    def _init_containers(self) -> None:
         self.nodes: Dict[int, Node] = {}
         self.linksets: Dict[Tuple[int, int], Linkset] = {}
         self.graph = nx.Graph()
         self._routes: Dict[Tuple[int, int], Route] = {}
+        self.igw: List[int] = []
+        self.zone_stp: Dict[int, List[int]] = {}
+        self.zone_sp: Dict[int, List[int]] = {}
+        self.hlr: List[int] = []
+        self.external: List[int] = []
 
+    def _build_random(self, cfg: SimConfig, rng: np.random.Generator) -> None:
+        p = cfg.priors
         nz = int(rng.integers(*p.n_zones))
         nid = 0
 
@@ -202,15 +212,13 @@ class Topology:
             nid += 1
             return n
 
-        # национальные шлюзы (граница интерконнекта)
         self.igw = [add(f"IGW{i}", NodeType.IGW, NodeRole.SLAVE, -1).nid
                     for i in range(2)]
-        self.zone_stp: Dict[int, List[int]] = {}
-        self.zone_sp: Dict[int, List[int]] = {}
-        self.hlr: List[int] = []
+        self.zone_stp = {}
+        self.zone_sp = {}
+        self.hlr = []
 
         for z in range(nz):
-            # мейтед-пара STP; первый — коллектор (MASTER)
             s0 = add(f"STP{z}A", NodeType.STP, NodeRole.MASTER, z).nid
             s1 = add(f"STP{z}B", NodeType.STP, NodeRole.SLAVE, z).nid
             self.zone_stp[z] = [s0, s1]
@@ -231,20 +239,68 @@ class Topology:
 
         for z in range(nz):
             s0, s1 = self.zone_stp[z]
-            ls(s0, s1, 4)                                    # C-links
-            for sp in self.zone_sp[z] + [self.hlr[z]]:       # A-links
+            ls(s0, s1, 4)
+            for sp in self.zone_sp[z] + [self.hlr[z]]:
                 ls(sp, s0, 2); ls(sp, s1, 2)
-            for g in self.igw:                               # B-links (quad)
+            for g in self.igw:
                 ls(s0, g, 3); ls(s1, g, 3)
         ls(self.igw[0], self.igw[1], 4)
         for e in self.external:
             for g in self.igw:
                 ls(e, g, 2)
+        self._finalize()
 
+    @classmethod
+    def from_spec(cls, nodes, linksets) -> "Topology":
+        self = cls.__new__(cls)
+        self._init_containers()
+        for n in nodes:
+            if n.nid in self.nodes:
+                raise ValueError(f"дублирующийся nid {n.nid}")
+            self.nodes[n.nid] = n
+            self.graph.add_node(n.nid)
+        for lsx in linksets:
+            key = (min(lsx.a, lsx.b), max(lsx.a, lsx.b))
+            if key[0] == key[1]:
+                continue
+            if key[0] not in self.nodes or key[1] not in self.nodes:
+                raise ValueError(f"linkset {key} ссылается на несуществующий узел")
+            self.linksets[key] = Linkset(key[0], key[1], lsx.n_links,
+                                         lsx.link_kbps, lsx.buffer_msgs)
+            self.graph.add_edge(key[0], key[1], weight=1.0)
+        for n in self.nodes.values():
+            if n.external:
+                self.external.append(n.nid)
+            elif n.ntype is NodeType.IGW:
+                self.igw.append(n.nid)
+            elif n.ntype is NodeType.STP:
+                self.zone_stp.setdefault(n.zone, []).append(n.nid)
+            elif n.ntype is NodeType.SP:
+                self.zone_sp.setdefault(n.zone, []).append(n.nid)
+            elif n.ntype is NodeType.SCP:
+                self.hlr.append(n.nid)
+                self.zone_sp.setdefault(n.zone, [])
+        self._finalize()
+        self._validate()
+        return self
+
+    def _finalize(self) -> None:
         self.slaves = [n.nid for n in self.nodes.values()
                        if n.role is NodeRole.SLAVE and not n.external]
         self.masters = [n.nid for n in self.nodes.values()
                         if n.role is NodeRole.MASTER]
+
+    def _validate(self) -> None:
+        if not self.hlr:
+            raise ValueError("нужен хотя бы один SCP/HLR — иначе нет MAP-потоков")
+        if not self.external:
+            raise ValueError("нужен хотя бы один внешний партнёр (external=True)")
+        if not any(self.zone_sp.values()):
+            raise ValueError("нужен хотя бы один SP — источник трафика")
+        if not self.slaves:
+            raise ValueError("все узлы помечены MASTER — нечего наблюдать")
+        if self.graph.number_of_nodes() and not nx.is_connected(self.graph):
+            raise ValueError("граф несвязен: маршрутизация между зонами невозможна")
 
     # ---- маршрутизация -----------------------------------------------------
     def route(self, src: int, dst: int) -> Route:
@@ -671,12 +727,27 @@ class Flow:
 
 
 class Ss7Sim:
-    def __init__(self, cfg: SimConfig, book: RngBook):
+    def __init__(self, cfg: SimConfig, book: RngBook,
+                 topo: Optional[Topology] = None,
+                 size_capacities: bool = True,
+                 template: Optional["Ss7Sim"] = None):
         self.cfg = cfg
         self.book = book
         p = cfg.priors
         rt = book["topology"]
-        self.topo = Topology(cfg, rt)
+        self.topo = Topology(cfg, rt) if topo is None else topo
+        if template is not None:
+            self.rel_sigma = template.rel_sigma
+            self.background = template.background
+            self.rotation = template.rotation
+            self.max_retry = template.max_retry
+            self.diurnal_amp = template.diurnal_amp
+            self.flows = template.flows
+            self._ar_phi = dict(template._ar_phi)
+            self._ar_sig = dict(template._ar_sig)
+            self._ar_x = {n: 0.0 for n in self.topo.nodes}
+            self.mean_msg_bits = template.mean_msg_bits
+            return
         self.rel_sigma = float(rt.uniform(*p.meas_rel_sigma))
         self.background = float(rt.uniform(*p.integrity_background))
         self.rotation = int(rt.integers(*p.key_rotation_intervals))
@@ -687,7 +758,8 @@ class Ss7Sim:
         self._ar_sig = {n: float(rt.uniform(*p.ar_rel_sigma)) for n in self.topo.nodes}
         self._ar_x = {n: 0.0 for n in self.topo.nodes}
         self.mean_msg_bits = 8.0 * float(np.mean(list(MSG_BYTES.values())))
-        self.topo.size_capacities(self._nominal_offered(), rt, p)
+        if size_capacities:
+            self.topo.size_capacities(self._nominal_offered(), rt, p)
 
     # ---- потоки ------------------------------------------------------------
     def _build_flows(self, rng) -> List[Flow]:
@@ -790,7 +862,8 @@ class Ss7Sim:
             if ep.kind != "compromise" or not (ep.t0 <= t <= ep.t1):
                 continue
             nid = ep.nid
-            h = int(rng.poisson(max(ep.hidden_rate * dt, 0.0)))
+            hidden_lambda = max(ep.hidden_rate * dt, 0.0)
+            h = 0 if hidden_lambda == 0.0 else int(rng.poisson(hidden_lambda))
             if h <= 0:
                 continue
             ext = int(rng.choice(topo.external))
@@ -1155,10 +1228,14 @@ def make_episodes(sim: Ss7Sim, cfg: SimConfig, rng: np.random.Generator,
     return eps
 
 
-def build_dataset(cfg: SimConfig, *, episodes_kw: Optional[dict] = None
+def build_dataset(cfg: SimConfig, *, episodes_kw: Optional[dict] = None,
+                  topo: Optional[Topology] = None,
+                  size_capacities: bool = True,
+                  sim_template: Optional[Ss7Sim] = None
                   ) -> Tuple[pd.DataFrame, Ss7Sim, List[Episode]]:
     book = RngBook(cfg.seed)
-    sim = Ss7Sim(cfg, book)
+    sim = Ss7Sim(cfg, book, topo=topo, size_capacities=size_capacities,
+                 template=sim_template)
     eps = make_episodes(sim, cfg, book["episode"], **(episodes_kw or {}))
     ep_id = {id(e): i for i, e in enumerate(eps)}
     rows = []
@@ -1197,6 +1274,7 @@ def build_dataset(cfg: SimConfig, *, episodes_kw: Optional[dict] = None
 # Компрометированный узел проходит весь путь маскировки при h = 0.
 # Детектор обязан дать AUC ~ 0.5; иначе в генераторе есть подпись.
 # =============================================================================
+from collections import defaultdict
 from typing import Dict, List, Sequence, Tuple
 import numpy as np
 import pandas as pd
@@ -1235,33 +1313,28 @@ def tost_equivalence(x: np.ndarray, y: np.ndarray, delta: float = 0.25
     return bool(hi < delta), float(d)
 
 
-def null_test(cfg: SimConfig, feature_cols: Sequence[str],
-              *, auc_tol: float = 0.06, delta: float = 0.30,
-              n_boot: int = 200) -> Dict:
-    """Возвращает отчёт и БРОСАЕТ AssertionError при провале."""
-    assert_mask_is_identity_at_zero(np.random.default_rng(cfg.seed))
+def _usable_columns(frame: pd.DataFrame, cols: Sequence[str],
+                    min_notna: float = 0.98) -> List[str]:
+    return [c for c in cols
+            if frame[c].notna().mean() >= min_notna
+            and frame[c].nunique(dropna=True) > 1]
 
-    c0 = SimConfig(**{**cfg.__dict__, "seed": cfg.seed + 100_003})
-    df, _, _ = build_dataset(c0, episodes_kw=dict(
-        n_compromise=10, n_normal=0, n_ext=0, force_hidden=0.0))
-    cols = [c for c in feature_cols if c in df.columns]
-    d = df.dropna(subset=cols)
-    pos = d[d["label"] == 1]
-    neg = d[d["label"] == 0].sample(min(len(d[d["label"] == 0]), 4 * len(pos)),
-                                    random_state=cfg.seed)
-    assert len(pos) > 50, "мало окон для нулевого теста"
+
+def _null_test_one(pos: pd.DataFrame, neg: pd.DataFrame, cols: List[str],
+                   seed: int, auc_tol: float, delta: float,
+                   n_boot: int) -> Dict:
     X = pd.concat([pos, neg])[cols].to_numpy(float)
     y = np.r_[np.ones(len(pos)), np.zeros(len(neg))]
 
     rf = RandomForestClassifier(n_estimators=300, min_samples_leaf=5,
-                                random_state=cfg.seed, n_jobs=1)
-    n = len(y); idx = np.random.default_rng(cfg.seed).permutation(n)
+                                random_state=seed, n_jobs=1)
+    n = len(y); idx = np.random.default_rng(seed).permutation(n)
     half = n // 2
     rf.fit(X[idx[:half]], y[idx[:half]])
     s = rf.predict_proba(X[idx[half:]])[:, 1]
     auc = roc_auc_score(y[idx[half:]], s)
 
-    rng = np.random.default_rng(cfg.seed + 1)
+    rng = np.random.default_rng(seed + 1)
     boots = []
     yy, ss = y[idx[half:]], s
     for _ in range(n_boot):
@@ -1275,7 +1348,7 @@ def null_test(cfg: SimConfig, feature_cols: Sequence[str],
     k = min(8, Xs.shape[1])
     p_energy = permutation_energy_test(
         Xs[y == 1][:150, :k], Xs[y == 0][:150, :k],
-        rng=np.random.default_rng(cfg.seed + 2))
+        rng=np.random.default_rng(seed + 2))
 
     per_feat = {}
     fails = []
@@ -1286,7 +1359,9 @@ def null_test(cfg: SimConfig, feature_cols: Sequence[str],
             fails.append((c, dd))
 
     rep = {"auc": float(auc), "auc_ci": (float(lo), float(hi)),
-           "p_energy": float(p_energy), "n_pos": int(len(pos)),
+           "ci": (float(lo), float(hi)), "p_energy": float(p_energy),
+           "n_pos": int(len(pos)), "n_neg": int(len(neg)),
+           "equivalent": not fails,
            "non_equivalent": sorted(fails, key=lambda x: -abs(x[1]))[:10],
            "per_feature": per_feat}
     assert abs(auc - 0.5) <= auc_tol, (
@@ -1295,6 +1370,120 @@ def null_test(cfg: SimConfig, feature_cols: Sequence[str],
         f"Худшие признаки: {rep['non_equivalent'][:5]}")
     assert p_energy > 0.01, f"НУЛЕВОЙ ТЕСТ: p_energy={p_energy:.4f}"
     return rep
+
+
+def _counterfactual_null(cfg: SimConfig, feature_cols: Sequence[str],
+                         topo: Optional[Topology], log=print) -> Dict:
+    """Побиточно сравнивает h=0 с тем же миром без compromise-эпизодов."""
+    c0 = SimConfig(**{**cfg.__dict__, "seed": cfg.seed + 100_003})
+    base = dict(n_normal=0, n_ext=0)
+    df_a, sim_a, _ = build_dataset(
+        c0, topo=topo, size_capacities=(topo is None),
+        episodes_kw=dict(n_compromise=10, force_hidden=0.0, **base))
+    df_b, _, _ = build_dataset(
+        c0, topo=sim_a.topo, size_capacities=False,
+        sim_template=sim_a,
+        episodes_kw=dict(n_compromise=0, **base))
+
+    cols = [c for c in feature_cols
+            if c in df_a.columns and c in df_b.columns
+            and not c.endswith(("__z", "__mean", "__std", "__dev_zone"))]
+    if not cols:
+        raise AssertionError("контрфактуальный тест: нет базовых признаков")
+
+    a = df_a.set_index(["nid", "t"]).sort_index()
+    b = df_b.set_index(["nid", "t"]).sort_index()
+    idx = a.index.intersection(b.index)
+    a, b = a.loc[idx], b.loc[idx]
+    va = a[cols].to_numpy(float)
+    vb = b[cols].to_numpy(float)
+    scale = np.nanstd(vb, axis=0)
+    scale[~np.isfinite(scale) | (scale == 0)] = 1.0
+    rel = np.abs(va - vb) / scale
+
+    victim = a["label"].to_numpy() == 1
+    off = float(np.nanmax(rel[~victim])) if (~victim).any() else 0.0
+    on = float(np.nanmax(rel[victim])) if victim.any() else 0.0
+    worst = (sorted(zip(cols, np.nanmax(rel[victim], axis=0)),
+                    key=lambda kv: -kv[1])[:8]
+             if victim.any() else [])
+    log(f"[null-test/cf] строк {len(idx)}, окон компрометации {int(victim.sum())}; "
+        f"макс. относительное расхождение: вне эпизодов {off:.3e}, "
+        f"внутри {on:.3e}")
+
+    tol = 1e-9
+    if off > tol:
+        raise AssertionError(
+            f"прогоны A и B расходятся вне эпизодов (max={off:.3e}). "
+            f"Проверьте независимость потоков ГСЧ и book.child")
+    if on > tol:
+        raise AssertionError(
+            f"НУЛЕВОЙ ТЕСТ ПРОВАЛЕН контрфактуально: при h=0 наблюдаемые "
+            f"величины отличаются от честного прогона, max={on:.3e}. "
+            f"Худшие признаки: {worst}")
+    return {"passed": True, "max_dev_outside": off,
+            "max_dev_inside": on, "n_rows": int(len(idx)),
+            "n_pos": int(victim.sum()), "n_features": len(cols)}
+
+
+def null_test(cfg: SimConfig, feature_cols: Sequence[str], *,
+              topo: Optional[Topology] = None, auc_tol: float = 0.06,
+              delta: float = 0.30, n_boot: int = 200, min_pos: int = 50,
+              log=print) -> Dict:
+    """Сравнивает компрометированные окна с честными на тех же узлах."""
+    assert_mask_is_identity_at_zero(np.random.default_rng(cfg.seed))
+    cf = _counterfactual_null(cfg, feature_cols, topo, log=log)
+    c0 = SimConfig(**{**cfg.__dict__, "seed": cfg.seed + 100_003})
+    df, sim, _ = build_dataset(
+        c0, topo=topo, size_capacities=(topo is None),
+        episodes_kw=dict(n_compromise=10, n_normal=0, n_ext=0,
+                         force_hidden=0.0))
+    cols0 = [c for c in feature_cols if c in df.columns]
+    role_of = {int(n): sim.topo.nodes[int(n)].ntype.name
+               for n in df["nid"].unique()}
+    victims = sorted(int(n) for n in df.loc[df["label"] == 1, "nid"].unique())
+    if not victims:
+        raise AssertionError("в нулевом прогоне нет компрометированных окон")
+    groups: Dict[str, List[int]] = defaultdict(list)
+    for nid in victims:
+        groups[role_of[nid]].append(nid)
+
+    reports, worst = {}, 0.5
+    for role, nids in sorted(groups.items()):
+        sub = df[df["nid"].isin(nids)]
+        cols = _usable_columns(sub, cols0)
+        d = sub.dropna(subset=cols)
+        pos = d[d["label"] == 1]
+        negp = d[d["label"] == 0]
+        log(f"[null-test] {role}: узлов {len(nids)}, "
+            f"признаков {len(cols)}/{len(cols0)}, строк {len(d)}/{len(sub)}, "
+            f"pos={len(pos)} neg={len(negp)}")
+        if len(cols) < 5:
+            raise AssertionError(f"{role}: информативных признаков всего {len(cols)}")
+        if len(pos) < min_pos:
+            raise AssertionError(
+                f"{role}: окон компрометации {len(pos)}, требуется {min_pos}. "
+                f"Увеличьте days или n_compromise")
+        neg = negp.sample(min(len(negp), 4 * len(pos)),
+                          random_state=cfg.seed)
+        try:
+            rep = _null_test_one(pos, neg, cols, cfg.seed, auc_tol, delta,
+                                  n_boot)
+        except AssertionError as exc:
+            reports[role] = {"passed": False, "reason": str(exc),
+                             "n_nodes": len(nids),
+                             "n_features": len(cols),
+                             "n_pos": int(len(pos)), "n_neg": int(len(neg))}
+            continue
+        rep["n_nodes"], rep["n_features"] = len(nids), len(cols)
+        reports[role] = rep
+        worst = max(worst, abs(rep["auc"] - 0.5) + 0.5)
+
+        return {"passed": True, "counterfactual": cf,
+            "by_role": reports, "worst_auc": worst,
+            "role_diagnostic_passed": all(
+                v.get("passed", True) and v.get("equivalent", True)
+                for v in reports.values())}
 
 
 # =============================================================================
@@ -1571,10 +1760,13 @@ def main(argv=None) -> int:
     if not a.skip_null_test:
         print("\n3) НУЛЕВОЙ ТЕСТ (компрометация с h=0, полный путь маскировки)")
         rep = null_test(cfg, cols)
-        print(f"   AUC={rep['auc']:.3f} CI95={rep['auc_ci']}, "
-              f"p_energy={rep['p_energy']:.3f}, n_pos={rep['n_pos']}")
-        if rep["non_equivalent"]:
-            print(f"   неэквивалентные признаки: {rep['non_equivalent'][:3]}")
+        for role, report in rep["by_role"].items():
+            if "auc" in report:
+                print(f"   {role}: AUC={report['auc']:.3f} "
+                      f"CI95={report['ci']}, признаки={report['n_features']}")
+            else:
+                print(f"   {role}: диагностический RF не пройден: "
+                      f"{report['reason'][:160]}")
         print("   OK: подписи, не связанной со скрытой активностью, нет")
 
     print("\n4) Блочный сплит по времени с purge-зазором")

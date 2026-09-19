@@ -659,12 +659,32 @@ def run_zoo(M: Matrices, cfg: TrainingConfig, seed: int,
 #  Диагностика, аблации, кривые
 # =============================================================================
 
+def _load_sidecar(data_path: str):
+    path = os.path.splitext(data_path)[0] + "_topology.json"
+    if not data_path or not os.path.exists(path):
+        return None, None
+    with open(path, encoding="utf-8") as fh:
+        blob = json.load(fh)
+    try:
+        from .ss7_simulator_v7 import topology_from_spec_dict
+    except ImportError:
+        from ss7_simulator_v7 import topology_from_spec_dict
+    return topology_from_spec_dict(blob["topology"]), float(blob.get("days", 0)) or None
+
+
 def gate_null_test(cfg: TrainingConfig, cols: Sequence[str],
                    allow_untrusted: bool) -> Dict:
     """Шлюз: без прохождения нулевого теста обучение не начинается."""
     assert_mask_is_identity_at_zero(np.random.default_rng(cfg.seed))
+    topo, days = _load_sidecar(cfg.data_path)
+    sc = cfg.sim_config()
+    if days:
+        sc.days = days
+    if topo is not None:
+        print(f"    нулевой тест на топологии датасета: "
+              f"{len(topo.nodes)} узлов, зон {len(topo.zone_sp)}, days={sc.days}")
     try:
-        rep = null_test(cfg.sim_config(), cols)
+        rep = null_test(sc, cols, topo=topo)
         rep["passed"] = True
         return rep
     except AssertionError as e:
@@ -962,8 +982,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print("\n[2] Нулевой тест (шлюз)")
     nt = gate_null_test(cfg, cols, a.untrusted)
     if nt.get("passed"):
-        print(f"    AUC={nt['auc']:.3f} CI95={nt['auc_ci']} "
-              f"p_energy={nt['p_energy']:.3f} → подписи при h=0 нет")
+        cf = nt["counterfactual"]
+        print(f"    CF: строк={cf['n_rows']} pos={cf['n_pos']} "
+              f"max_out={cf['max_dev_outside']:.3e} "
+              f"max_in={cf['max_dev_inside']:.3e}")
+        for role, report in nt["by_role"].items():
+            if "auc" in report:
+                print(f"    {role}: AUC={report['auc']:.3f} "
+                      f"CI95={report['ci']} признаки={report['n_features']}")
+            else:
+                print(f"    {role}: диагностический RF не пройден: "
+                      f"{report['reason'][:160]}")
+        print(f"    худший AUC={nt['worst_auc']:.3f} → подписи при h=0 нет")
     else:
         print("    ПРОВАЛЕН, результаты НЕДОВЕРЕННЫЕ:", nt.get("reason", "")[:200])
     with open(os.path.join(run_dir, "null_test.json"), "w") as f:

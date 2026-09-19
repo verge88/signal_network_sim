@@ -197,6 +197,17 @@ def run_with_topology(topo: Topology, sim_dir: str,
     module = importlib.import_module(name)
     log(f"модуль загружен: {module.__file__}")
 
+    if hasattr(module, "set_gui_topology"):
+        log(f"{name}: топология передаётся напрямую "
+            f"({len(topo.nodes)} узлов, {len(topo.links)} линков)")
+        module.set_gui_topology(topo)
+        try:
+            result = module.main()
+        finally:
+            module.set_gui_topology(None)
+        log("main() завершён")
+        return result
+
     sim_topo = build_sim_topology(topo, module, log=log)
     log(f"топология подставлена: {len(sim_topo.nodes)} узлов, "
         f"{len(sim_topo.links)} линков, мастера {topo.masters()}")

@@ -10,6 +10,7 @@ SS7 Master-Slave Signalling Network Simulator v6
   6. Компрометированный узел периодически «проскальзывает» с реальными значениями
 """
 
+import json
 import numpy as np
 import pandas as pd
 import networkx as nx
@@ -19,6 +20,8 @@ from typing import Dict, List, Optional, Tuple, Set
 from collections import defaultdict
 import warnings
 import os
+
+_GUI_TOPOLOGY = None
 
 warnings.filterwarnings("ignore")
 
@@ -1254,11 +1257,136 @@ Ss7Sim = _fixed.Ss7Sim
 Episode = _fixed.Episode
 FEATURE_SETS = _fixed.FEATURE_SETS
 
+_NTYPE_MAP = {
+    "STP": _fixed.NodeType.STP,
+    "SCP": _fixed.NodeType.SCP,
+    "HLR": _fixed.NodeType.SCP,
+    "SP": _fixed.NodeType.SP,
+    "MSC": _fixed.NodeType.SP,
+    "VLR": _fixed.NodeType.SP,
+    "IGW": _fixed.NodeType.IGW,
+}
 
-def main(argv=None):
+
+def set_gui_topology(topology) -> None:
+    """Вызывается из gui/adapters перед main(); None — сбросить."""
+    global _GUI_TOPOLOGY
+    _GUI_TOPOLOGY = topology
+
+
+def topology_from_gui(gui, *, link_kbps: float = 64.0, buffer_msgs: int = 400,
+                      n_external: int = 4, log=print) -> "_fixed.Topology":
+    """gui — объект gui.model.Topology (нужны .nodes и .links)."""
+    Node = _fixed.Node
+    Linkset = _fixed.Linkset
+    NodeType = _fixed.NodeType
+    NodeRole = _fixed.NodeRole
+
+    zmap = {z: i for i, z in enumerate(sorted({int(n.zone_id) for n in gui.nodes.values()}))}
+
+    nodes, ext, igw = [], [], []
+    for n in sorted(gui.nodes.values(), key=lambda x: x.node_id):
+        extra = dict(getattr(n, "extra", {}) or {})
+        raw = str(extra.get("ss7_type") or n.node_type).upper()
+        is_ext = bool(extra.get("external")) or raw in ("EXT", "EXTERNAL")
+        ntype = NodeType.IGW if is_ext else _NTYPE_MAP.get(raw)
+        if ntype is None:
+            raise ValueError(f"узел {n.node_id}: тип {raw!r} не отображается на SS7")
+        zone = -2 if is_ext else (-1 if ntype is NodeType.IGW else zmap[int(n.zone_id)])
+        role = NodeRole.MASTER if str(n.role).upper() == "MASTER" else NodeRole.SLAVE
+        nid = int(n.node_id)
+        nodes.append(Node(nid, getattr(n, "hostname", "") or f"{raw}{nid}",
+                          ntype, role, zone, is_ext))
+        if is_ext:
+            ext.append(nid)
+        elif ntype is NodeType.IGW:
+            igw.append(nid)
+
+    links = []
+    for lk in gui.links.values():
+        mbps = float(getattr(lk, "capacity_mbps", 0.064) or 0.064)
+        n_links = max(1, min(16, int(round(mbps * 1000.0 / link_kbps))))
+        links.append(Linkset(int(lk.src), int(lk.dst), n_links, link_kbps, buffer_msgs))
+
+    free = max((n.nid for n in nodes), default=-1) + 1
+    if not igw:
+        stp = [n.nid for n in nodes if n.ntype is NodeType.STP]
+        if not stp:
+            raise ValueError("нет ни одного STP — не к чему подключить интерконнект")
+        for i in range(2):
+            nodes.append(Node(free, f"IGW{i}", NodeType.IGW, NodeRole.SLAVE, -1, False))
+            igw.append(free)
+            free += 1
+        for g in igw:
+            for s in stp:
+                links.append(Linkset(min(g, s), max(g, s), 3, link_kbps, buffer_msgs))
+        links.append(Linkset(min(igw), max(igw), 4, link_kbps, buffer_msgs))
+        log(f"добавлены служебные IGW {igw}: B-линки к STP {stp}")
+    if not ext:
+        for i in range(int(n_external)):
+            nodes.append(Node(free, f"EXT{i}", NodeType.IGW, NodeRole.SLAVE, -2, True))
+            ext.append(free)
+            free += 1
+        for e in ext:
+            for g in igw:
+                links.append(Linkset(min(e, g), max(e, g), 2, link_kbps, buffer_msgs))
+        log(f"добавлены внешние партнёры {ext}: источник SRI-SM/MT-FSM")
+
+    topo = _fixed.Topology.from_spec(nodes, links)
+    log(f"SS7-топология: {len(topo.nodes)} узлов, {len(topo.linksets)} linkset'ов, "
+        f"зон {len(topo.zone_sp)}, HLR {topo.hlr}, внешних {topo.external}, "
+        f"мастера {topo.masters}")
+    return topo
+
+
+def topology_spec(topo) -> dict:
+    return {
+        "nodes": [{"nid": n.nid, "name": n.name, "ntype": n.ntype.name,
+                   "role": n.role.name, "zone": n.zone, "external": n.external}
+                  for n in topo.nodes.values()],
+        "linksets": [{"a": l.a, "b": l.b, "n_links": l.n_links,
+                      "link_kbps": l.link_kbps, "buffer_msgs": l.buffer_msgs}
+                     for l in topo.linksets.values()],
+    }
+
+
+def topology_from_spec_dict(spec: dict):
+    Node, Linkset = _fixed.Node, _fixed.Linkset
+    nodes = [Node(int(d["nid"]), d["name"], _fixed.NodeType[d["ntype"]],
+                  _fixed.NodeRole[d["role"]], int(d["zone"]), bool(d["external"]))
+             for d in spec["nodes"]]
+    links = [Linkset(int(d["a"]), int(d["b"]), int(d["n_links"]),
+                     float(d["link_kbps"]), int(d["buffer_msgs"]))
+             for d in spec["linksets"]]
+    return _fixed.Topology.from_spec(nodes, links)
+
+
+def main(config=None, topology=None, argv=None):
     """Generate the corrected SS7 dataset while preserving the old API."""
-    config = SimulationConfig(seed=42, days=6.0)
-    dataframe, _, _ = _fixed.build_dataset(config)
+    src = topology if topology is not None else _GUI_TOPOLOGY
+    params = dict(getattr(src, "sim_params", {}) or {}) if src is not None else {}
+    if isinstance(config, _fixed.SimConfig):
+        cfg = config
+    else:
+        cfg = _fixed.SimConfig(
+            seed=int(params.get("seed", 42)),
+            days=float(params.get("duration_hours", 144.0)) / 24.0)
+    topo = None
+    if src is not None:
+        topo = src if isinstance(src, _fixed.Topology) else topology_from_gui(src)
+    dataframe, sim, _ = _fixed.build_dataset(
+        cfg,
+        topo=topo,
+        size_capacities=bool(params.get("size_capacities", True)))
+    out = os.environ.get("SNS_DATASET_PATH", "ss7_dataset_v7.csv")
+    dataframe.to_csv(out, index=False)
+    sidecar = os.path.splitext(out)[0] + "_topology.json"
+    with open(sidecar, "w", encoding="utf-8") as fh:
+        json.dump({"topology": topology_spec(sim.topo),
+                   "days": cfg.days, "seed": cfg.seed},
+                  fh, ensure_ascii=False, indent=2)
+    print(f"Dataset saved to {os.path.abspath(out)}; shape={dataframe.shape}")
+    print(f"Topology sidecar saved to {os.path.abspath(sidecar)}")
     return dataframe
 
 
