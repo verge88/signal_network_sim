@@ -1331,15 +1331,22 @@ def _null_test_one(pos: pd.DataFrame, neg: pd.DataFrame, cols: List[str],
 
     rf = RandomForestClassifier(n_estimators=300, min_samples_leaf=5,
                                 random_state=seed, n_jobs=1)
-    n = len(y); idx = np.random.default_rng(seed).permutation(n)
+    # Keep both counterfactual observations of each node/time in one split.
+    # Each split is balanced even when neighbouring windows are correlated.
+    if len(pos) != len(neg) or len(pos) < 4:
+        raise AssertionError("нулевой тест требует минимум 4 пары окон")
+    n = len(pos)
+    pairs = np.random.default_rng(seed).permutation(n)
     half = n // 2
-    rf.fit(X[idx[:half]], y[idx[:half]])
-    s = rf.predict_proba(X[idx[half:]])[:, 1]
-    auc = roc_auc_score(y[idx[half:]], s)
+    train = np.r_[pairs[:half], pairs[:half] + n]
+    test = np.r_[pairs[half:], pairs[half:] + n]
+    rf.fit(X[train], y[train])
+    s = rf.predict_proba(X[test])[:, 1]
+    auc = roc_auc_score(y[test], s)
 
     rng = np.random.default_rng(seed + 1)
     boots = []
-    yy, ss = y[idx[half:]], s
+    yy, ss = y[test], s
     for _ in range(n_boot):
         b = rng.integers(0, len(yy), len(yy))
         if len(np.unique(yy[b])) < 2:
@@ -1375,9 +1382,8 @@ def _null_test_one(pos: pd.DataFrame, neg: pd.DataFrame, cols: List[str],
     return rep
 
 
-def _counterfactual_null(cfg: SimConfig, feature_cols: Sequence[str],
-                         topo: Optional[Topology], log=print) -> Dict:
-    """Побиточно сравнивает h=0 с тем же миром без compromise-эпизодов."""
+def _null_worlds(cfg: SimConfig, topo: Optional[Topology]):
+    """Build matched worlds with and without zero-intensity episodes."""
     c0 = SimConfig(**{**cfg.__dict__, "seed": cfg.seed + 100_003})
     base = dict(n_normal=0, n_ext=0)
     df_a, sim_a, _ = build_dataset(
@@ -1387,19 +1393,28 @@ def _counterfactual_null(cfg: SimConfig, feature_cols: Sequence[str],
         c0, topo=sim_a.topo, size_capacities=False,
         sim_template=sim_a,
         episodes_kw=dict(n_compromise=0, **base))
+    return df_a, df_b, sim_a
+
+
+def _counterfactual_null(cfg: SimConfig, feature_cols: Sequence[str],
+                         topo: Optional[Topology], log=print, *, worlds=None) -> Dict:
+    """Сравнивает все признаки h=0 с тем же миром без compromise-эпизодов."""
+    df_a, df_b, _ = worlds if worlds is not None else _null_worlds(cfg, topo)
 
     cols = [c for c in feature_cols
-            if c in df_a.columns and c in df_b.columns
-            and not c.endswith(("__z", "__mean", "__std", "__dev_zone"))]
+            if c in df_a.columns and c in df_b.columns]
     if not cols:
         raise AssertionError("контрфактуальный тест: нет базовых признаков")
 
     a = df_a.set_index(["nid", "t"]).sort_index()
     b = df_b.set_index(["nid", "t"]).sort_index()
-    idx = a.index.intersection(b.index)
-    a, b = a.loc[idx], b.loc[idx]
+    if not a.index.is_unique or not b.index.is_unique or not a.index.equals(b.index):
+        raise AssertionError("контрфактуальный тест: окна двух прогонов не совпадают")
+    idx = a.index
     va = a[cols].to_numpy(float)
     vb = b[cols].to_numpy(float)
+    if not np.array_equal(np.isnan(va), np.isnan(vb)):
+        raise AssertionError("контрфактуальный тест: пропуски признаков не совпадают")
     scale = np.nanstd(vb, axis=0)
     scale[~np.isfinite(scale) | (scale == 0)] = 1.0
     rel = np.abs(va - vb) / scale
@@ -1433,14 +1448,12 @@ def null_test(cfg: SimConfig, feature_cols: Sequence[str], *,
               topo: Optional[Topology] = None, auc_tol: float = 0.06,
               delta: float = 0.30, n_boot: int = 200, min_pos: int = 50,
               log=print) -> Dict:
-    """Сравнивает компрометированные окна с честными на тех же узлах."""
+    """Сравнивает h=0 с честным миром на тех же узлах и временах."""
     assert_mask_is_identity_at_zero(np.random.default_rng(cfg.seed))
-    cf = _counterfactual_null(cfg, feature_cols, topo, log=log)
-    c0 = SimConfig(**{**cfg.__dict__, "seed": cfg.seed + 100_003})
-    df, sim, _ = build_dataset(
-        c0, topo=topo, size_capacities=(topo is None),
-        episodes_kw=dict(n_compromise=10, n_normal=0, n_ext=0,
-                         force_hidden=0.0))
+    worlds = _null_worlds(cfg, topo)
+    cf = _counterfactual_null(cfg, feature_cols, topo, log=log, worlds=worlds)
+    df, control, sim = worlds
+    control = control.set_index(["nid", "t"])
     cols0 = [c for c in feature_cols if c in df.columns]
     role_of = {int(n): sim.topo.nodes[int(n)].ntype.name
                for n in df["nid"].unique()}
@@ -1457,18 +1470,16 @@ def null_test(cfg: SimConfig, feature_cols: Sequence[str], *,
         cols = _usable_columns(sub, cols0)
         d = sub.dropna(subset=cols)
         pos = d[d["label"] == 1]
-        negp = d[d["label"] == 0]
+        neg = control.loc[pd.MultiIndex.from_frame(pos[["nid", "t"]])].reset_index()
         log(f"[null-test] {role}: узлов {len(nids)}, "
             f"признаков {len(cols)}/{len(cols0)}, строк {len(d)}/{len(sub)}, "
-            f"pos={len(pos)} neg={len(negp)}")
+            f"pos={len(pos)} парных контролей={len(neg)}")
         if len(cols) < 5:
             raise AssertionError(f"{role}: информативных признаков всего {len(cols)}")
         if len(pos) < min_pos:
             raise AssertionError(
                 f"{role}: окон компрометации {len(pos)}, требуется {min_pos}. "
                 f"Увеличьте days или n_compromise")
-        neg = negp.sample(min(len(negp), 4 * len(pos)),
-                          random_state=cfg.seed)
         try:
             rep = _null_test_one(pos, neg, cols, cfg.seed, auc_tol, delta,
                                   n_boot)

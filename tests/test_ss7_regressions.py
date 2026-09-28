@@ -42,18 +42,50 @@ class RegressionTests(unittest.TestCase):
                 capture.restore.assert_called_once()
 
     def test_null_report_all_roles_even_when_diagnostics_fail(self):
-        df = pd.DataFrame({"nid": [0]*4+[1]*4, "label": [0,0,1,1]*2,
+        df = pd.DataFrame({"nid": [0]*4+[1]*4, "t": list(range(4))*2,
+                           "label": [0,0,1,1]*2,
                            **{f"f{i}": range(8) for i in range(5)}})
         sim = SimpleNamespace(topo=SimpleNamespace(nodes={
             0: SimpleNamespace(ntype=SimpleNamespace(name="SP")),
             1: SimpleNamespace(ntype=SimpleNamespace(name="IGW"))}))
         with patch.object(fix, "_counterfactual_null", return_value={"passed": True}), \
-             patch.object(fix, "build_dataset", return_value=(df, sim, None)), \
+             patch.object(fix, "_null_worlds", return_value=(
+                 df, df.assign(label=0).iloc[::-1], sim)), \
              patch.object(fix, "_usable_columns", return_value=[f"f{i}" for i in range(5)]), \
-             patch.object(fix, "_null_test_one", side_effect=AssertionError("diagnostic")):
+             patch.object(fix, "_null_test_one", side_effect=AssertionError("diagnostic")) as diagnostic:
             report = null_test(SimConfig(), [f"f{i}" for i in range(5)], min_pos=1, log=lambda s: None)
         self.assertEqual(set(report["by_role"]), {"SP", "IGW"})
         self.assertFalse(report["role_diagnostic_passed"])
+        for call in diagnostic.call_args_list:
+            pos, neg = call.args[:2]
+            pd.testing.assert_frame_equal(pos[["nid", "t", "f0"]].reset_index(drop=True),
+                                          neg[["nid", "t", "f0"]].reset_index(drop=True))
+
+    def test_paired_null_ignores_time_profile_but_detects_real_signature(self):
+        # Strong time trends must not become a spurious compromise signature.
+        pos = pd.DataFrame({"f": np.linspace(0, 100, 300)})
+        report = fix._null_test_one(pos, pos.copy(), ["f"], 42, .06, .30, 20)
+        self.assertEqual(report["auc"], .5)
+        self.assertTrue(report["equivalent"])
+        with self.assertRaises(AssertionError):
+            fix._null_test_one(pos, pos + 200, ["f"], 42, .06, .30, 20)
+
+    def test_counterfactual_checks_derived_features_and_missing_windows(self):
+        df = pd.DataFrame({"nid": [0]*4, "t": range(4), "label": [0,0,1,1],
+                           "f": [1.,2.,3.,4.], "f__mean": [np.nan,1.,2.,3.]})
+        def check(control):
+            return fix._counterfactual_null(SimConfig(), ["f", "f__mean"], None,
+                log=lambda s: None, worlds=(df, control, None))
+        self.assertEqual(check(df.copy())["n_features"], 2)
+        changed = df.copy()
+        changed.loc[2, "f__mean"] += 1
+        with self.assertRaises(AssertionError):
+            check(changed)
+        with self.assertRaises(AssertionError):
+            check(df.iloc[:-1])
+        changed.loc[2, "f__mean"] = np.nan
+        with self.assertRaises(AssertionError):
+            check(changed)
 
     def test_gate_rejects_missing_or_failed_reports(self):
         for report in (None, {"passed": False}, {"passed": True, "skipped": True},
