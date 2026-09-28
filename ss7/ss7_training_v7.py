@@ -659,6 +659,17 @@ def run_zoo(M: Matrices, cfg: TrainingConfig, seed: int,
 #  Диагностика, аблации, кривые
 # =============================================================================
 
+def _nulltest_skipped(name: str, reason: str, **extra) -> Dict:
+    rep = {
+        "name": name,
+        "passed": True,
+        "skipped": True,
+        "reason": reason,
+    }
+    rep.update(extra)
+    return rep
+
+
 def _load_sidecar(data_path: str):
     path = os.path.splitext(data_path)[0] + "_topology.json"
     if not data_path or not os.path.exists(path):
@@ -685,7 +696,14 @@ def gate_null_test(cfg: TrainingConfig, cols: Sequence[str],
               f"{len(topo.nodes)} узлов, зон {len(topo.zone_sp)}, days={sc.days}")
     try:
         rep = null_test(sc, cols, topo=topo)
-        rep["passed"] = True
+        if not isinstance(rep, dict) or not rep.get("passed") or rep.get("skipped"):
+            raise AssertionError(f"Нулевой тест не пройден: {rep!r}")
+        if not rep.get("role_diagnostic_passed", False):
+            rep = {**rep, "passed": False,
+                   "reason": "CF пройден, но ролевая диагностика нулевого теста не пройдена"}
+            if not allow_untrusted:
+                raise AssertionError(rep["reason"] +
+                    "; для диагностического запуска используйте --i-know-results-are-untrusted")
         return rep
     except AssertionError as e:
         if not allow_untrusted:
@@ -982,18 +1000,26 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print("\n[2] Нулевой тест (шлюз)")
     nt = gate_null_test(cfg, cols, a.untrusted)
     if nt.get("passed"):
-        cf = nt["counterfactual"]
-        print(f"    CF: строк={cf['n_rows']} pos={cf['n_pos']} "
-              f"max_out={cf['max_dev_outside']:.3e} "
-              f"max_in={cf['max_dev_inside']:.3e}")
-        for role, report in nt["by_role"].items():
-            if "auc" in report:
-                print(f"    {role}: AUC={report['auc']:.3f} "
-                      f"CI95={report['ci']} признаки={report['n_features']}")
+        if nt.get("skipped"):
+            print(f"    пропущен: {nt.get('name', 'unknown')} "
+                  f"({nt.get('reason', 'unspecified')})")
+        else:
+            cf = nt["counterfactual"]
+            print(f"    CF: строк={cf['n_rows']} pos={cf['n_pos']} "
+                  f"max_out={cf['max_dev_outside']:.3e} "
+                  f"max_in={cf['max_dev_inside']:.3e}")
+            for role, report in nt["by_role"].items():
+                if "auc" in report:
+                    print(f"    {role}: AUC={report['auc']:.3f} "
+                          f"CI95={report['ci']} признаки={report['n_features']}")
+                else:
+                    print(f"    {role}: диагностический RF не пройден: "
+                          f"{report['reason'][:160]}")
+            if nt.get("role_diagnostic_passed", False):
+                print(f"    худший AUC={nt['worst_auc']:.3f} → подписи при h=0 нет")
             else:
-                print(f"    {role}: диагностический RF не пройден: "
-                      f"{report['reason'][:160]}")
-        print(f"    худший AUC={nt['worst_auc']:.3f} → подписи при h=0 нет")
+                print("    CF пройден; ролевая диагностика RF не пройдена — "
+                      "отсутствие статистической подписи не подтверждено.")
     else:
         print("    ПРОВАЛЕН, результаты НЕДОВЕРЕННЫЕ:", nt.get("reason", "")[:200])
     with open(os.path.join(run_dir, "null_test.json"), "w") as f:

@@ -864,6 +864,9 @@ class Ss7Sim:
             nid = ep.nid
             hidden_lambda = max(ep.hidden_rate * dt, 0.0)
             h = 0 if hidden_lambda == 0.0 else int(rng.poisson(hidden_lambda))
+            # At h=0 the adversarial process is absent, not an empty
+            # transaction. Keeping this branch side-effect free is required
+            # for the counterfactual null test.
             if h <= 0:
                 continue
             ext = int(rng.choice(topo.external))
@@ -1479,7 +1482,7 @@ def null_test(cfg: SimConfig, feature_cols: Sequence[str], *,
         reports[role] = rep
         worst = max(worst, abs(rep["auc"] - 0.5) + 0.5)
 
-        return {"passed": True, "counterfactual": cf,
+    return {"passed": True, "counterfactual": cf,
             "by_role": reports, "worst_auc": worst,
             "role_diagnostic_passed": all(
                 v.get("passed", True) and v.get("equivalent", True)
@@ -1496,6 +1499,28 @@ import pandas as pd
 
 
 def blocked_split(df: pd.DataFrame, cfg: SimConfig, rng: np.random.Generator,
+                  fracs=(0.6, 0.15, 0.25), n_blocks: int = 12
+                  ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Label-stratified block assignment, with purging and disjoint episodes.
+
+    Select the first valid assignment using labels only, never model scores.
+    Fail explicitly if the data cannot support meaningful evaluation.
+    """
+    if df.empty or set(df["label"].unique()) != {0, 1}:
+        raise ValueError("SS7 split requires both normal and anomalous windows")
+    positives = df.loc[(df["label"] == 1) & (df["episode_id"] >= 0), "episode_id"]
+    if positives.nunique() < 3:
+        raise ValueError("SS7 split requires at least 3 attack episodes; increase days or episode count")
+    for _ in range(128):
+        parts = _blocked_split_once(df, cfg, rng, fracs, n_blocks)
+        if all(set(part["label"].unique()) == {0, 1} for part in parts):
+            return parts
+    raise ValueError(
+        "Cannot create SS7 train/val/test with both classes after purging; "
+        "increase simulation duration or attack episode count")
+
+
+def _blocked_split_once(df: pd.DataFrame, cfg: SimConfig, rng: np.random.Generator,
                   fracs=(0.6, 0.15, 0.25), n_blocks: int = 12
                   ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Непрерывные блоки времени -> train/val/test; purge-зазор >= окна

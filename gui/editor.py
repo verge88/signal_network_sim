@@ -58,8 +58,14 @@ class TopologyEditor(tk.Frame):
         self.show_labels = tk.BooleanVar(value=True)
         self.theme_var = tk.StringVar(value=self.view.theme)
         self.selection: tuple[str, object] | None = None
+        self._selected_node_ids: set[int] = set()
         self._pending_link: int | None = None
         self._drag: dict | None = None
+        self._marquee: tuple[int, int, int, int] | None = None
+        self._node_palette_pos = (12, 12)
+        self._palette_drag = None
+        self._initial_fit_pending = True
+        self._initial_fit_job: str | None = None
         self._log_q: "queue.Queue[str]" = queue.Queue()
 
         self._build_menu()
@@ -183,6 +189,7 @@ class TopologyEditor(tk.Frame):
         left.pack(side="left", fill="both", expand=True)
         self.canvas = tk.Canvas(left, bg=self.pal["canvas_bg"], highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
+        self._build_node_palette(left)
         self.status = ttk.Label(left, text="", anchor="w", padding=(6, 3), style="Status.TLabel")
         self.status.pack(fill="x")
 
@@ -208,6 +215,57 @@ class TopologyEditor(tk.Frame):
         self.log.pack(fill="both", expand=True)
         self._texts.append(self.log)
         self._show_properties()
+
+    def _build_node_palette(self, parent: ttk.Frame) -> None:
+        """Floating, draggable shortcuts for adding common node types."""
+        panel = ttk.Frame(parent, padding=5, relief="solid")
+        self.node_palette = panel
+        panel.place(x=self._node_palette_pos[0], y=self._node_palette_pos[1])
+        title = ttk.Label(panel, text="Добавить узел  ·  перетащите", cursor="fleur",
+                          padding=(4, 3), style="Hint.TLabel")
+        title.pack(fill="x")
+        title.bind("<ButtonPress-1>", self._palette_drag_start)
+        title.bind("<B1-Motion>", self._palette_drag_move)
+        self.node_palette_buttons = ttk.Frame(panel)
+        self.node_palette_buttons.pack(fill="x")
+        self._refresh_node_palette()
+
+    def _refresh_node_palette(self) -> None:
+        for child in self.node_palette_buttons.winfo_children():
+            child.destroy()
+        for i, node_type in enumerate(self.topo.node_type_names()):
+            ttk.Button(self.node_palette_buttons, text=node_type,
+                       command=lambda kind=node_type: self.add_node_from_palette(kind)
+                       ).grid(row=i // 2, column=i % 2, sticky="ew", padx=2, pady=2)
+        for col in range(2):
+            self.node_palette_buttons.columnconfigure(col, weight=1)
+
+    def _palette_drag_start(self, ev) -> None:
+        self._palette_drag = (ev.x_root, ev.y_root,
+                              self.node_palette.winfo_x(), self.node_palette.winfo_y())
+
+    def _palette_drag_move(self, ev) -> None:
+        if not self._palette_drag:
+            return
+        sx, sy, px, py = self._palette_drag
+        x = max(0, min(self.node_palette.master.winfo_width() - self.node_palette.winfo_reqwidth(),
+                       px + ev.x_root - sx))
+        y = max(0, min(self.node_palette.master.winfo_height() - self.node_palette.winfo_reqheight(),
+                       py + ev.y_root - sy))
+        self.node_palette.place(x=x, y=y)
+        self._node_palette_pos = (x, y)
+
+    def add_node_from_palette(self, node_type: str) -> None:
+        self.new_type.set(node_type)
+        x = self.canvas.winfo_width() / 2
+        y = self.canvas.winfo_height() / 2
+        # Keep successive additions visible instead of stacking them exactly.
+        n = len(self.topo.nodes)
+        wx, wy = self.s2w(x + (n % 5) * 24 * self.gs,
+                          y + (n % 5) * 18 * self.gs)
+        node = self.topo.add_node(node_type, wx, wy)
+        self.select(("node", node))
+        self.mark_dirty()
 
     def _build_scenarios_tab(self) -> None:
         cols = ("kind", "name", "targets", "start", "end", "intensity")
@@ -251,7 +309,7 @@ class TopologyEditor(tk.Frame):
         c.bind("<MouseWheel>", self.on_wheel)
         c.bind("<Button-4>", lambda e: self.on_wheel(e, 120))
         c.bind("<Button-5>", lambda e: self.on_wheel(e, -120))
-        c.bind("<Configure>", lambda e: self.redraw())
+        c.bind("<Configure>", self._on_canvas_configure)
         self.master.bind("<Delete>", lambda e: self.delete_selection())
         self.master.bind("m", lambda e: self.toggle_master())
         self.master.bind("c", lambda e: self.toggle_compromised())
@@ -267,6 +325,18 @@ class TopologyEditor(tk.Frame):
         self.master.bind("<Control-0>", lambda e: self.bump_ui_scale(None))
         self.master.bind("<Control-KP_Add>", lambda e: self.bump_ui_scale(+0.1))
         self.master.bind("<Control-KP_Subtract>", lambda e: self.bump_ui_scale(-0.1))
+
+    def _on_canvas_configure(self, ev) -> None:
+        self.redraw()
+        if self._initial_fit_pending and ev.width > 100 and ev.height > 100:
+            if self._initial_fit_job is not None:
+                self.after_cancel(self._initial_fit_job)
+            self._initial_fit_job = self.after(100, self._finish_initial_fit)
+
+    def _finish_initial_fit(self) -> None:
+        self._initial_fit_job = None
+        self._initial_fit_pending = False
+        self.fit_view()
 
     # ── координаты ─────────────────────────────────────────────────
     def apply_view(self, view: ViewSettings, initial: bool = False) -> None:
@@ -449,7 +519,8 @@ class TopologyEditor(tk.Frame):
             base_color = (zone_color(n.zone_id, pal) if self.color_by_zone.get()
                           else self.topo.color_of(n))
             fill = node_fill(base_color, pal)
-            sel = (sel_kind == "node" and sel_obj is n)
+            sel = ((sel_kind == "node" and sel_obj is n)
+                   or n.node_id in self._selected_node_ids)
             outline = (pal["outline_compromised"] if n.is_compromised
                        else pal["outline_master"] if n.is_master else pal["outline"])
             if n.is_master:
@@ -475,6 +546,11 @@ class TopologyEditor(tk.Frame):
         self._update_status()
         self._update_metrics()
         self._refresh_scenarios()
+        if self._marquee:
+            x0, y0, x1, y1 = self._marquee
+            c.create_rectangle(x0, y0, x1, y1, outline=pal["accent"],
+                               fill=pal["accent"], stipple="gray25", dash=(4, 2),
+                               tags="selection_marquee")
 
     def _update_status(self) -> None:
         m = self.topo.metrics()
@@ -529,25 +605,67 @@ class TopologyEditor(tk.Frame):
             self.mark_dirty()
             return
         if node is not None:
-            self.select(("node", node))
-            self._drag = {"node": node, "sx": ev.x, "sy": ev.y,
-                          "x0": node.x, "y0": node.y}
+            if node.node_id not in self._selected_node_ids:
+                self._selected_node_ids = {node.node_id}
+                self.select(("node", node))
+            else:
+                self.selection = ("node", node)
+                self._show_properties()
+            nodes = [self.topo.nodes[nid] for nid in self._selected_node_ids
+                     if nid in self.topo.nodes]
+            self._drag = {"sx": ev.x, "sy": ev.y,
+                          "nodes": [(item, item.x, item.y) for item in nodes]}
         else:
             l = self.link_at(ev.x, ev.y)
-            self.select(("link", l) if l else None)
+            if l:
+                self._selected_node_ids.clear()
+                self.select(("link", l))
+            else:
+                self._marquee = (ev.x, ev.y, ev.x, ev.y)
+                self.redraw()
 
     def on_drag(self, ev) -> None:
+        if self._marquee:
+            x0, y0, _, _ = self._marquee
+            self._marquee = (x0, y0, ev.x, ev.y)
+            self.redraw()
+            return
         if not self._drag:
             return
         d = self._drag
-        d["node"].x = d["x0"] + (ev.x - d["sx"]) / self.scale
-        d["node"].y = d["y0"] + (ev.y - d["sy"]) / self.scale
+        if "nodes" in d:
+            dx, dy = (ev.x - d["sx"]) / self.scale, (ev.y - d["sy"]) / self.scale
+            for node, x0, y0 in d["nodes"]:
+                node.x, node.y = x0 + dx, y0 + dy
+        else:
+            d["node"].x = d["x0"] + (ev.x - d["sx"]) / self.scale
+            d["node"].y = d["y0"] + (ev.y - d["sy"]) / self.scale
         self.redraw()
 
     def on_release(self, ev) -> None:
         if self._drag:
             self._drag = None
             self.mark_dirty()
+        if self._marquee:
+            x0, y0, _, _ = self._marquee
+            x1, y1 = ev.x, ev.y
+            self._marquee = None
+            if abs(x1 - x0) > 4 or abs(y1 - y0) > 4:
+                left, right = sorted((x0, x1))
+                top, bottom = sorted((y0, y1))
+                self._selected_node_ids = {
+                    n.node_id for n in self.topo.nodes.values()
+                    if left <= self.w2s(n.x, n.y)[0] <= right
+                    and top <= self.w2s(n.x, n.y)[1] <= bottom
+                }
+                first = next((self.topo.nodes[nid] for nid in self._selected_node_ids), None)
+                self.selection = ("node", first) if first else None
+                self._show_properties()
+            else:
+                self._selected_node_ids.clear()
+                self.selection = None
+                self._show_properties()
+            self.redraw()
 
     def on_double(self, ev) -> None:
         n = self.node_at(ev.x, ev.y)
@@ -602,6 +720,10 @@ class TopologyEditor(tk.Frame):
 
     def select(self, sel) -> None:
         self.selection = sel
+        if not (sel and sel[0] == "node"):
+            self._selected_node_ids.clear()
+        elif sel[1].node_id not in self._selected_node_ids:
+            self._selected_node_ids = {sel[1].node_id}
         self._show_properties()
         self.redraw()
 
@@ -646,6 +768,13 @@ class TopologyEditor(tk.Frame):
         self.mark_dirty()
 
     def delete_selection(self) -> None:
+        if self._selected_node_ids:
+            for nid in list(self._selected_node_ids):
+                self.topo.remove_node(nid)
+            self._selected_node_ids.clear()
+            self.selection = None
+            self.mark_dirty()
+            return
         if not self.selection:
             return
         kind, obj = self.selection
@@ -681,14 +810,22 @@ class TopologyEditor(tk.Frame):
     def fit_view(self) -> None:
         if not self.topo.nodes:
             return
+        width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
+        if width <= 100 or height <= 100:
+            return
         xs = [n.x for n in self.topo.nodes.values()]
         ys = [n.y for n in self.topo.nodes.values()]
-        w = (self.canvas.winfo_width() or 900) - 80
-        h = (self.canvas.winfo_height() or 700) - 80
+        margin = 48 * self.gs
+        palette_bottom = self.node_palette.winfo_y() + self.node_palette.winfo_reqheight()
+        top = min(height * 0.4, palette_bottom + 24 * self.gs) + margin
+        left, right, bottom = margin, width - margin, height - margin
         dx = (max(xs) - min(xs)) or 1
         dy = (max(ys) - min(ys)) or 1
-        self.scale = max(0.2, min(3.0, min(w / dx, h / dy)))
-        self.offset = [40 - min(xs) * self.scale, 40 - min(ys) * self.scale]
+        radius = 2 * self.view.node_radius * self.gs
+        self.scale = max(0.2, min(3.0, (right - left) / (dx + radius),
+                                   (bottom - top) / (dy + radius)))
+        self.offset = [(left + right) / 2 - (min(xs) + max(xs)) / 2 * self.scale,
+                       (top + bottom) / 2 - (min(ys) + max(ys)) / 2 * self.scale]
         self.redraw()
 
     # ── панель свойств ─────────────────────────────────────────────
@@ -907,8 +1044,10 @@ class TopologyEditor(tk.Frame):
         self.path = path
         self.dirty = False
         self.selection = None
+        self._selected_node_ids.clear()
         self.type_box.config(values=self.topo.node_type_names())
         self.new_type.set(self.topo.node_type_names()[0])
+        self._refresh_node_palette()
         for k, var in list(self.sim_vars.items()):
             if k in self.topo.sim_params:
                 var.set(str(self.topo.sim_params[k]))

@@ -24,7 +24,7 @@ from .protocol import JobSpec, _write_line, emit
 TRAIN_MODULES = {
     "diameter": "diameter_training_v1",
     "ss7": "ss7_training_v7",
-    "sip": "sip_training_v4",
+    "sip": "sip_train_v4_claude",
     "5g_sba": "sba_eval",
 }
 
@@ -204,10 +204,22 @@ def stage_simulate(job: JobSpec) -> str:
 
 
 def stage_train(job: JobSpec, dataset: str, capture: _Capture) -> dict[str, Any]:
+    if job.sim_dir and os.path.abspath(job.sim_dir) not in sys.path:
+        sys.path.insert(0, os.path.abspath(job.sim_dir))
     module_name = job.train_module or TRAIN_MODULES.get(job.protocol)
     if not module_name:
         raise RuntimeError(f"не задан модуль обучения для {job.protocol}")
-    module = importlib.import_module(module_name)
+    try:
+        module = importlib.import_module(module_name)
+    except ModuleNotFoundError:
+        fallback = {
+            "sip_training_v4": "sip_train_v4_claude",
+            "sip_train_v4_claude": "sip_training_v4",
+        }.get(module_name)
+        if fallback:
+            module = importlib.import_module(fallback)
+        else:
+            raise
     emit("stage", name="train", status="start", module=module.__file__)
     main = getattr(module, "main", None)
     if main is None:
@@ -236,7 +248,14 @@ def stage_train(job: JobSpec, dataset: str, capture: _Capture) -> dict[str, Any]
         old_argv = sys.argv
         sys.argv = [str(script)] + argv
         try:
-            result = runpy.run_path(str(script), run_name="__main__")
+            try:
+                result = runpy.run_path(str(script), run_name="__main__")
+            except SystemExit as exc:
+                # CLI entry points commonly use raise SystemExit(main()).
+                # Only successful exits are normal; preserve real failures.
+                if exc.code is not None and exc.code != 0:
+                    raise
+                result = {"exit_code": exc.code}
             capture.collect_torch(module)
         finally:
             sys.argv = old_argv

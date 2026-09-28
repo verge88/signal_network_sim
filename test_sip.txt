@@ -1,0 +1,76 @@
+[42] этап simulate: start
+[42] модуль загружен: C:\Users\niyaz\Documents\асп\имитационная_модель\signal_network_sim\sip\sip_sim_v4_claude.py
+[42] узлов 14, линков 37, мастера [0, 1], поля узла: ['attacker_sophistication', 'base_rate', 'compromised_since', 'covert_redirect_fraction', 'forking_factor', 'hostname', 'is_compromised', 'master_id', 'method_dist', 'node_id', 'node_type', 'realm', 'resp_dist', 'role', 'transport', 'zone_id']
+[42] топология подставлена: 14 узлов, 37 линков, мастера [0, 1]
+[42] ==================================================================
+[42]   SIP Master-Slave Simulator v3.1 (txn-integrity dominant)
+[42]   Threat model: NAIVE / STATISTICAL / ADAPTIVE attacker mimicry
+[42] ==================================================================
+[42] Nodes: 13 | Masters: [0, 1]
+[42] Intervals: 4320 (24.0h, Δt=20.0s)
+[42] Attacks: 11 (3 compromise sophistication levels)
+[42] 
+[42] Total records: 51840
+[42] Anomalies: 3810 (7.35%)
+[42] 
+[42] Attack distribution:
+[42] attack_type
+[42] none                   48030
+[42] proxy_compromise        3200
+[42] spit                     180
+[42] signaling_dos            160
+[42] register_bruteforce      140
+[42] register_hijack          130
+[42] Name: count, dtype: int64
+[42] 
+[42] Compromise by sophistication:
+[42] attacker_sophistication
+[42] adaptive       4840
+[42] naive          3820
+[42] statistical    3020
+[42] Name: count, dtype: int64
+[42] 
+[42] --- Compromise detectability by sophistication level ---
+[42] (средние значения остаточных рычагов: чем ближе к норме, тем сложнее обнаружить)
+[42]   cu_txn_state_consistency_error         norm=  0.0311  naiv=  0.0827  stat=  0.1076  adap=  0.1767
+[42]   dev_txn_consistency_vs_zone            norm= -0.0062  naiv=  0.0432  stat=  0.0626  adap=  0.1185
+[42]   dev_io_ratio_vs_zone                   norm=  0.0615  naiv=  1.0231  stat=  0.1556  adap= -0.0324
+[42]   var_obs_inbound_outbound_ratio         norm=  0.1130  naiv=  0.1529  stat=  0.1020  adap=  0.0685
+[42]   dev_processing_delay_vs_zone           norm=  0.0401  naiv=  0.4150  stat=  0.1917  adap=  0.0778
+[42]   obs_dangling_dialog_ratio              norm=  0.0119  naiv=  0.1231  stat=  0.0432  adap=  0.0232
+[42] 
+[42] Dataset saved to sip_dataset_v4.csv
+[42] Shape: (51840, 143)
+[42] 
+[42] --- Проверка инварианта I2 (транзитный ACK, Вариант A) ---
+[42]   none        : E[M(I2)]=0.0043  E[Δ(I1)]=0.0113
+[42]   naive       : E[M(I2)]=0.0597  E[Δ(I1)]=0.0827
+[42]   statistical : E[M(I2)]=0.0001  E[Δ(I1)]=0.1076
+[42]   adaptive    : E[M(I2)]=0.0003  E[Δ(I1)]=0.1767
+[42] main() завершён
+[42] этап simulate: done
+[42] этап train: start
+[42] ВНИМАНИЕ: опция --days не поддерживается sip_train_v4_claude.py — пропущена
+[42] ВНИМАНИЕ: опция --feature-set не поддерживается sip_train_v4_claude.py — пропущена
+[42] ВНИМАНИЕ: опция --soph не поддерживается sip_train_v4_claude.py — пропущена
+[42] ВНИМАНИЕ: опция --custody не поддерживается sip_train_v4_claude.py — пропущена
+[42] ВНИМАНИЕ: опция --alerts-per-day не поддерживается sip_train_v4_claude.py — пропущена
+[42] ВНИМАНИЕ: опция --op-prevalence не поддерживается sip_train_v4_claude.py — пропущена
+[42] ВНИМАНИЕ: опция --metric не поддерживается sip_train_v4_claude.py — пропущена
+[42] ВНИМАНИЕ: игнорирую неизвестные параметры: ['alerts_per_day', 'custody', 'days', 'feature_set', 'i_know_results_are_untrusted', 'metric', 'no_cache', 'no_torch', 'op_prevalence', 'soph']
+[42] Traceback (most recent call last):
+[42]   File "C:\Users\niyaz\Documents\асп\имитационная_модель\signal_network_sim\gui\ml\harness.py", line 358, in main
+[42]     summary.update(stage_train(job, dataset, capture))
+[42]                    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+[42]   File "C:\Users\niyaz\Documents\асп\имитационная_модель\signal_network_sim\gui\ml\harness.py", line 308, in stage_train
+[42]     result = main(config) if takes_config else main()
+[42]              ~~~~^^^^^^^^
+[42]   File "C:\Users\niyaz\Documents\асп\имитационная_модель\signal_network_sim\sip\sip_train_v4_claude.py", line 960, in main
+[42]     if config is not None and not isinstance(config, TrainingConfig):
+[42]                                   ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+[42] TypeError: isinstance() arg 2 must be a type, a tuple of types, or a union
+[42] 
+[42] завершено: error (35 с)
+[42] TypeError: isinstance() arg 2 must be a type, a tuple of types, or a union
+[42] завершено: error (35 с)
+[42] TypeError: isinstance() arg 2 must be a type, a tuple of types, or a union

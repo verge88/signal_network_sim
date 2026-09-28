@@ -86,6 +86,7 @@ class TrainingConfig:
     test_size: float = 0.25
     val_size: float = 0.15
     seed: int = 42
+    quick: bool = False
 
     iso_forest_trees: int = 300
     iso_forest_contamination: float = 0.05
@@ -955,13 +956,35 @@ class ResultsVisualizer:
 #  MAIN
 # ══════════════════════════════════════════════════════════
 
-def main(seed_override=None, results_dir_override=None):
-    config = TrainingConfig()
+def main(config: TrainingConfig = None, seed_override=None, results_dir_override=None):
+    if config is not None and not isinstance(config, TrainingConfig):
+        if isinstance(config, int) and seed_override is None:
+            seed_override = config
+            config = None
+        else:
+            config = None
+
+    if config is None:
+        config = TrainingConfig()
+
     if seed_override is not None:
         config.seed = seed_override
     if results_dir_override is not None:
         config.results_dir = results_dir_override
         config.plots_dir = os.path.join(results_dir_override, "plots")
+
+    np.random.seed(config.seed)
+    torch.manual_seed(config.seed)
+
+    if getattr(config, "quick", False):
+        config.ae_epochs = min(config.ae_epochs, 5)
+        config.vae_epochs = min(config.vae_epochs, 5)
+        config.lstm_epochs = min(config.lstm_epochs, 5)
+        config.iso_forest_trees = min(config.iso_forest_trees, 50)
+        config.rf_trees = min(config.rf_trees, 50)
+        config.gb_estimators = min(config.gb_estimators, 50)
+        config.cascade_rf_trees = min(config.cascade_rf_trees, 50)
+        config.cascade_gb_estimators = min(config.cascade_gb_estimators, 50)
 
     os.makedirs(config.results_dir, exist_ok=True)
     os.makedirs(config.plots_dir, exist_ok=True)
@@ -1363,10 +1386,24 @@ def main(seed_override=None, results_dir_override=None):
         pickle.dump(artifacts, f)
 
     print(f"\n  All results saved to {config.results_dir}/")
+    return results_list
 
 
-import sys
 if __name__ == "__main__":
-    seed = int(sys.argv[1]) if len(sys.argv) > 1 else 42
-    rdir = sys.argv[2] if len(sys.argv) > 2 else "results_sip_v4"
-    main(seed_override=seed, results_dir_override=rdir)
+    import argparse
+    parser = argparse.ArgumentParser(description="SIP Anomaly Detection Training Pipeline v4")
+    parser.add_argument("seed_pos", nargs="?", type=int, default=None, help="Random seed (positional)")
+    parser.add_argument("rdir_pos", nargs="?", type=str, default=None, help="Results directory (positional)")
+    parser.add_argument("--seed", type=int, default=None, help="Random seed")
+    parser.add_argument("--data", "--data-path", dest="data_path", default=None, help="Dataset CSV path")
+    parser.add_argument("--out", "--out-dir", "--results-dir", dest="results_dir", default=None, help="Results directory")
+    parser.add_argument("--quick", action="store_true", help="Run fewer epochs/trees for quick testing")
+    args, unknown = parser.parse_known_args()
+
+    seed = args.seed if args.seed is not None else (args.seed_pos if args.seed_pos is not None else 42)
+    rdir = args.results_dir if args.results_dir is not None else (args.rdir_pos if args.rdir_pos is not None else "results_sip_v4")
+
+    cfg = TrainingConfig(seed=seed, results_dir=rdir, plots_dir=os.path.join(rdir, "plots"), quick=args.quick)
+    if args.data_path:
+        cfg.data_path = args.data_path
+    main(cfg)
