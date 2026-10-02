@@ -464,14 +464,20 @@ def run_streamed(
         log.write("$ " + shlex.join(command) + "\n\n")
         log.flush()
 
+        child_env = os.environ.copy()
+        child_env.setdefault("PYTHONUTF8", "1")
+        child_env.setdefault("PYTHONIOENCODING", "utf-8")
+
         proc = subprocess.Popen(
             list(command),
             cwd=cwd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             bufsize=1,
-            env=os.environ.copy(),
+            env=child_env,
         )
 
         assert proc.stdout is not None
