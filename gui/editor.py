@@ -31,6 +31,7 @@ from .theme import (THEMES, WINDOW_PRESETS, ViewSettings, apply_ttk_theme,
                     apply_ui_scale, node_fill, palette_of, style_menu,
                     style_text, zone_color)
 from .view_settings import ViewSettingsDialog
+from .node_shapes import draw_symbol, symbol_svg, symbol_contains
 
 
 class TopologyEditor(tk.Frame):
@@ -449,7 +450,8 @@ class TopologyEditor(tk.Frame):
     def node_at(self, sx: float, sy: float) -> Node | None:
         for n in self.topo.nodes.values():
             nx_, ny_ = self.w2s(n.x, n.y)
-            if (nx_ - sx) ** 2 + (ny_ - sy) ** 2 <= (self.view.node_radius * self.gs * self.scale) ** 2:
+            if symbol_contains(self.topo.protocol, n.node_type, sx - nx_, sy - ny_,
+                               self.view.node_radius * self.gs * self.scale):
                 return n
         return None
 
@@ -523,12 +525,9 @@ class TopologyEditor(tk.Frame):
                    or n.node_id in self._selected_node_ids)
             outline = (pal["outline_compromised"] if n.is_compromised
                        else pal["outline_master"] if n.is_master else pal["outline"])
-            if n.is_master:
-                c.create_rectangle(x - r, y - r, x + r, y + r, fill=fill,
-                                   outline=outline, width=4 if sel else 2.5)
-            else:
-                c.create_oval(x - r, y - r, x + r, y + r, fill=fill,
-                              outline=outline, width=3 if sel else 1.4)
+            stroke_width = (4 if sel else 2.5) if n.is_master else (3 if sel else 1.4)
+            draw_symbol(c, self.topo.protocol, n.node_type, x, y, r,
+                        fill, outline, stroke_width)
             if sel:
                 c.create_oval(x - r - 5, y - r - 5, x + r + 5, y + r + 5,
                               outline=pal["sel_ring"], dash=(3, 2))
@@ -1163,24 +1162,15 @@ class TopologyEditor(tk.Frame):
                 zone_color(node.zone_id, self.pal) if self.color_by_zone.get()
                 else self.topo.color_of(node), self.pal
             )
-            selected = sel_kind == "node" and sel_obj is node
+            selected = ((sel_kind == "node" and sel_obj is node)
+                        or node.node_id in self._selected_node_ids)
             outline = (self.pal["outline_compromised"] if node.is_compromised
                        else self.pal["outline_master"] if node.is_master
                        else self.pal["outline"])
-            shape = "rect" if node.is_master else "circle"
-            if shape == "rect":
-                svg.append(
-                    f'<rect x="{point(x - radius)}" y="{point(y - radius)}" '
-                    f'width="{point(radius * 2)}" height="{point(radius * 2)}" '
-                    f'fill="{esc(fill)}" stroke="{esc(outline)}" '
-                    f'stroke-width="{point(4 if selected else 2.5)}"/>'
-                )
-            else:
-                svg.append(
-                    f'<circle cx="{point(x)}" cy="{point(y)}" r="{point(radius)}" '
-                    f'fill="{esc(fill)}" stroke="{esc(outline)}" '
-                    f'stroke-width="{point(3 if selected else 1.4)}"/>'
-                )
+            stroke_width = ((4 if selected else 2.5) if node.is_master
+                            else (3 if selected else 1.4))
+            svg.extend(symbol_svg(self.topo.protocol, node.node_type, x, y, radius,
+                                  fill, outline, stroke_width))
             if selected:
                 svg.append(
                     f'<circle cx="{point(x)}" cy="{point(y)}" r="{point(radius + 5)}" '
