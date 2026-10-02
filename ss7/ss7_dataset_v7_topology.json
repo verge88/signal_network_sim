@@ -1,0 +1,648 @@
+{
+  "topology": {
+    "nodes": [
+      {
+        "nid": 0,
+        "name": "IGW0",
+        "ntype": "IGW",
+        "role": "SLAVE",
+        "zone": -1,
+        "external": false
+      },
+      {
+        "nid": 1,
+        "name": "IGW1",
+        "ntype": "IGW",
+        "role": "SLAVE",
+        "zone": -1,
+        "external": false
+      },
+      {
+        "nid": 2,
+        "name": "STP0A",
+        "ntype": "STP",
+        "role": "MASTER",
+        "zone": 0,
+        "external": false
+      },
+      {
+        "nid": 3,
+        "name": "STP0B",
+        "ntype": "STP",
+        "role": "SLAVE",
+        "zone": 0,
+        "external": false
+      },
+      {
+        "nid": 4,
+        "name": "SP0-0",
+        "ntype": "SP",
+        "role": "SLAVE",
+        "zone": 0,
+        "external": false
+      },
+      {
+        "nid": 5,
+        "name": "SP0-1",
+        "ntype": "SP",
+        "role": "SLAVE",
+        "zone": 0,
+        "external": false
+      },
+      {
+        "nid": 6,
+        "name": "SP0-2",
+        "ntype": "SP",
+        "role": "SLAVE",
+        "zone": 0,
+        "external": false
+      },
+      {
+        "nid": 7,
+        "name": "SP0-3",
+        "ntype": "SP",
+        "role": "SLAVE",
+        "zone": 0,
+        "external": false
+      },
+      {
+        "nid": 8,
+        "name": "SP0-4",
+        "ntype": "SP",
+        "role": "SLAVE",
+        "zone": 0,
+        "external": false
+      },
+      {
+        "nid": 9,
+        "name": "HLR0",
+        "ntype": "SCP",
+        "role": "SLAVE",
+        "zone": 0,
+        "external": false
+      },
+      {
+        "nid": 10,
+        "name": "STP1A",
+        "ntype": "STP",
+        "role": "MASTER",
+        "zone": 1,
+        "external": false
+      },
+      {
+        "nid": 11,
+        "name": "STP1B",
+        "ntype": "STP",
+        "role": "SLAVE",
+        "zone": 1,
+        "external": false
+      },
+      {
+        "nid": 12,
+        "name": "SP1-0",
+        "ntype": "SP",
+        "role": "SLAVE",
+        "zone": 1,
+        "external": false
+      },
+      {
+        "nid": 13,
+        "name": "SP1-1",
+        "ntype": "SP",
+        "role": "SLAVE",
+        "zone": 1,
+        "external": false
+      },
+      {
+        "nid": 14,
+        "name": "SP1-2",
+        "ntype": "SP",
+        "role": "SLAVE",
+        "zone": 1,
+        "external": false
+      },
+      {
+        "nid": 15,
+        "name": "SP1-3",
+        "ntype": "SP",
+        "role": "SLAVE",
+        "zone": 1,
+        "external": false
+      },
+      {
+        "nid": 16,
+        "name": "HLR1",
+        "ntype": "SCP",
+        "role": "SLAVE",
+        "zone": 1,
+        "external": false
+      },
+      {
+        "nid": 17,
+        "name": "STP2A",
+        "ntype": "STP",
+        "role": "MASTER",
+        "zone": 2,
+        "external": false
+      },
+      {
+        "nid": 18,
+        "name": "STP2B",
+        "ntype": "STP",
+        "role": "SLAVE",
+        "zone": 2,
+        "external": false
+      },
+      {
+        "nid": 19,
+        "name": "SP2-0",
+        "ntype": "SP",
+        "role": "SLAVE",
+        "zone": 2,
+        "external": false
+      },
+      {
+        "nid": 20,
+        "name": "SP2-1",
+        "ntype": "SP",
+        "role": "SLAVE",
+        "zone": 2,
+        "external": false
+      },
+      {
+        "nid": 21,
+        "name": "SP2-2",
+        "ntype": "SP",
+        "role": "SLAVE",
+        "zone": 2,
+        "external": false
+      },
+      {
+        "nid": 22,
+        "name": "SP2-3",
+        "ntype": "SP",
+        "role": "SLAVE",
+        "zone": 2,
+        "external": false
+      },
+      {
+        "nid": 23,
+        "name": "SP2-4",
+        "ntype": "SP",
+        "role": "SLAVE",
+        "zone": 2,
+        "external": false
+      },
+      {
+        "nid": 24,
+        "name": "HLR2",
+        "ntype": "SCP",
+        "role": "SLAVE",
+        "zone": 2,
+        "external": false
+      },
+      {
+        "nid": 25,
+        "name": "EXT0",
+        "ntype": "IGW",
+        "role": "SLAVE",
+        "zone": -2,
+        "external": true
+      },
+      {
+        "nid": 26,
+        "name": "EXT1",
+        "ntype": "IGW",
+        "role": "SLAVE",
+        "zone": -2,
+        "external": true
+      },
+      {
+        "nid": 27,
+        "name": "EXT2",
+        "ntype": "IGW",
+        "role": "SLAVE",
+        "zone": -2,
+        "external": true
+      },
+      {
+        "nid": 28,
+        "name": "EXT3",
+        "ntype": "IGW",
+        "role": "SLAVE",
+        "zone": -2,
+        "external": true
+      }
+    ],
+    "linksets": [
+      {
+        "a": 2,
+        "b": 3,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 2,
+        "b": 4,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 3,
+        "b": 4,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 2,
+        "b": 5,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 3,
+        "b": 5,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 2,
+        "b": 6,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 3,
+        "b": 6,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 2,
+        "b": 7,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 3,
+        "b": 7,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 2,
+        "b": 8,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 3,
+        "b": 8,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 2,
+        "b": 9,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 3,
+        "b": 9,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 0,
+        "b": 2,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 0,
+        "b": 3,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 1,
+        "b": 2,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 1,
+        "b": 3,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 10,
+        "b": 11,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 10,
+        "b": 12,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 11,
+        "b": 12,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 10,
+        "b": 13,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 11,
+        "b": 13,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 10,
+        "b": 14,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 11,
+        "b": 14,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 10,
+        "b": 15,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 11,
+        "b": 15,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 10,
+        "b": 16,
+        "n_links": 2,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 11,
+        "b": 16,
+        "n_links": 2,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 0,
+        "b": 10,
+        "n_links": 2,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 0,
+        "b": 11,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 1,
+        "b": 10,
+        "n_links": 2,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 1,
+        "b": 11,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 17,
+        "b": 18,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 17,
+        "b": 19,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 18,
+        "b": 19,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 17,
+        "b": 20,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 18,
+        "b": 20,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 17,
+        "b": 21,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 18,
+        "b": 21,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 17,
+        "b": 22,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 18,
+        "b": 22,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 17,
+        "b": 23,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 18,
+        "b": 23,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 17,
+        "b": 24,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 18,
+        "b": 24,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 0,
+        "b": 17,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 0,
+        "b": 18,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 1,
+        "b": 17,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 1,
+        "b": 18,
+        "n_links": 2,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 0,
+        "b": 1,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 0,
+        "b": 25,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 1,
+        "b": 25,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 0,
+        "b": 26,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 1,
+        "b": 26,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 0,
+        "b": 27,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 1,
+        "b": 27,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 0,
+        "b": 28,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      },
+      {
+        "a": 1,
+        "b": 28,
+        "n_links": 1,
+        "link_kbps": 64.0,
+        "buffer_msgs": 400
+      }
+    ]
+  },
+  "days": 6.0,
+  "seed": 42
+}

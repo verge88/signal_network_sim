@@ -38,6 +38,7 @@ class BaselineProfile:
     training: tuple[str, ...]
     dataset: str
     metrics_file: str = "all_seed_metrics.csv"
+    metrics_candidates: tuple[str, ...] = ()
     config_targets: tuple[str, ...] = ()
     extra_sources: tuple[str, ...] = ()
     supports_regen: bool = False
@@ -55,15 +56,24 @@ PROFILES: dict[str, BaselineProfile] = {
     "ss7": BaselineProfile(
         name="ss7",
         workdir="ss7",
-        runner="run_seeds_ss7.py",
-        simulator="ss7_simulator_v7.py",
+        # IMPORTANT: run_seeds_ss7.py is a legacy wrapper and currently expects
+        # ss7_training_v7.DataPipeline, which no longer exists.  The current
+        # ss7_training_v7.py has its own scientifically corrected multiseed()
+        # implementation, so Stage 0 invokes it directly.
+        runner="ss7_training_v7.py",
+        simulator="fix.py",
         training=("ss7_training_v7.py",),
         dataset="ss7_dataset_v7.csv",
+        metrics_file="multiseed_raw.csv",
+        metrics_candidates=(
+            "multiseed_raw.csv",
+            "models.csv",
+        ),
         config_targets=(
-            "ss7_simulator_v7:SimulationConfig",
+            "fix:SimConfig",
             "ss7_training_v7:TrainingConfig",
         ),
-        extra_sources=("fix.py", "ms_multiseed_core.py"),
+        extra_sources=("run_seeds_ss7.py", "ms_multiseed_core.py"),
         supports_regen=True,
     ),
     "diameter": BaselineProfile(
@@ -73,6 +83,7 @@ PROFILES: dict[str, BaselineProfile] = {
         simulator="diameter_sim_v1.py",
         training=("diameter_training_v1.py",),
         dataset="diameter_dataset_v1.csv",
+        metrics_candidates=("all_seed_metrics.csv",),
         config_targets=(
             "diameter_sim_v1:SimulationConfig",
             "diameter_training_v1:TrainingConfig",
@@ -87,6 +98,7 @@ PROFILES: dict[str, BaselineProfile] = {
         simulator="sip_sim_v4_claude.py",
         training=("train_ticd.py", "ticd.py", "sip_train_v4_claude.py"),
         dataset="sip_dataset_v4.csv",
+        metrics_candidates=("all_seed_metrics.csv",),
         config_targets=("sip_sim_v4_claude:SimulationConfig",),
         supports_regen=False,
     ),
@@ -379,7 +391,34 @@ def build_command(
     results_dir: Path,
     regen: bool,
 ) -> tuple[list[str], bool]:
-    if profile.name in {"ss7", "diameter"}:
+    if profile.name == "ss7":
+        # Current ss7_training_v7.py already implements multiseed() and,
+        # for every seed, rebuilds topology, traffic and episodes through
+        # build_dataset(). Do NOT route this through the stale
+        # run_seeds_ss7.py/ms_multiseed_core.py compatibility wrapper.
+        if not seeds:
+            raise ValueError("SS7 baseline requires at least one seed")
+
+        command = [
+            sys.executable,
+            profile.runner,
+            "--seed",
+            str(int(seeds[0])),
+            "--seeds",
+            *[str(int(seed)) for seed in seeds],
+            "--out-dir",
+            str(results_dir.resolve()),
+        ]
+
+        # multiseed() itself regenerates worlds regardless of this flag.
+        # --no-cache additionally forces the preliminary single-seed run
+        # in main() not to reuse its cached dataset.
+        if regen:
+            command.append("--no-cache")
+
+        return command, True
+
+    if profile.name == "diameter":
         command = [
             sys.executable,
             profile.runner,
@@ -470,6 +509,26 @@ def _write_json(
     ).write_text(digest + "\n", encoding="ascii")
 
     return digest
+
+
+def find_metrics_file(
+    profile: BaselineProfile,
+    results_dir: Path,
+) -> Path | None:
+    candidates = profile.metrics_candidates or (profile.metrics_file,)
+
+    # Prefer the newest matching file because current SS7 puts outputs under
+    # <out-dir>/<fingerprint>_seed<seed>/.
+    found: list[Path] = []
+    for name in candidates:
+        found.extend(results_dir.rglob(name))
+
+    found = [path for path in found if path.is_file()]
+    if not found:
+        return None
+
+    found.sort(key=lambda path: path.stat().st_mtime, reverse=True)
+    return found[0]
 
 
 def run_protocol(
@@ -570,15 +629,23 @@ def run_protocol(
     artifacts = artifact_hashes(results_dir)
     artifact_tree_sha256 = canonical_hash(artifacts)
 
-    metrics_path = (
-        results_dir / profile.metrics_file
+    metrics_path = find_metrics_file(
+        profile,
+        results_dir,
     )
 
-    if metrics_path.is_file():
+    if metrics_path is not None:
         metrics = read_metrics_csv(metrics_path)
+        metrics["relative_source"] = str(
+            metrics_path.relative_to(results_dir)
+        )
     else:
         metrics = {
-            "source": str(metrics_path),
+            "source": None,
+            "searched_for": list(
+                profile.metrics_candidates
+                or (profile.metrics_file,)
+            ),
             "missing": True,
             "rows": [],
             "row_count": 0,
