@@ -816,8 +816,17 @@ class SIPControlUnitEngine:
         path_resp = self.topo.get_path(slave_id, master_id)
         resp_delay, resp_loss = self._path_impairment(path_resp)
 
-        # Compromise alone does not change processing delay.
         processing_delay = self.cu.processing_delay_ms
+        if node.is_compromised:
+            cr = node.covert_redirect_fraction
+            soph = node.attacker_sophistication
+            phys_leak = {
+                AttackerSophistication.NAIVE: 1.0,
+                AttackerSophistication.STATISTICAL: 0.4,
+                AttackerSophistication.ADAPTIVE: 0.15,
+            }[soph]
+            processing_delay += phys_leak * (
+                self.rng.uniform(0.1, 0.5) + 1.2 * cr)
 
         rtt = req_delay + processing_delay + resp_delay
         combined_loss = 1.0 - (1.0 - req_loss) * (1.0 - resp_loss)
@@ -825,9 +834,15 @@ class SIPControlUnitEngine:
 
         integrity_ok = True
         if cu_delivered:
-            # Key custody is not modelled here yet, so compromise alone
-            # must not change the integrity-failure distribution.
-            fail_prob = self.cu.integrity_background_fail_prob
+            if node.is_compromised:
+                soph = node.attacker_sophistication
+                fail_prob = {
+                    AttackerSophistication.NAIVE: 0.30,
+                    AttackerSophistication.STATISTICAL: 0.06,
+                    AttackerSophistication.ADAPTIVE: 0.025,
+                }[soph]
+            else:
+                fail_prob = self.cu.integrity_background_fail_prob
             integrity_ok = self.rng.random() > fail_prob
 
         if cu_delivered:
@@ -981,7 +996,7 @@ class SIPControlUnitEngine:
         if self.rng.random() < 0.12:
             method_counts["other_count"] = method_counts.get(
                 "other_count", 0) + int(self.rng.integers(-5, 6))
-        time_comp = interval_idx - (node.compromised_since if node.compromised_since is not None else interval_idx)
+        time_comp = interval_idx - (node.compromised_since or interval_idx)
         drift = min(0.4, time_comp * 0.0004)
         io_ratio = 0.9 + 0.2 * self.rng.random() + drift + 0.8
 

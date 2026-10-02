@@ -675,7 +675,7 @@ class ControlUnitEngine:
             fake_tcap += int(self.rng.integers(-3, 4))
 
         # v6: Inbound/outbound ratio дрейфует вверх со временем
-        time_compromised = interval_idx - (node.compromised_since if node.compromised_since is not None else interval_idx)
+        time_compromised = interval_idx - (node.compromised_since or interval_idx)
         drift = min(0.4, time_compromised * 0.0005)  # медленный рост
         io_ratio = 0.9 + 0.2 * self.rng.random() + drift
         # Базовый повышенный io_ratio из-за атаки

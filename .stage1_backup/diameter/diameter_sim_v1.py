@@ -35,7 +35,7 @@ import networkx as nx
 from enum import Enum, auto
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Set
-from collections import defaultdict, deque
+from collections import defaultdict
 import warnings
 import os
 
@@ -786,9 +786,6 @@ class DiameterControlUnitEngine:
         self.response_delay_history: Dict[int, List[float]] = defaultdict(
             list)
         self.response_history_window = 20
-        self.honest_history: Dict[int, deque] = defaultdict(
-            lambda: deque(maxlen=60)
-        )
 
     def add_cu_load_to_links(self, master_id: int, slave_ids: List[int]):
         cu_load_mbps = (self.cu.cu_message_size_bytes * 8) / (
@@ -810,8 +807,10 @@ class DiameterControlUnitEngine:
         path_resp = self.topo.get_path(slave_id, master_id)
         resp_delay, resp_loss = self._path_impairment(path_resp)
 
-        # Compromise alone MUST NOT create an observable delay signature.
+        # Processing delay (ms → seconds for consistency)
         processing_delay_ms = self.cu.processing_delay_ms
+        if node.is_compromised:
+            processing_delay_ms += self.rng.uniform(0.5, 3.0)
 
         rtt_ms = req_delay + processing_delay_ms + resp_delay
 
@@ -821,15 +820,15 @@ class DiameterControlUnitEngine:
         integrity_ok = True
         if cu_delivered:
             fail_prob = self.cu.integrity_background_fail_prob
+            if node.is_compromised:
+                fail_prob = 0.30
             integrity_ok = self.rng.random() > fail_prob
 
         if cu_delivered:
             if node.is_compromised:
-                reported = self._masked_report(
-                    true_traffic, node, slave_id, interval_idx
-                )
+                reported = self._masked_report(true_traffic, node,
+                                               interval_idx)
             else:
-                self._update_honest_history(slave_id, true_traffic)
                 reported = self._honest_report(true_traffic)
             self.last_successful_report[slave_id] = dict(reported)
             self.consecutive_cu_losses[slave_id] = 0
@@ -926,93 +925,77 @@ class DiameterControlUnitEngine:
         return r
 
     def _masked_report(self, true: Dict, node: DiameterNode,
-                       slave_id: int, interval_idx: int) -> Dict:
-        """Forge benign-looking local telemetry without a hard class signature."""
-        history = self.honest_history.get(slave_id)
-        if history:
-            recent = list(history)[-min(20, len(history)):]
-            base = dict(recent[int(self.rng.integers(0, len(recent)))])
-            return self._honest_report(base)
-        return self._nominal_counterfactual_report(node, interval_idx)
+                       interval_idx: int) -> Dict:
+        slip = self.rng.random() < 0.08
+        if slip:
+            fake_total = int(node.base_rate * (0.9 + 0.2 * self.rng.random()))
+            r = {
+                "total_messages": true["total_messages"],  # LEAKED
+                "s6a_count": int(fake_total * node.interface_dist.get("S6a", 0.55)),
+                "gx_count": int(fake_total * node.interface_dist.get("Gx", 0.25)),
+                "rx_count": int(fake_total * node.interface_dist.get("Rx", 0.10)),
+                "s13_count": int(fake_total * node.interface_dist.get("S13", 0.05)),
+                "other_count": int(fake_total * 0.05),
+                "entropy": true["entropy"],  # LEAKED
+                "inbound_outbound_ratio": true["inbound_outbound_ratio"],
+                "international_fraction": true["international_fraction"],
+                "n_unique_peers": true["n_unique_peers"],
+                "s6a_dominance_ratio": true.get("s6a_dominance_ratio", 0.0),
+                "s6a_top2_ratio": true.get("s6a_top2_ratio", 0.0),
+                "s6a_gini": true.get("s6a_gini", 0.0),
+            }
+            for cmd in S6A_COMMANDS:
+                r[f"ratio_s6a_{cmd.lower()}"] = true.get(
+                    f"ratio_s6a_{cmd.lower()}", 0.0)
+            for cmd in GX_COMMANDS:
+                r[f"ratio_gx_{cmd.lower()}"] = true.get(
+                    f"ratio_gx_{cmd.lower()}", 0.0)
+            return r
 
-    def _update_honest_history(self, slave_id: int, true: Dict) -> None:
-        self.honest_history[slave_id].append({
-            str(k): v for k, v in true.items() if not str(k).startswith("_")
-        })
+        # Standard masking: low-variance fake data
+        fake_total = int(node.base_rate *
+                         (0.95 + 0.10 * self.rng.random()))
+        fake_s6a = int(fake_total * node.interface_dist.get("S6a", 0.55) *
+                       (1.0 + self.rng.normal(0, 0.01)))
+        fake_gx = int(fake_total * node.interface_dist.get("Gx", 0.25) *
+                      (1.0 + self.rng.normal(0, 0.01)))
+        fake_rx = int(fake_total * node.interface_dist.get("Rx", 0.10))
+        fake_s13 = int(fake_total * node.interface_dist.get("S13", 0.05))
+        fake_other = fake_total - fake_s6a - fake_gx - fake_rx - fake_s13
 
-    def _nominal_counterfactual_report(
-        self, node: DiameterNode, interval_idx: int
-    ) -> Dict:
-        t_seconds = interval_idx * self.config.interval_s
-        hour = (t_seconds / 3600.0) % 24.0
-        h0 = int(hour) % 24
-        h1 = (h0 + 1) % 24
-        frac = hour - int(hour)
-        profile = DiameterTrafficGenerator.TOD_PROFILE
-        tod = profile[h0] * (1.0 - frac) + profile[h1] * frac
-        total = max(1, int(self.rng.poisson(max(1.0, node.base_rate * tod))))
+        # Consistency error
+        if self.rng.random() < 0.12:
+            fake_other += int(self.rng.integers(-5, 6))
 
-        names = ["S6a", "Gx", "Rx", "S13", "Other"]
-        p = np.array(
-            [max(0.0, float(node.interface_dist.get(k, 0.0))) for k in names],
-            dtype=float,
-        )
-        if p.sum() <= 0:
-            p = np.ones(len(names), dtype=float)
-        p /= p.sum()
-        counts = self.rng.multinomial(total, p)
+        # IO ratio drift
+        time_comp = interval_idx - (node.compromised_since or interval_idx)
+        drift = min(0.4, time_comp * 0.0004)
+        io_ratio = 0.9 + 0.2 * self.rng.random() + drift + 0.8
 
-        s6a_p = np.array(
-            [max(0.0, float(node.s6a_command_dist.get(k, 0.0)))
-             for k in S6A_COMMANDS],
-            dtype=float,
-        )
-        if s6a_p.sum() <= 0:
-            s6a_p = np.ones(len(S6A_COMMANDS), dtype=float)
-        s6a_p /= s6a_p.sum()
-
-        gx_p = np.array(
-            [max(0.0, float(node.gx_command_dist.get(k, 0.0)))
-             for k in GX_COMMANDS],
-            dtype=float,
-        )
-        if gx_p.sum() <= 0:
-            gx_p = np.ones(len(GX_COMMANDS), dtype=float)
-        gx_p /= gx_p.sum()
-
-        nz = p[p > 0]
-        ent = float(-(nz * np.log2(nz)).sum()) if len(nz) else 0.0
-        ordered = np.sort(s6a_p)[::-1]
-        dominance = float(ordered[0] / max(1e-9, ordered[1:].sum()))
-        top2 = float(ordered[:2].sum() / max(1e-9, ordered[2:].sum()))
-
-        arr = np.sort(s6a_p)
-        idx = np.arange(1, len(arr) + 1)
-        gini = float(
-            (2.0 * np.sum(idx * arr) - (len(arr) + 1) * arr.sum())
-            / (len(arr) * arr.sum())
-        ) if arr.sum() > 0 else 0.0
-
-        base = {
-            "total_messages": total,
-            "s6a_count": int(counts[0]),
-            "gx_count": int(counts[1]),
-            "rx_count": int(counts[2]),
-            "s13_count": int(counts[3]),
-            "other_count": int(counts[4]),
-            "entropy": ent,
-            "inbound_outbound_ratio": float(0.8 + 0.4 * self.rng.random()),
-            "international_fraction": float(0.05 + 0.03 * self.rng.random()),
-            "n_unique_peers": max(5, int(self.rng.normal(20, 6))),
-            "s6a_dominance_ratio": dominance,
-            "s6a_top2_ratio": top2,
-            "s6a_gini": gini,
+        r = {
+            "total_messages": fake_total,
+            "s6a_count": fake_s6a,
+            "gx_count": fake_gx,
+            "rx_count": fake_rx,
+            "s13_count": fake_s13,
+            "other_count": fake_other,
+            "entropy": 1.8 + self.rng.normal(0, 0.02),
+            "inbound_outbound_ratio": io_ratio,
+            "international_fraction": 0.05 + 0.02 * self.rng.random(),
+            "n_unique_peers": int(self.rng.normal(20, 2)),
+            "s6a_dominance_ratio": 0.3 + 0.02 * self.rng.random(),
+            "s6a_top2_ratio": 0.8 + 0.05 * self.rng.random(),
+            "s6a_gini": 0.3 + 0.02 * self.rng.random(),
         }
-        for cmd, prob in zip(S6A_COMMANDS, s6a_p):
-            base[f"ratio_s6a_{cmd.lower()}"] = float(prob)
-        for cmd, prob in zip(GX_COMMANDS, gx_p):
-            base[f"ratio_gx_{cmd.lower()}"] = float(prob)
-        return self._honest_report(base)
+        for cmd in S6A_COMMANDS:
+            r[f"ratio_s6a_{cmd.lower()}"] = (
+                node.s6a_command_dist.get(cmd, 0.1) +
+                self.rng.normal(0, 0.01))
+        for cmd in GX_COMMANDS:
+            r[f"ratio_gx_{cmd.lower()}"] = (
+                node.gx_command_dist.get(cmd, 0.25) +
+                self.rng.normal(0, 0.01))
+        return r
 
     def _empty_report(self) -> Dict:
         r = {k: 0 for k in ["total_messages", "s6a_count", "gx_count",
