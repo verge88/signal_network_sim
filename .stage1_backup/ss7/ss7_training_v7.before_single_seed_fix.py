@@ -838,38 +838,21 @@ def holm(pvals: Dict[str, float], alpha: float = 0.05) -> pd.DataFrame:
 
 def bootstrap_paired(res: pd.DataFrame, a: str, b: str, metric: str,
                      n_boot: int = 10000, seed: int = 0) -> Dict[str, float]:
-    """Парный bootstrap по seed с устойчивым schema результата."""
     pa = res[res.model == a].set_index("seed")[metric]
     pb = res[res.model == b].set_index("seed")[metric]
     common = pa.index.intersection(pb.index)
     d = (pa.loc[common] - pb.loc[common]).dropna().to_numpy(float)
-
     if len(d) < 3:
-        return {
-            "n": int(len(d)),
-            "mean_diff": float(d.mean()) if len(d) else np.nan,
-            "sd": float(d.std(ddof=1)) if len(d) > 1 else np.nan,
-            "ci_lo": np.nan,
-            "ci_hi": np.nan,
-            "p": np.nan,
-            "mde_95": np.nan,
-            "enough_seeds": False,
-        }
-
+        return {"n": len(d), "p": np.nan}
     rng = np.random.default_rng(seed)
     bs = rng.choice(d, (n_boot, len(d)), replace=True).mean(1)
     p = 2 * min((bs <= 0).mean(), (bs >= 0).mean())
-
-    return {
-        "n": int(len(d)),
-        "mean_diff": float(d.mean()),
-        "sd": float(d.std(ddof=1)),
-        "ci_lo": float(np.percentile(bs, 2.5)),
-        "ci_hi": float(np.percentile(bs, 97.5)),
-        "p": float(min(p, 1.0)),
-        "mde_95": float(1.96 * d.std(ddof=1) / math.sqrt(len(d))),
-        "enough_seeds": True,
-    }
+    return {"n": int(len(d)), "mean_diff": float(d.mean()),
+            "sd": float(d.std(ddof=1)),
+            "ci_lo": float(np.percentile(bs, 2.5)),
+            "ci_hi": float(np.percentile(bs, 97.5)),
+            "p": float(min(p, 1.0)),
+            "mde_95": float(1.96 * d.std(ddof=1) / math.sqrt(len(d)))}
 
 
 def multiseed(cfg: TrainingConfig, seeds: Sequence[int],
@@ -1107,33 +1090,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         ms, agg, tests = multiseed(cfg, a.seeds, metric=a.metric)
         print(agg.to_string(index=False))
         if not tests.empty:
-            enough = (
-                "enough_seeds" in tests.columns
-                and tests["enough_seeds"].fillna(False).any()
-            )
-
-            if enough:
-                print("\n     Бутстрэп по сидам + поправка Холма:")
-                wanted = [
-                    "comparison", "n", "mean_diff", "ci_lo", "ci_hi", "p",
-                    "holm_threshold", "significant", "mde_95",
-                ]
-                print(
-                    tests[[c for c in wanted if c in tests.columns]]
-                    .to_string(index=False)
-                )
-            else:
-                max_n = (
-                    int(tests["n"].max())
-                    if "n" in tests.columns and tests["n"].notna().any()
-                    else 0
-                )
-                print(
-                    "\n     Статистические сравнения пропущены: "
-                    f"доступно только {max_n} парных seed; "
-                    "для bootstrap требуется минимум 3, "
-                    "для диссертационного вывода рекомендуется >= 10."
-                )
+            print("\n     Бутстрэп по сидам + поправка Холма:")
+            print(tests[["comparison", "n", "mean_diff", "ci_lo", "ci_hi", "p",
+                         "holm_threshold", "significant",
+                         "mde_95"]].to_string(index=False))
         save("multiseed_raw.csv", ms)
         save("multiseed_agg.csv", agg)
         save("multiseed_tests.csv", tests)
