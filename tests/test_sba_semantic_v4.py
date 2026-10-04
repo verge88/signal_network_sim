@@ -34,6 +34,21 @@ class SemanticV4Tests(unittest.TestCase):
         det = SemanticQuorumDetector(0.05).fit(calib)
         return sim, det
 
+    def assertFloatMappingEqualNanAware(self, left, right):
+        """Compare mappings while treating paired NaNs as equal.
+
+        Missing transport evidence is intentionally represented as NaN in v4.
+        Python follows IEEE-754 semantics where NaN != NaN, so ordinary dict
+        equality is unsuitable for the passive-compromise reproducibility test.
+        """
+        self.assertEqual(set(left), set(right))
+        for key in left:
+            a = left[key]
+            b = right[key]
+            if math.isnan(a) and math.isnan(b):
+                continue
+            self.assertEqual(a, b, msg=f"mapping mismatch for {key}: {a!r} != {b!r}")
+
     def test_evidence_has_unknown_state_and_latency(self):
         sim, _ = self._fit(42)
         windows = [sim.generate_window(1000 + i) for i in range(20)]
@@ -112,7 +127,10 @@ class SemanticV4Tests(unittest.TestCase):
             compromised_domains=[TrustDomain.SCP],
             compromise_mode=CompromiseMode.PASSIVE,
         )
-        self.assertEqual(wa.transport_residuals, wb.transport_residuals)
+        self.assertFloatMappingEqualNanAware(
+            wa.transport_residuals,
+            wb.transport_residuals,
+        )
         xa = [(o.event_id, o.fact, o.domain, o.state, o.observed_at) for o in wa.observations]
         xb = [(o.event_id, o.fact, o.domain, o.state, o.observed_at) for o in wb.observations]
         self.assertEqual(xa, xb)
