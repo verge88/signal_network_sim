@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import sys
 import unittest
 from pathlib import Path
@@ -19,6 +20,7 @@ from sba_semantic_v3 import (  # noqa: E402
     TrustDomain,
     empirical_auc,
 )
+from run_semantic_v3 import _event_metrics, wilson_interval  # noqa: E402
 
 
 class SemanticV3Tests(unittest.TestCase):
@@ -104,6 +106,28 @@ class SemanticV3Tests(unittest.TestCase):
         auc = empirical_auc(labels, [det.score(w).score for w in windows])
         self.assertGreater(auc, 0.30)
         self.assertLess(auc, 0.70)
+
+    def test_event_metrics_use_only_appended_attack_events(self):
+        sim, det = self._fit(16)
+        w = sim.generate_window(
+            3000,
+            attack_family=AttackFamily.NO_TOKEN,
+            hidden_calls=3,
+        )
+        metrics = _event_metrics(w, det.score(w))
+        self.assertEqual(metrics["hidden_events"], 3.0)
+        self.assertGreaterEqual(metrics["detected_attack_events"], 0.0)
+        self.assertLessEqual(metrics["detected_attack_events"], 3.0)
+        self.assertGreaterEqual(metrics["event_recall"], 0.0)
+        self.assertLessEqual(metrics["event_recall"], 1.0)
+        if math.isfinite(metrics["ttd_s"]):
+            self.assertGreaterEqual(metrics["ttd_s"], 0.0)
+
+    def test_wilson_interval_contains_target_for_observed_medium_run(self):
+        lo, hi = wilson_interval(10, 1200)
+        self.assertLess(lo, 0.01)
+        self.assertGreater(hi, 0.01)
+        self.assertAlmostEqual(10 / 1200, 0.008333333333333333)
 
 
 if __name__ == "__main__":
