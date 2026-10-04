@@ -191,8 +191,6 @@ class V8Window(V6Window):
 
 @dataclass
 class V8DetectionResult:
-    # DetectionResult-compatible fields are repeated explicitly so v8 stays
-    # decoupled from dataclass inheritance details in prior iterations.
     alert: bool
     semantic_alert: bool
     transport_alert: bool
@@ -375,8 +373,6 @@ class SemanticSbaSimulator(V6SemanticSbaSimulator):
         false_marker: bool = True,
     ) -> V8Window:
         state = OperationalState(operational_state)
-        # V6 disturbance generation is deliberately disabled: state, marker,
-        # transient evidence and recovery are separate stochastic channels.
         base = super().generate_window(
             window_id,
             context=context,
@@ -444,11 +440,6 @@ class SemanticSbaSimulator(V6SemanticSbaSimulator):
         hidden_calls: int = 1,
         sophistication: Sophistication | str = Sophistication.ADAPTIVE,
     ) -> V8Window:
-        """Condition an attack to occur while a genuine state is active.
-
-        The marker still traverses the same noisy operational channel. No
-        synthetic recovery is created for the malicious inconsistency.
-        """
         family = AttackFamily(attack_family)
         state = ATTACK_STATE.get(family, OperationalState.NORMAL)
         base = super().generate_window(
@@ -524,7 +515,8 @@ class SemanticQuorumDetector(V6SemanticQuorumDetector):
         }
         observations = [
             o for o in window.observations
-            if o.origin in selected[o.fact]
+            if o.fact in selected
+            and o.origin in selected[o.fact]
             and (until is None or o.observed_at <= until)
         ]
         markers = (
@@ -533,12 +525,11 @@ class SemanticQuorumDetector(V6SemanticQuorumDetector):
             else []
         )
 
-        # A marker must arrive before quorum confirmation to defer it. Late
-        # markers cannot retroactively erase a previously emitted alarm.
         timeline: List[Tuple[float, int, str, object]] = []
         for marker in markers:
             timeline.append((float(marker.observed_at), 0, "marker", marker))
-            timeline.append((float(marker.expires_at), 2, "expiry", marker))
+            if until is None or marker.expires_at <= until:
+                timeline.append((float(marker.expires_at), 2, "expiry", marker))
         for obs in observations:
             timeline.append((float(obs.observed_at), 1, "obs", obs))
         timeline.sort(key=lambda x: (x[0], x[1], x[2]))
@@ -585,7 +576,6 @@ class SemanticQuorumDetector(V6SemanticQuorumDetector):
 
         for at, _priority, kind, payload in timeline:
             if kind == "marker":
-                # A marker arriving after its own expiry is stale and ignored.
                 if at <= payload.expires_at:
                     active_markers.append(payload)
                 continue
@@ -605,7 +595,7 @@ class SemanticQuorumDetector(V6SemanticQuorumDetector):
                 fire(key, at)
                 continue
 
-            marker = payload  # expiry
+            marker = payload
             if marker in active_markers:
                 active_markers.remove(marker)
             for event_id, event in by_event.items():
