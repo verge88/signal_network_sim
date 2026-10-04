@@ -1,4 +1,4 @@
-"""Paired v6 experiment: legacy median vs Byzantine-resistant 2-of-4 transport.
+"""Paired v6 experiment: legacy median vs Byzantine-resistant 3-of-4 transport.
 
 The semantic detector is frozen at the v5 candidate q3of5 with persistence off.
 Both transport modes score exactly the same generated worlds. The runner adds
@@ -43,7 +43,7 @@ PHYSICAL_TRANSPORT_ORIGINS = (
     EvidenceOrigin.PRODUCER,
     EvidenceOrigin.NWDAF,
 )
-MODES = (TransportMode.LEGACY_MEDIAN, TransportMode.BYZ_2OF4)
+MODES = (TransportMode.LEGACY_MEDIAN, TransportMode.BYZ_3OF4)
 
 
 def setup_logging() -> None:
