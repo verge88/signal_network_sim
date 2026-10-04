@@ -210,9 +210,10 @@ class SemanticSbaSimulator(V5SemanticSbaSimulator):
             disturbance,
             disturbance_events,
         )
+        data = dict(base.__dict__)
+        data["observations"] = observations
         return V6Window(
-            **base.__dict__,
-            observations=observations,
+            **data,
             disturbance=disturbance,
             disturbance_event_ids=disturbed_ids,
         )
