@@ -5,11 +5,13 @@ alarms from a single INJECT origin, while residual Byzantine false alarms came
 from the transport channel. V6 therefore freezes the semantic candidate at
 q3of5 without global persistence and changes the transport decision.
 
-The v6 transport score is the *second largest context/domain-normalized
-residual* among the available physical transport observers. A single arbitrary
-high report can occupy only the largest position; it cannot raise the second
-largest score by itself. The final threshold is calibrated on benign windows,
-so the score is still interpreted relative to the requested FPR.
+The v6 transport score is the *third largest context/domain-normalized
+residual* among the available physical transport observers (3-of-4 evidence).
+A single arbitrary-high report cannot satisfy the transport decision together
+with only one noisy honest report. Thresholds are calibrated on a worst-case
+single-high replacement statistic (the second largest benign normalized
+residual), making calibration explicitly conservative against one high-side
+Byzantine observer.
 
 V6 also adds synthetic legitimate semantic disturbances. They do not change
 attack labels or attack-event ground truth. Instead they model short-lived
@@ -47,7 +49,7 @@ from sba_semantic_v5 import (
 
 class TransportMode(str, Enum):
     LEGACY_MEDIAN = "legacy_median"
-    BYZ_2OF4 = "byz_2of4"
+    BYZ_3OF4 = "byz_3of4"
 
 
 class LegitimateDisturbance(str, Enum):
@@ -226,7 +228,7 @@ class SemanticQuorumDetector(V5SemanticQuorumDetector):
         self,
         target_fpr: float = 0.01,
         *,
-        transport_mode: TransportMode | str = TransportMode.BYZ_2OF4,
+        transport_mode: TransportMode | str = TransportMode.BYZ_3OF4,
     ):
         super().__init__(
             "q3of5",
@@ -302,12 +304,12 @@ class SemanticQuorumDetector(V5SemanticQuorumDetector):
         )
         return float((value - model.center) / max(model.scale, 1e-9))
 
-    def robust_transport_score(
+    def _transport_z_values(
         self,
         window: V6Window,
         *,
         until: Optional[float] = None,
-    ) -> float:
+    ) -> List[float]:
         values: List[float] = []
         for domain in TRANSPORT_OBSERVERS:
             observed_at = window.transport_observed_at.get(domain, float("nan"))
@@ -318,12 +320,30 @@ class SemanticQuorumDetector(V5SemanticQuorumDetector):
             z = self._domain_z(window, domain)
             if np.isfinite(z):
                 values.append(float(z))
-        # At least three reports are required before the 2-of-4 statistic is
-        # actionable. This prevents a pair of early reports from masquerading
-        # as a robust quorum when one may be Byzantine.
+        values.sort(reverse=True)
+        return values
+
+    def robust_transport_score(
+        self,
+        window: V6Window,
+        *,
+        until: Optional[float] = None,
+    ) -> float:
+        values = self._transport_z_values(window, until=until)
+        # 3-of-4: third largest normalized residual. With only three usable
+        # reports this becomes the minimum of those three, i.e. all three must
+        # support the anomaly.
         if len(values) < 3:
             return float("nan")
-        values.sort(reverse=True)
+        return float(values[2])
+
+    def adversarial_calibration_score(self, window: V6Window) -> float:
+        values = self._transport_z_values(window)
+        # Worst-case single high replacement for a 3-of-4 runtime statistic:
+        # an attacker replaces the lowest honest report by +infinity, promoting
+        # the benign second-largest value into the third-largest runtime slot.
+        if len(values) < 3:
+            return float("nan")
         return float(values[1])
 
     def _robust_alert_time(self, window: V6Window, threshold: float) -> float:
@@ -348,7 +368,7 @@ class SemanticQuorumDetector(V5SemanticQuorumDetector):
         global_scores: List[float] = []
         by_context: Dict[str, List[float]] = {}
         for window in windows:
-            score = self.robust_transport_score(window)
+            score = self.adversarial_calibration_score(window)
             if np.isfinite(score):
                 global_scores.append(float(score))
                 by_context.setdefault(window.context, []).append(float(score))
