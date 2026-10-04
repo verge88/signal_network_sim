@@ -8,12 +8,13 @@ of the v9 primary Holm family.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List, Sequence
+from typing import Dict, List
 
 import numpy as np
 import pandas as pd
@@ -80,6 +81,11 @@ KEY_METRICS = (
 )
 
 
+def stable_offset(*parts: str) -> int:
+    raw = "|".join(parts).encode("utf-8")
+    return int(hashlib.sha256(raw).hexdigest()[:8], 16) % 1_000_000
+
+
 def paired_seed_rows(point: SensitivityPoint, summaries: pd.DataFrame) -> pd.DataFrame:
     static = summaries[summaries["arm"] == ARM_STATIC].set_index("seed")
     noisy = summaries[summaries["arm"] == ARM_NOISY].set_index("seed")
@@ -123,7 +129,8 @@ def aggregate_point(seed_rows: pd.DataFrame, bootstrap: int, seed: int) -> Dict:
         if delta_col not in seed_rows:
             continue
         x = seed_rows[delta_col].to_numpy(dtype=float)
-        lo, hi = bootstrap_delta_ci(x, seed + abs(hash((point_id, metric))) % 1_000_000, bootstrap)
+        boot_seed = int(seed) + stable_offset(point_id, metric)
+        lo, hi = bootstrap_delta_ci(x, boot_seed, bootstrap)
         out[f"delta_{metric}_mean"] = float(np.nanmean(x))
         out[f"delta_{metric}_ci_lo"] = float(lo)
         out[f"delta_{metric}_ci_hi"] = float(hi)
