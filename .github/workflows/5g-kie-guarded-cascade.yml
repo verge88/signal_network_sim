@@ -1,0 +1,51 @@
+name: 5g-kie-guarded-cascade
+
+on:
+  push:
+    branches:
+      - "experiment/5g-kie-full"
+    paths:
+      - "experiments/5g_kie_full/cascade_detector.py"
+      - "experiments/5g_kie_full/run_cascade_experiment.py"
+      - "experiments/5g_kie_full/plot_cascade_results.py"
+      - "experiments/5g_kie_full/simulator.py"
+      - "experiments/5g_kie_full/tests/test_cascade_detector.py"
+      - "experiments/5g_kie_full/CASCADE_ITERATION.md"
+      - ".github/workflows/5g-kie-guarded-cascade.yml"
+  workflow_dispatch:
+
+jobs:
+  guarded-cascade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: experiments/5g_kie_full/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r experiments/5g_kie_full/requirements.txt
+
+      - name: Run tests
+        run: python -m pytest -q experiments/5g_kie_full/tests
+
+      - name: Run 30-seed guarded-cascade experiment
+        working-directory: experiments/5g_kie_full
+        run: python run_cascade_experiment.py --seeds 30 --output results_cascade
+
+      - name: Plot medium-severity recall
+        working-directory: experiments/5g_kie_full
+        run: python plot_cascade_results.py --input results_cascade/summary.csv --output results_cascade/cascade_recall.png --severity 1.0
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5g-kie-guarded-cascade-results
+          path: experiments/5g_kie_full/results_cascade/
+          retention-days: 30
