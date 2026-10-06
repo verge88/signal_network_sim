@@ -185,7 +185,7 @@ def run(cfg: ExperimentConfig, output_dir: Path) -> Dict[str, Path]:
         )["fusion_maxq"]
         cascades = fit_guarded_cascade_family(
             train, cal,
-            seed=seed + 47,
+            seed=seed,
             target_fpr=cfg.contamination_target_fpr,
         )
 
