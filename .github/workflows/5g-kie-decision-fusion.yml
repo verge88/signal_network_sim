@@ -1,0 +1,46 @@
+name: 5g-kie-decision-fusion
+
+on:
+  push:
+    branches:
+      - "experiment/5g-kie-full"
+    paths:
+      - "experiments/5g_kie_full/**"
+      - ".github/workflows/5g-kie-decision-fusion.yml"
+  workflow_dispatch:
+
+jobs:
+  decision-fusion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: experiments/5g_kie_full/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r experiments/5g_kie_full/requirements.txt
+
+      - name: Run tests
+        run: python -m pytest -q experiments/5g_kie_full/tests
+
+      - name: Run 20-seed decision-fusion experiment
+        working-directory: experiments/5g_kie_full
+        run: python run_fusion_experiment.py --seeds 20 --output results_fusion
+
+      - name: Plot medium-severity recall
+        working-directory: experiments/5g_kie_full
+        run: python plot_fusion_results.py --input results_fusion/summary.csv --output results_fusion/decision_fusion_recall.png --severity 1.0
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5g-kie-decision-fusion-results
+          path: experiments/5g_kie_full/results_fusion/
+          retention-days: 30
