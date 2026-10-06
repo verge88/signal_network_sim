@@ -181,6 +181,15 @@ class FiveGCoreSimulator:
         elif attack == "compromised_truth":
             row["observed_rps"] *= 1.0 + 0.32 * severity
             row["report_rps"] = row["observed_rps"] * (1.0 + rng.normal(0.0, 0.01))
+        elif attack == "adaptive_lie":
+            # Adaptive attacker partially mirrors the malicious SBI increase in
+            # its self-report, reducing (but not eliminating) report-vs-observed
+            # disagreement. 75% of the malicious delta is copied into the
+            # report; only 25% remains visible to the active consistency check.
+            clean = row["observed_rps"]
+            row["observed_rps"] *= 1.0 + 0.32 * severity
+            delta = row["observed_rps"] - clean
+            row["report_rps"] = (clean + 0.75 * delta) * (1.0 + rng.normal(0.0, 0.01))
         elif attack == "slow_drift_lie":
             clean = row["observed_rps"]
             drift = 0.02 + (0.18 * severity * progress)
