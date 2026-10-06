@@ -1,12 +1,6 @@
 name: 5g-kie-decision-fusion
 
 on:
-  push:
-    branches:
-      - "experiment/5g-kie-full"
-    paths:
-      - "experiments/5g_kie_full/**"
-      - ".github/workflows/5g-kie-decision-fusion.yml"
   workflow_dispatch:
 
 jobs:
