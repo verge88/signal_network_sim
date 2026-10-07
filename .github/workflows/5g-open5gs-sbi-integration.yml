@@ -1,0 +1,246 @@
+name: 5g-open5gs-sbi-integration
+
+on:
+  push:
+    branches:
+      - "experiment/5g-kie-full"
+    paths:
+      - "experiments/5g_kie_full/open5gs_probe.py"
+      - "experiments/5g_kie_full/tests/test_open5gs_probe.py"
+      - "experiments/5g_kie_full/OPEN5GS_CI_ITERATION.md"
+      - ".github/workflows/5g-open5gs-sbi-integration.yml"
+  workflow_dispatch:
+
+jobs:
+  open5gs-sbi:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python test dependencies
+        run: python -m pip install -r experiments/5g_kie_full/requirements.txt pyyaml
+
+      - name: Run repository tests
+        run: python -m pytest -q experiments/5g_kie_full/tests
+
+      - name: Install Open5GS and capture tools
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            software-properties-common \
+            ca-certificates \
+            curl \
+            jq \
+            tcpdump \
+            tshark \
+            python3-yaml
+          sudo add-apt-repository -y ppa:open5gs/latest
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y open5gs
+
+      - name: Record installed Open5GS version and units
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p experiments/5g_kie_full/results_open5gs
+          dpkg-query -W -f='${Package} ${Version}\n' 'open5gs*' \
+            > experiments/5g_kie_full/results_open5gs/open5gs_packages.txt || true
+          systemctl list-unit-files --type=service 'open5gs-*' --no-pager \
+            > experiments/5g_kie_full/results_open5gs/open5gs_units.txt || true
+
+      - name: Start SBI capture and Open5GS control plane
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs"
+          sudo tcpdump -i lo -U -s 0 -w "$OUT/open5gs_sbi.pcap" 'tcp port 7777' \
+            > "$OUT/tcpdump.log" 2>&1 &
+          echo $! > "$OUT/tcpdump.pid"
+          sleep 2
+
+          services=(
+            open5gs-nrfd.service
+            open5gs-scpd.service
+            open5gs-udrd.service
+            open5gs-udmd.service
+            open5gs-ausfd.service
+            open5gs-pcfd.service
+            open5gs-nssfd.service
+            open5gs-smfd.service
+            open5gs-amfd.service
+          )
+
+          : > "$OUT/restart_results.txt"
+          for unit in "${services[@]}"; do
+            if systemctl list-unit-files --type=service --no-legend "$unit" | grep -q "$unit"; then
+              if sudo systemctl restart "$unit"; then
+                echo "$unit restarted" | tee -a "$OUT/restart_results.txt"
+              else
+                echo "$unit restart_failed" | tee -a "$OUT/restart_results.txt"
+              fi
+            else
+              echo "$unit missing" | tee -a "$OUT/restart_results.txt"
+            fi
+          done
+
+          sleep 25
+
+      - name: Probe live SBI endpoints
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs"
+          python experiments/5g_kie_full/open5gs_probe.py \
+            --config-dir /etc/open5gs \
+            --output "$OUT/open5gs_endpoints.json"
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("experiments/5g_kie_full/results_open5gs/open5gs_endpoints.json")
+          doc = json.loads(path.read_text())
+          rows = doc["endpoints"]
+          nrf = [r for r in rows if r["nf"].lower() == "nrf"]
+          if not nrf:
+              raise SystemExit("No NRF SBI endpoint discovered in /etc/open5gs")
+          if not any(r["reachable"] for r in nrf):
+              raise SystemExit("NRF SBI endpoint is not reachable")
+          if doc["reachable_count"] < 6:
+              raise SystemExit(
+                  f"Only {doc['reachable_count']} SBI endpoints reachable; expected >= 6"
+              )
+          print(f"reachable SBI endpoints: {doc['reachable_count']}/{doc['endpoint_count']}")
+          PY
+
+      - name: Query live NRF NF-instance collection
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs"
+          read NRF_ADDR NRF_PORT < <(
+            python - <<'PY'
+          import json
+          doc = json.load(open("experiments/5g_kie_full/results_open5gs/open5gs_endpoints.json"))
+          for row in doc["endpoints"]:
+              if row["nf"].lower() == "nrf" and row["reachable"]:
+                  print(row["address"], row["port"])
+                  break
+          PY
+          )
+          echo "NRF=$NRF_ADDR:$NRF_PORT" | tee "$OUT/nrf_endpoint.txt"
+
+          set +e
+          curl --http2-prior-knowledge -sS \
+            -D "$OUT/nrf_headers.txt" \
+            -o "$OUT/nrf_instances.json" \
+            -w '%{http_code}\n' \
+            "http://$NRF_ADDR:$NRF_PORT/nnrf-nfm/v1/nf-instances" \
+            > "$OUT/nrf_http_code.txt"
+          CURL_RC=$?
+          set -e
+          echo "$CURL_RC" > "$OUT/nrf_curl_exit_code.txt"
+
+      - name: Stop capture and export packet evidence
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          OUT="experiments/5g_kie_full/results_open5gs"
+          if [ -f "$OUT/tcpdump.pid" ]; then
+            PID="$(cat "$OUT/tcpdump.pid")"
+            sudo kill -INT "$PID" 2>/dev/null || true
+            sleep 3
+          fi
+          sudo chown -R "$(id -u):$(id -g)" "$OUT" 2>/dev/null || true
+
+          if [ -f "$OUT/open5gs_sbi.pcap" ]; then
+            tshark -r "$OUT/open5gs_sbi.pcap" -Y 'tcp.port == 7777' \
+              -T fields \
+              -e frame.time_epoch \
+              -e ip.src \
+              -e tcp.srcport \
+              -e ip.dst \
+              -e tcp.dstport \
+              -e tcp.len \
+              > "$OUT/sbi_tcp_flows.tsv" || true
+
+            tshark -r "$OUT/open5gs_sbi.pcap" \
+              -d tcp.port==7777,http2 \
+              -Y http2 \
+              -T json \
+              > "$OUT/sbi_http2.json" || true
+          fi
+
+      - name: Collect Open5GS service diagnostics
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          OUT="experiments/5g_kie_full/results_open5gs"
+          units=(
+            open5gs-nrfd.service
+            open5gs-scpd.service
+            open5gs-udrd.service
+            open5gs-udmd.service
+            open5gs-ausfd.service
+            open5gs-pcfd.service
+            open5gs-nssfd.service
+            open5gs-smfd.service
+            open5gs-amfd.service
+          )
+
+          : > "$OUT/service_status.txt"
+          for unit in "${units[@]}"; do
+            echo "===== $unit =====" >> "$OUT/service_status.txt"
+            systemctl is-active "$unit" >> "$OUT/service_status.txt" 2>&1 || true
+            systemctl --no-pager --full status "$unit" >> "$OUT/service_status.txt" 2>&1 || true
+          done
+
+          sudo journalctl --no-pager --since "-15 minutes" \
+            -u open5gs-nrfd.service \
+            -u open5gs-scpd.service \
+            -u open5gs-udrd.service \
+            -u open5gs-udmd.service \
+            -u open5gs-ausfd.service \
+            -u open5gs-pcfd.service \
+            -u open5gs-nssfd.service \
+            -u open5gs-smfd.service \
+            -u open5gs-amfd.service \
+            > "$OUT/open5gs_journal.txt" 2>&1 || true
+
+      - name: Validate real SBI traffic capture
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs"
+          test -s "$OUT/open5gs_sbi.pcap"
+          FLOW_LINES="$(wc -l < "$OUT/sbi_tcp_flows.tsv")"
+          echo "$FLOW_LINES" | tee "$OUT/sbi_tcp_flow_count.txt"
+          if [ "$FLOW_LINES" -lt 5 ]; then
+            echo "Too little real SBI TCP traffic captured: $FLOW_LINES rows"
+            exit 1
+          fi
+
+      - name: Upload Open5GS integration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5g-open5gs-sbi-integration-results
+          path: experiments/5g_kie_full/results_open5gs/
+          retention-days: 30
