@@ -1,0 +1,51 @@
+name: 5g-kie-adaptive-sweep
+
+on:
+  push:
+    branches:
+      - "experiment/5g-kie-full"
+    paths:
+      - "experiments/5g_kie_full/run_adaptive_sweep.py"
+      - "experiments/5g_kie_full/plot_adaptive_sweep.py"
+      - "experiments/5g_kie_full/cascade_detector.py"
+      - "experiments/5g_kie_full/simulator.py"
+      - "experiments/5g_kie_full/tests/test_adaptive_sweep.py"
+      - "experiments/5g_kie_full/ADAPTIVE_SWEEP_ITERATION.md"
+      - ".github/workflows/5g-kie-adaptive-sweep.yml"
+  workflow_dispatch:
+
+jobs:
+  adaptive-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: experiments/5g_kie_full/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r experiments/5g_kie_full/requirements.txt
+
+      - name: Run tests
+        run: python -m pytest -q experiments/5g_kie_full/tests
+
+      - name: Run 30-seed adaptive attacker and FPR-budget sweep
+        working-directory: experiments/5g_kie_full
+        run: python run_adaptive_sweep.py --seeds 30 --output results_adaptive_sweep
+
+      - name: Plot adaptive robustness and Pareto curves
+        working-directory: experiments/5g_kie_full
+        run: python plot_adaptive_sweep.py --summary results_adaptive_sweep/summary.csv --pareto results_adaptive_sweep/pareto.csv --output-dir results_adaptive_sweep --severity 1.0
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5g-kie-adaptive-sweep-results
+          path: experiments/5g_kie_full/results_adaptive_sweep/
+          retention-days: 30
