@@ -1,0 +1,219 @@
+name: 5g-open5gs-real-features
+
+on:
+  push:
+    branches:
+      - "experiment/5g-kie-full"
+    paths:
+      - "experiments/5g_kie_full/open5gs_real_features.py"
+      - "experiments/5g_kie_full/run_open5gs_real_analysis.py"
+      - "experiments/5g_kie_full/tests/test_open5gs_real_features.py"
+      - "experiments/5g_kie_full/OPEN5GS_REAL_FEATURES.md"
+      - ".github/workflows/5g-open5gs-real-features.yml"
+  workflow_dispatch:
+
+jobs:
+  real-open5gs-features:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    env:
+      MPLBACKEND: Agg
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python dependencies
+        run: python -m pip install -r experiments/5g_kie_full/requirements.txt pyyaml
+
+      - name: Run Open5GS bridge tests
+        run: |
+          python -m pytest -q             experiments/5g_kie_full/tests/test_open5gs_probe.py             experiments/5g_kie_full/tests/test_open5gs_real_features.py
+
+      - name: Install Open5GS and capture tools
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y             software-properties-common             ca-certificates             curl             jq             tcpdump             tshark             python3-yaml
+          sudo add-apt-repository -y ppa:open5gs/latest
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y open5gs
+
+      - name: Start Open5GS control plane and packet capture
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_real"
+          mkdir -p "$OUT"
+
+          dpkg-query -W -f='${Package} ${Version}\n' 'open5gs*'             > "$OUT/open5gs_packages.txt" || true
+
+          sudo tcpdump -i lo -U -s 0 -w "$OUT/open5gs_sbi_real.pcap" 'tcp port 7777'             > "$OUT/tcpdump.log" 2>&1 &
+          echo $! > "$OUT/tcpdump.pid"
+
+          services=(
+            open5gs-nrfd.service
+            open5gs-scpd.service
+            open5gs-udrd.service
+            open5gs-udmd.service
+            open5gs-ausfd.service
+            open5gs-pcfd.service
+            open5gs-nssfd.service
+            open5gs-smfd.service
+            open5gs-amfd.service
+          )
+          : > "$OUT/restart_results.txt"
+          for unit in "${services[@]}"; do
+            if systemctl list-unit-files --type=service --no-legend "$unit" | grep -q "$unit"; then
+              sudo systemctl restart "$unit"
+              echo "$unit restarted" >> "$OUT/restart_results.txt"
+            else
+              echo "$unit missing" >> "$OUT/restart_results.txt"
+            fi
+          done
+          sleep 25
+
+      - name: Probe live SBI endpoints
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_real"
+          python experiments/5g_kie_full/open5gs_probe.py             --config-dir /etc/open5gs             --output "$OUT/open5gs_endpoints.json"
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          doc = json.loads(
+              Path("experiments/5g_kie_full/results_open5gs_real/open5gs_endpoints.json").read_text()
+          )
+          nrf = [r for r in doc["endpoints"] if r["nf"].lower() == "nrf" and r["reachable"]]
+          if not nrf:
+              raise SystemExit("No reachable NRF SBI endpoint")
+          if doc["reachable_count"] < 6:
+              raise SystemExit(f"Only {doc['reachable_count']} reachable SBI endpoints")
+          print(f"reachable={doc['reachable_count']}/{doc['endpoint_count']}")
+          PY
+
+      - name: Run controlled real SBI perturbations
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_real"
+          echo "start_ts,end_ts,phase,cycle" > "$OUT/phase_intervals.csv"
+
+          now_ts() {
+            python -c 'import time; print(f"{time.time():.6f}")'
+          }
+
+          read NRF_ADDR NRF_PORT < <(
+            python - <<'PY'
+          import json
+          doc = json.load(open("experiments/5g_kie_full/results_open5gs_real/open5gs_endpoints.json"))
+          for row in doc["endpoints"]:
+              if row["nf"].lower() == "nrf" and row["reachable"]:
+                  print(row["address"], row["port"])
+                  break
+          PY
+          )
+          echo "$NRF_ADDR:$NRF_PORT" > "$OUT/nrf_endpoint.txt"
+
+          BASE_START="$(now_ts)"
+          sleep 90
+          BASE_END="$(now_ts)"
+          echo "$BASE_START,$BASE_END,baseline,0" >> "$OUT/phase_intervals.csv"
+
+          for cycle in 1 2 3 4 5; do
+            S="$(now_ts)"
+            sudo systemctl restart open5gs-udmd.service
+            sleep 7
+            E="$(now_ts)"
+            echo "$S,$E,udm_restart,$cycle" >> "$OUT/phase_intervals.csv"
+
+            S="$(now_ts)"
+            sleep 5
+            E="$(now_ts)"
+            echo "$S,$E,recovery,$cycle" >> "$OUT/phase_intervals.csv"
+
+            S="$(now_ts)"
+            for i in $(seq 1 60); do
+              curl --http2-prior-knowledge -sS -o /dev/null                 "http://$NRF_ADDR:$NRF_PORT/nnrf-nfm/v1/nf-instances" || true
+              sleep 0.03
+            done
+            sleep 2
+            E="$(now_ts)"
+            echo "$S,$E,nrf_burst,$cycle" >> "$OUT/phase_intervals.csv"
+
+            S="$(now_ts)"
+            sleep 7
+            E="$(now_ts)"
+            echo "$S,$E,recovery,$cycle" >> "$OUT/phase_intervals.csv"
+          done
+
+          cat "$OUT/phase_intervals.csv"
+
+      - name: Stop capture and export HTTP2 events
+        if: always()
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_real"
+
+          if [ -f "$OUT/tcpdump.pid" ]; then
+            PID="$(cat "$OUT/tcpdump.pid")"
+            sudo kill -INT "$PID" 2>/dev/null || true
+            sleep 3
+          fi
+          sudo chown -R "$(id -u):$(id -g)" "$OUT" || true
+
+          test -s "$OUT/open5gs_sbi_real.pcap"
+
+          tshark -r "$OUT/open5gs_sbi_real.pcap"             -d tcp.port==7777,http2             -Y 'http2 || tcp.flags.reset == 1'             -T fields             -E header=y             -E separator=/t             -E occurrence=a             -E aggregator=,             -e frame.time_epoch             -e ip.src             -e ip.dst             -e tcp.stream             -e tcp.flags.reset             -e tcp.len             -e http2.streamid             -e http2.type             -e http2.header.name             -e http2.header.value             > "$OUT/sbi_http2_events.tsv"
+
+          test -s "$OUT/sbi_http2_events.tsv"
+          wc -l "$OUT/sbi_http2_events.tsv" | tee "$OUT/sbi_http2_event_count.txt"
+
+      - name: Build real SBI features
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_real"
+          python experiments/5g_kie_full/open5gs_real_features.py             --events "$OUT/sbi_http2_events.tsv"             --endpoints "$OUT/open5gs_endpoints.json"             --intervals "$OUT/phase_intervals.csv"             --output-dir "$OUT"             --window-s 2
+
+      - name: Analyze controlled perturbations
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_real"
+          python experiments/5g_kie_full/run_open5gs_real_analysis.py             --input "$OUT/real_sbi_global_features.csv"             --output-dir "$OUT"             --target-fpr 0.01             --seed 101
+
+          cat "$OUT/real_sbi_phase_metrics.csv"
+
+      - name: Collect service diagnostics
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          OUT="experiments/5g_kie_full/results_open5gs_real"
+          sudo journalctl --no-pager --since "-20 minutes"             -u open5gs-nrfd.service             -u open5gs-scpd.service             -u open5gs-udrd.service             -u open5gs-udmd.service             -u open5gs-ausfd.service             -u open5gs-pcfd.service             -u open5gs-nssfd.service             -u open5gs-smfd.service             -u open5gs-amfd.service             > "$OUT/open5gs_journal.txt" 2>&1 || true
+
+          systemctl --no-pager --full --type=service 'open5gs-*'             > "$OUT/open5gs_service_status.txt" 2>&1 || true
+
+      - name: Upload real Open5GS feature results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5g-open5gs-real-feature-results
+          path: experiments/5g_kie_full/results_open5gs_real/
+          retention-days: 30
