@@ -1,17 +1,6 @@
 name: 5g-kie-guarded-cascade
 
 on:
-  push:
-    branches:
-      - "experiment/5g-kie-full"
-    paths:
-      - "experiments/5g_kie_full/cascade_detector.py"
-      - "experiments/5g_kie_full/run_cascade_experiment.py"
-      - "experiments/5g_kie_full/plot_cascade_results.py"
-      - "experiments/5g_kie_full/simulator.py"
-      - "experiments/5g_kie_full/tests/test_cascade_detector.py"
-      - "experiments/5g_kie_full/CASCADE_ITERATION.md"
-      - ".github/workflows/5g-kie-guarded-cascade.yml"
   workflow_dispatch:
 
 jobs:
