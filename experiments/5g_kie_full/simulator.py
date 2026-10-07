@@ -30,6 +30,7 @@ BASE_RPS = {
 class AttackSpec:
     name: str
     severity: float = 1.0
+    report_alpha: float | None = None
 
 
 class FiveGCoreSimulator:
@@ -172,7 +173,14 @@ class FiveGCoreSimulator:
             label=0,
         )
 
-    def _apply_attack(self, row: dict, attack: str, severity: float, progress: float) -> None:
+    def _apply_attack(
+        self,
+        row: dict,
+        attack: str,
+        severity: float,
+        progress: float,
+        report_alpha: float | None = None,
+    ) -> None:
         rng = self.rng
         if attack == "compromised_lie":
             clean = row["observed_rps"]
@@ -182,14 +190,17 @@ class FiveGCoreSimulator:
             row["observed_rps"] *= 1.0 + 0.32 * severity
             row["report_rps"] = row["observed_rps"] * (1.0 + rng.normal(0.0, 0.01))
         elif attack == "adaptive_lie":
-            # Adaptive attacker partially mirrors the malicious SBI increase in
-            # its self-report, reducing (but not eliminating) report-vs-observed
-            # disagreement. 75% of the malicious delta is copied into the
-            # report; only 25% remains visible to the active consistency check.
+            # Parametric adaptive attacker. report_alpha=0 reproduces the
+            # lying-compromise endpoint; report_alpha=1 reproduces truthful
+            # mirroring of the malicious traffic delta. The default 0.75 keeps
+            # backward compatibility with the previous guarded-cascade run.
+            alpha = 0.75 if report_alpha is None else float(report_alpha)
+            alpha = min(max(alpha, 0.0), 1.0)
             clean = row["observed_rps"]
             row["observed_rps"] *= 1.0 + 0.32 * severity
             delta = row["observed_rps"] - clean
-            row["report_rps"] = (clean + 0.75 * delta) * (1.0 + rng.normal(0.0, 0.01))
+            row["report_rps"] = (clean + alpha * delta) * (1.0 + rng.normal(0.0, 0.01))
+            row["report_alpha"] = alpha
         elif attack == "slow_drift_lie":
             clean = row["observed_rps"]
             drift = 0.02 + (0.18 * severity * progress)
@@ -250,7 +261,13 @@ class FiveGCoreSimulator:
                 )
                 if attack is not None and meta["nf_id"] in targets:
                     progress = 0.0 if n_windows <= 1 else k / (n_windows - 1)
-                    self._apply_attack(row, scenario, severity, progress)
+                    self._apply_attack(
+                        row,
+                        scenario,
+                        severity,
+                        progress,
+                        report_alpha=attack.report_alpha,
+                    )
                 rows.append(row)
 
             self.window_id += 1
