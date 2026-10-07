@@ -69,6 +69,54 @@ def _tail_threshold(values: np.ndarray, alpha: float) -> float:
     return float(np.quantile(values, 1.0 - alpha))
 
 
+
+def fit_preserve_sbi_cascade(
+    train_benign: pd.DataFrame,
+    calibration_benign: pd.DataFrame,
+    seed: int,
+    active_fpr_budget: float,
+    context_fpr_budget: float = 0.0005,
+    sbi_target_fpr: float = 0.01,
+    name: str | None = None,
+) -> GuardedCascadeModel:
+    """Fit one SBI-preserving cascade with explicit auxiliary FPR budgets.
+
+    The SBI stage is calibrated exactly as the baseline. ACTIVE/KIE and CONTEXT
+    thresholds are estimated from benign calibration data only.
+    """
+    fusion_family = fit_decision_fusion_family(
+        train_benign,
+        calibration_benign,
+        target_fpr=sbi_target_fpr,
+        seed=seed + 7000,
+    )
+    channels = fusion_family["fusion_maxq"].channels
+    _, cal_tail = _split_calibration(calibration_benign)
+
+    q_report = channels["REPORT"].percentile_score(cal_tail)
+    q_kie = channels["KIE"].percentile_score(cal_tail)
+    q_temporal = channels["TEMPORAL"].percentile_score(cal_tail)
+    q_zone = channels["ZONE"].percentile_score(cal_tail)
+
+    active_null = np.maximum(q_report, q_kie)
+    context_null = np.maximum(q_temporal, q_zone)
+
+    sbi = fit_iforest(
+        train_benign,
+        calibration_benign,
+        features=FEATURE_SETS["SBI"],
+        target_fpr=sbi_target_fpr,
+        seed=seed,
+    )
+    model_name = name or f"cascade_active_{active_fpr_budget:.5f}"
+    return GuardedCascadeModel(
+        sbi_model=sbi,
+        channels=channels,
+        active_threshold=_tail_threshold(active_null, active_fpr_budget),
+        context_threshold=_tail_threshold(context_null, context_fpr_budget),
+        name=model_name,
+    )
+
 def fit_guarded_cascade_family(
     train_benign: pd.DataFrame,
     calibration_benign: pd.DataFrame,
