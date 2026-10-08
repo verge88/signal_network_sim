@@ -246,21 +246,31 @@ class TopologyEditor(tk.Frame):
         self.redraw()
 
     def _build_body(self) -> None:
-        body = ttk.Frame(self)
+        body = ttk.Frame(self, style="Studio.TFrame")
         body.pack(fill="both", expand=True)
+        self.split = ttk.Panedwindow(body, orient="horizontal")
+        self.split.pack(fill="both", expand=True)
 
-        left = ttk.Frame(body)
-        left.pack(side="left", fill="both", expand=True)
+        left = ttk.Frame(self.split)
+        self.split.add(left, weight=1)
         self.canvas = tk.Canvas(left, bg=self.pal["canvas_bg"], highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
         self._build_node_palette(left)
-        self.status = ttk.Label(left, text="", anchor="w", padding=(6, 3), style="Status.TLabel")
-        self.status.pack(fill="x")
+        footer = ttk.Frame(left, padding=(12, 7), style="StudioFooter.TFrame")
+        footer.pack(fill="x")
+        self.status = ttk.Label(footer, text="", anchor="w", style="Status.TLabel")
+        self.status.pack(side="left", fill="x", expand=True)
+        self.footer_stats = ttk.Label(footer, text="", style="StudioStats.TLabel")
+        self.footer_stats.pack(side="right")
 
-        right = ttk.Frame(body, width=self.view.panel_width)
+        right = ttk.Frame(self.split, width=self.view.panel_width)
         self.right = right
-        right.pack(side="right", fill="y")
+        self.split.add(right, weight=0)
         right.pack_propagate(False)
+        self.split.bind("<ButtonRelease-1>", self._remember_panel_width, add="+")
+        ttk.Label(right, text="ИНСПЕКТОР  /  ПАРАМЕТРЫ СЕТИ",
+                  style="StudioEyebrow.TLabel").pack(
+                      fill="x", padx=12, pady=(12, 8))
 
         nb = ttk.Notebook(right)
         nb.pack(fill="both", expand=True)
