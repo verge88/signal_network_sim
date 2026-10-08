@@ -32,6 +32,8 @@ from .theme import (THEMES, WINDOW_PRESETS, ViewSettings, apply_ttk_theme,
                     style_text, zone_color)
 from .view_settings import ViewSettingsDialog
 from .node_shapes import draw_symbol, symbol_svg, symbol_contains
+from .studio_styles import apply_studio_styles
+from .inspector_scroll import InspectorScroll
 
 
 class TopologyEditor(tk.Frame):
@@ -47,6 +49,7 @@ class TopologyEditor(tk.Frame):
         self.gs = apply_ui_scale(master, self.dpi if self.view.auto_dpi else 96.0,
                      self.view.ui_scale, self.view.font_scale)
         apply_ttk_theme(master, self.pal)
+        apply_studio_styles(master, self.pal)
         self.topo = template("diameter")
         self.path: str | None = None
         self.dirty = False
@@ -161,51 +164,123 @@ class TopologyEditor(tk.Frame):
         self.master.bind("<Control-l>", lambda e: self.open_ml_lab())
 
     def _build_toolbar(self) -> None:
-        bar = ttk.Frame(self, padding=(6, 4))
+        """A two-level workspace header keeps frequently used tools discoverable."""
+        bar = ttk.Frame(self, padding=(14, 10), style="Studio.TFrame")
         self.bar = bar
         bar.pack(side="top", fill="x")
-        ttk.Label(bar, text="Режим:").pack(side="left")
-        for val, label in (("select", "Выбор"), ("node", "Узел"),
-                           ("link", "Линк"), ("delete", "Удалить")):
-            ttk.Radiobutton(bar, text=label, value=val, variable=self.mode,
-                            command=self._reset_pending).pack(side="left", padx=2)
-        ttk.Separator(bar, orient="vertical").pack(side="left", fill="y", padx=8)
-        ttk.Label(bar, text="Тип узла:").pack(side="left")
-        self.type_box = ttk.Combobox(bar, textvariable=self.new_type, width=14,
-                                     state="readonly",
-                                     values=self.topo.node_type_names())
-        self.type_box.pack(side="left", padx=4)
-        ttk.Separator(bar, orient="vertical").pack(side="left", fill="y", padx=8)
-        ttk.Checkbutton(bar, text="Раскраска по зонам", variable=self.color_by_zone,
-                        command=self.redraw).pack(side="left")
-        ttk.Checkbutton(bar, text="Подписи", variable=self.show_labels,
-                        command=self.redraw).pack(side="left", padx=6)
-        ttk.Button(bar, text="Вписать в окно", command=self.fit_view).pack(side="right")
+
+        headline = ttk.Frame(bar, style="Studio.TFrame")
+        headline.pack(fill="x")
+        brand = ttk.Frame(headline, style="Studio.TFrame")
+        brand.pack(side="left")
+        ttk.Label(brand, text="◉  SIGNAL NETWORK", style="StudioBrand.TLabel").pack(anchor="w")
+        ttk.Label(brand, text="РЕДАКТОР СИГНАЛЬНЫХ СЕТЕЙ  /  SS7 · DIAMETER · SIP · 5G",
+                  style="StudioEyebrow.TLabel").pack(anchor="w", pady=(3, 0))
+        actions = ttk.Frame(headline, style="Studio.TFrame")
+        actions.pack(side="right")
+        ttk.Button(actions, text="Открыть", command=self.open_file,
+                   style="StudioSecondary.TButton").pack(side="left", padx=(0, 6))
+        ttk.Button(actions, text="Сохранить", command=self.save_file,
+                   style="StudioSecondary.TButton").pack(side="left", padx=(0, 6))
+        ttk.Button(actions, text="▶  Симуляция", command=self.run_simulation,
+                   style="StudioAccent.TButton").pack(side="left")
+
+        ttk.Separator(bar, orient="horizontal").pack(fill="x", pady=(10, 8))
+        row = ttk.Frame(bar, style="Studio.TFrame")
+        row.pack(fill="x")
+        ttk.Label(row, text="ИНСТРУМЕНТ", style="StudioEyebrow.TLabel").pack(
+            side="left", padx=(0, 8))
+        for value, label in (("select", "Выбор"), ("node", "Узел"),
+                             ("link", "Связь"), ("delete", "Удалить")):
+            ttk.Radiobutton(row, text=label, value=value, variable=self.mode,
+                            command=self._reset_pending,
+                            style="StudioMode.TRadiobutton").pack(side="left", padx=2)
+
+        zoom = ttk.Frame(row, style="Studio.TFrame")
+        zoom.pack(side="right")
+        ttk.Button(zoom, text="−", command=lambda: self.zoom_by(1 / 1.2),
+                   style="StudioSmall.TButton").pack(side="left")
+        self.zoom_lbl = ttk.Label(zoom, text="100%", width=6, anchor="center",
+                                  style="StudioZoom.TLabel")
+        self.zoom_lbl.pack(side="left", padx=4)
+        ttk.Button(zoom, text="+", command=lambda: self.zoom_by(1.2),
+                   style="StudioSmall.TButton").pack(side="left")
+        ttk.Button(zoom, text="Вписать", command=self.fit_view,
+                   style="StudioSecondary.TButton").pack(side="left", padx=(8, 0))
+
+        options = ttk.Frame(bar, style="Studio.TFrame")
+        options.pack(fill="x", pady=(8, 0))
+        ttk.Label(options, text="ТИП УЗЛА", style="StudioEyebrow.TLabel").pack(
+            side="left", padx=(0, 8))
+        self.type_box = ttk.Combobox(options, textvariable=self.new_type, width=16,
+                                     state="readonly", values=self.topo.node_type_names())
+        self.type_box.pack(side="left")
+        ttk.Checkbutton(options, text="Цвет по зонам", variable=self.color_by_zone,
+                        command=self.redraw).pack(side="left", padx=(14, 0))
+        ttk.Checkbutton(options, text="Подписи узлов", variable=self.show_labels,
+                        command=self.redraw).pack(side="left", padx=(10, 0))
+        ttk.Button(options, text="Горячие клавиши", command=self.show_shortcuts,
+                   style="StudioSmall.TButton").pack(side="right")
+
+    def show_shortcuts(self) -> None:
+        messagebox.showinfo(
+            "Горячие клавиши",
+            "Alt+1 — Выбор    Alt+2 — Узел    Alt+3 — Связь    Alt+4 — Удалить\n"
+            "Esc — сбросить инструмент / действие\n"
+            "Ctrl+N — Новая сеть    Ctrl+O — Открыть    Ctrl+S — Сохранить\n"
+            "F8 — Панель инструментов    F9 — Инспектор\n"
+            "F11 — Полный экран    F12 — Режим презентации\n"
+            "Колесо мыши — Масштаб    Shift+ЛКМ — Перемещение схемы\n"
+            "M — MASTER / SLAVE    C — Скомпрометирован    A — Автораскладка",
+            parent=self.master,
+        )
+
+    def choose_mode(self, mode: str) -> None:
+        self.mode.set(mode)
+        self._reset_pending()
+
+    def cancel_action(self) -> None:
+        self.mode.set("select")
+        self._pending_link = None
+        self._drag = None
+        self._marquee = None
+        self.redraw()
 
     def _build_body(self) -> None:
-        body = ttk.Frame(self)
+        body = ttk.Frame(self, style="Studio.TFrame")
         body.pack(fill="both", expand=True)
+        self.split = ttk.Panedwindow(body, orient="horizontal")
+        self.split.pack(fill="both", expand=True)
 
-        left = ttk.Frame(body)
-        left.pack(side="left", fill="both", expand=True)
+        left = ttk.Frame(self.split)
+        self.split.add(left, weight=1)
         self.canvas = tk.Canvas(left, bg=self.pal["canvas_bg"], highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
         self._build_node_palette(left)
-        self.status = ttk.Label(left, text="", anchor="w", padding=(6, 3), style="Status.TLabel")
-        self.status.pack(fill="x")
+        footer = ttk.Frame(left, padding=(12, 7), style="StudioFooter.TFrame")
+        footer.pack(fill="x")
+        self.status = ttk.Label(footer, text="", anchor="w", style="Status.TLabel")
+        self.status.pack(side="left", fill="x", expand=True)
+        self.footer_stats = ttk.Label(footer, text="", style="StudioStats.TLabel")
+        self.footer_stats.pack(side="right")
 
-        right = ttk.Frame(body, width=self.view.panel_width)
+        right = ttk.Frame(self.split, width=self.view.panel_width)
         self.right = right
-        right.pack(side="right", fill="y")
+        self.split.add(right, weight=0)
         right.pack_propagate(False)
+        self.split.bind("<ButtonRelease-1>", self._remember_panel_width, add="+")
+        ttk.Label(right, text="ИНСПЕКТОР  /  ПАРАМЕТРЫ СЕТИ",
+                  style="StudioEyebrow.TLabel").pack(
+                      fill="x", padx=12, pady=(12, 8))
 
         nb = ttk.Notebook(right)
         nb.pack(fill="both", expand=True)
-        self.prop_tab = ttk.Frame(nb, padding=8)
+        self.prop_scroll = InspectorScroll(nb, self.pal)
+        self.prop_tab = self.prop_scroll.content
         self.scen_tab = ttk.Frame(nb, padding=8)
         self.sim_tab = ttk.Frame(nb, padding=8)
         self.log_tab = ttk.Frame(nb, padding=4)
-        nb.add(self.prop_tab, text="Свойства")
+        nb.add(self.prop_scroll, text="Свойства")
         nb.add(self.scen_tab, text="Сценарии")
         nb.add(self.sim_tab, text="Параметры")
         nb.add(self.log_tab, text="Журнал")
@@ -326,6 +401,10 @@ class TopologyEditor(tk.Frame):
         self.master.bind("<Control-0>", lambda e: self.bump_ui_scale(None))
         self.master.bind("<Control-KP_Add>", lambda e: self.bump_ui_scale(+0.1))
         self.master.bind("<Control-KP_Subtract>", lambda e: self.bump_ui_scale(-0.1))
+        for number, mode in enumerate(("select", "node", "link", "delete"), 1):
+            self.master.bind(f"<Alt-Key-{number}>",
+                             lambda e, value=mode: self.choose_mode(value))
+        self.master.bind("<Escape>", lambda e: self.cancel_action())
 
     def _on_canvas_configure(self, ev) -> None:
         self.redraw()
@@ -348,17 +427,21 @@ class TopologyEditor(tk.Frame):
         base_dpi = self.dpi if view.auto_dpi else 96.0
         self.gs = apply_ui_scale(self.master, base_dpi, view.ui_scale, view.font_scale)
         apply_ttk_theme(self.master, self.pal)
+        apply_studio_styles(self.master, self.pal)
         for menu in self._menus:
             style_menu(menu, self.pal)
         for text in self._texts:
             style_text(text, self.pal)
+        self.configure(bg=self.pal["panel_bg"])
         self.canvas.configure(bg=self.pal["canvas_bg"])
-        self.right.configure(width=max(200, int(view.panel_width * self.gs)))
-        self.master.minsize(int(760 * self.gs), int(520 * self.gs))
-        if view.panel_visible and not self.right.winfo_ismapped():
-            self.right.pack(side="right", fill="y")
-        elif not view.panel_visible and self.right.winfo_ismapped():
-            self.right.pack_forget()
+        self.prop_scroll.set_palette(self.pal)
+        self.right.configure(width=max(300, int(view.panel_width * self.gs)))
+        self.master.minsize(int(800 * self.gs), int(550 * self.gs))
+        visible_in_split = str(self.right) in self.split.panes()
+        if view.panel_visible and not visible_in_split:
+            self.split.add(self.right, weight=0)
+        elif not view.panel_visible and visible_in_split:
+            self.split.forget(self.right)
         if view.toolbar_visible and not self.bar.winfo_ismapped():
             self.bar.pack(side="top", fill="x")
         elif not view.toolbar_visible and self.bar.winfo_ismapped():
@@ -413,6 +496,13 @@ class TopologyEditor(tk.Frame):
         except tk.TclError:
             messagebox.showerror("Размер окна", f"Некорректная геометрия: {geometry}")
         self.after(60, self.fit_view)
+
+    def _remember_panel_width(self, _event=None) -> None:
+        """Persist the sash position when the inspector is resized."""
+        if self.view.panel_visible and self.right.winfo_width() > 0:
+            self.view.panel_width = max(
+                300, round(self.right.winfo_width() / max(0.5, self.gs))
+            )
 
     def toggle_panel(self) -> None:
         self.view.panel_visible = not self.view.panel_visible
@@ -553,14 +643,17 @@ class TopologyEditor(tk.Frame):
 
     def _update_status(self) -> None:
         m = self.topo.metrics()
-        name = os.path.basename(self.path) if self.path else "без имени"
+        name = os.path.basename(self.path) if self.path else "Новая топология"
+        marker = " • не сохранено" if self.dirty else ""
         self.status.config(
-            text=f"{PROTOCOLS[self.topo.protocol]['label']} | {name}"
-                 f"{'*' if self.dirty else ''} | узлов: {m['nodes']}, "
-                 f"линков: {m['links']}, мастеров: {m['masters']}, "
-                  f"компонент: {m['components']} | зум {self.scale:.2f} | "
-                  f"UI ×{self.view.ui_scale:.2f} | {THEMES[self.view.theme]['label']}",
-              style="Status.TLabel")
+            text=f"{PROTOCOLS[self.topo.protocol]['label']}  /  {name}{marker}"
+                 f"   ·   UI ×{self.view.ui_scale:.2f}"
+        )
+        self.footer_stats.config(
+            text=f"Узлы {m['nodes']}    Связи {m['links']}"
+                 f"    MASTER {m['masters']}    Компоненты {m['components']}"
+        )
+        self.zoom_lbl.config(text=f"{self.scale * 100:.0f}%")
 
     def _update_metrics(self) -> None:
         m = self.topo.metrics()
@@ -624,6 +717,9 @@ class TopologyEditor(tk.Frame):
                 self.redraw()
 
     def on_drag(self, ev) -> None:
+        if ev.state & 0x0001 and hasattr(self, "_pan"):
+            self.on_pan_move(ev)
+            return
         if self._marquee:
             x0, y0, _, _ = self._marquee
             self._marquee = (x0, y0, ev.x, ev.y)
@@ -642,6 +738,8 @@ class TopologyEditor(tk.Frame):
         self.redraw()
 
     def on_release(self, ev) -> None:
+        if hasattr(self, "_pan"):
+            del self._pan
         if self._drag:
             self._drag = None
             self.mark_dirty()
@@ -702,15 +800,22 @@ class TopologyEditor(tk.Frame):
         self.offset = [ox + ev.x - sx, oy + ev.y - sy]
         self.redraw()
 
+    def zoom_by(self, factor: float, center: tuple[float, float] | None = None) -> None:
+        """Zoom around the pointer or the canvas center without jumping."""
+        x, y = center if center is not None else (
+            self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2
+        )
+        wx, wy = self.s2w(x, y)
+        self.scale = max(0.2, min(4.0, self.scale * factor))
+        nx, ny = self.w2s(wx, wy)
+        self.offset[0] += x - nx
+        self.offset[1] += y - ny
+        self.redraw()
+
     def on_wheel(self, ev, delta: int | None = None) -> None:
         d = delta if delta is not None else ev.delta
-        factor = 1.1 if d > 0 else 1 / 1.1
-        wx, wy = self.s2w(ev.x, ev.y)
-        self.scale = max(0.2, min(4.0, self.scale * factor))
-        nx_, ny_ = self.w2s(wx, wy)
-        self.offset[0] += ev.x - nx_
-        self.offset[1] += ev.y - ny_
-        self.redraw()
+        if d:
+            self.zoom_by(1.1 if d > 0 else 1 / 1.1, (ev.x, ev.y))
 
     # ── действия ───────────────────────────────────────────────────
     def _reset_pending(self) -> None:
@@ -831,6 +936,7 @@ class TopologyEditor(tk.Frame):
     def _show_properties(self) -> None:
         for w in self.prop_tab.winfo_children():
             w.destroy()
+        self.prop_tab.columnconfigure(1, weight=1)
         if not self.selection:
             ttk.Label(self.prop_tab, wraplength=300, style="Hint.TLabel",
                       text="Ничего не выбрано.\n\nВыберите узел или линк на схеме, "
@@ -843,7 +949,7 @@ class TopologyEditor(tk.Frame):
             ttk.Label(self.prop_tab, text=label).grid(row=i, column=0, sticky="w", pady=2)
             var = tk.StringVar(value=str(value))
             self._fields[key] = var
-            ttk.Entry(self.prop_tab, textvariable=var, width=20).grid(
+            ttk.Entry(self.prop_tab, textvariable=var, width=14).grid(
                 row=i, column=1, sticky="e")
 
         if kind == "node":
@@ -880,7 +986,7 @@ class TopologyEditor(tk.Frame):
             self._compromised_var = cvar
             ttk.Label(self.prop_tab, text="interface_dist (JSON)").grid(
                 row=next_row + 1, column=0, columnspan=2, sticky="w", pady=(6, 0))
-            txt = tk.Text(self.prop_tab, height=7, width=34, font="TkFixedFont")
+            txt = tk.Text(self.prop_tab, height=7, width=28, font="TkFixedFont")
             txt.insert("1.0", json.dumps(n.interface_dist, indent=1))
             txt.grid(row=next_row + 2, column=0, columnspan=2, sticky="ew")
             self._iface_text = txt
