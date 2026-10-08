@@ -32,6 +32,7 @@ from .theme import (THEMES, WINDOW_PRESETS, ViewSettings, apply_ttk_theme,
                     style_text, zone_color)
 from .view_settings import ViewSettingsDialog
 from .node_shapes import draw_symbol, symbol_svg, symbol_contains
+from .studio_styles import apply_studio_styles
 
 
 class TopologyEditor(tk.Frame):
@@ -47,6 +48,7 @@ class TopologyEditor(tk.Frame):
         self.gs = apply_ui_scale(master, self.dpi if self.view.auto_dpi else 96.0,
                      self.view.ui_scale, self.view.font_scale)
         apply_ttk_theme(master, self.pal)
+        apply_studio_styles(master, self.pal)
         self.topo = template("diameter")
         self.path: str | None = None
         self.dirty = False
@@ -348,6 +350,7 @@ class TopologyEditor(tk.Frame):
         base_dpi = self.dpi if view.auto_dpi else 96.0
         self.gs = apply_ui_scale(self.master, base_dpi, view.ui_scale, view.font_scale)
         apply_ttk_theme(self.master, self.pal)
+        apply_studio_styles(self.master, self.pal)
         for menu in self._menus:
             style_menu(menu, self.pal)
         for text in self._texts:
