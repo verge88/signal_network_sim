@@ -1,0 +1,114 @@
+name: 5g-open5gs-v2-archived-replay
+
+on:
+  push:
+    branches:
+      - "experiment/5g-kie-full"
+    paths:
+      - ".github/workflows/5g-open5gs-v2-archived-replay.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  replay:
+    name: Re-evaluate archived seed ${{ matrix.seed }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [10021, 11047, 12011]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install frozen replay dependencies
+        run: python -m pip install -q -r experiments/5g_kie_full/requirements.txt pytest
+
+      - name: Verify regression tests
+        run: |
+          python -m pytest -q \
+            experiments/5g_kie_full/tests/test_open5gs_event_boundary_audit.py \
+            experiments/5g_kie_full/tests/test_open5gs_concealment_v2.py \
+            experiments/5g_kie_full/tests/test_open5gs_concealment_v2_aggregate.py
+
+      - name: Download original failed CI artifact without recollecting experiments
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-concealment-v2-${{ matrix.seed }}
+          run-id: 37802205357
+          github-token: ${{ github.token }}
+          path: replay/source
+
+      - name: Reconstruct evaluation labels only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/5g_kie_full/audit_open5gs_event_boundaries.py \
+            --artifact-dir replay/source --output-dir replay/work \
+            --seed ${{ matrix.seed }} \
+            --event-window-only-replay
+          cat replay/work/boundary_audit_summary.json
+
+      - name: Evaluate v1 versus v2 without any new HMAC assertion
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/5g_kie_full/run_open5gs_concealment_v2.py \
+            --original-events replay/source/concealment_events.csv \
+            --boundary-audit replay/work/boundary_audit_events.csv \
+            --reports replay/source/kie_reports.jsonl \
+            --seed ${{ matrix.seed }} \
+            --output-dir replay/work \
+            --offline-no-verify
+          grep -q 'NOT_REVERIFIED_OFFLINE' replay/work/v2_concealment_summary.json
+          echo '=== per-seed truth/hidden results ==='
+          cat replay/work/v2_concealment_phase_metrics.csv
+          echo '=== changed decisions ==='
+          cat replay/work/v2_alarm_deltas.csv
+
+      - name: Upload independently scored retrospective comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5g-open5gs-concealment-v2-${{ matrix.seed }}
+          path: replay/work/
+          retention-days: 30
+          if-no-files-found: warn
+
+  aggregate:
+    name: Pool archived v1-v2 comparisons and verify missing-event diagnostics
+    needs: replay
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m pip install -q pandas numpy
+
+      - name: Download three per-seed v2 comparisons
+        uses: actions/download-artifact@v4
+        with:
+          pattern: 5g-open5gs-concealment-v2-*
+          path: replay/seed_outputs
+
+      - name: Aggregate outcomes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/5g_kie_full/aggregate_open5gs_concealment_v2.py \
+            --input-root replay/seed_outputs \
+            --output-dir replay/pooled \
+            --seeds 10021 11047 12011
+          cat replay/pooled/v2_pooled_phase_metrics.csv
+          cat replay/pooled/v2_pooled_summary.json
+
+      - name: Archive pooled v1-v2 analysis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5g-open5gs-concealment-v2-retrospective-pooled
+          path: replay/pooled/
+          retention-days: 30
+          if-no-files-found: warn
