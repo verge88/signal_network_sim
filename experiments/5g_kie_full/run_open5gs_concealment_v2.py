@@ -93,7 +93,7 @@ def run(
     original_events_path: Path,
     boundary_audit_path: Path,
     reports_path: Path,
-    secret: bytes,
+    secret: bytes | None,
     output_dir: Path,
     seed: int,
 ) -> dict:
@@ -163,7 +163,7 @@ def run(
 
     summary = {
         "seed": seed,
-        "signature_check": "LIVE_HMAC_VERIFIED",
+        "signature_check": ("LIVE_HMAC_VERIFIED" if secret is not None else "NOT_REVERIFIED_OFFLINE"),
         "detector_provenance": {
             "nrF_cutoff_previous_s": 3.0,
             "nrF_cutoff_v2_s": NRF_ACK_LAG_S,
@@ -178,6 +178,7 @@ def run(
         "phase_metrics": metrics,
         "limitations": [
             "The lag adjustment was motivated by an error in the earlier prospective run; performance on that run is exploratory only.",
+            "Offline replay checks no HMAC: the unknown sidecar key was not archived, and report-level valid_signature is a placeholder only.",
             "No phase/fault-injection tags or ground truth are inputs to the detector.",
             "A 4-second window can overlap report-mask recovery for very short NRF bursts; such a regression must be measured in new randomized testbeds.",
             "Observed CPU ticks are not a request accounting counter; silence does not cryptographically prove concealment.",
@@ -197,13 +198,19 @@ def main() -> None:
     p.add_argument("--reports", type=Path, required=True)
     p.add_argument("--output-dir", type=Path, required=True)
     p.add_argument("--seed", type=int, required=True)
+    p.add_argument(
+        "--offline-no-verify", action="store_true",
+        help="Explicit offline artifact replay; HMAC secret unavailable and NOT re-verified",
+    )
     args = p.parse_args()
     value = os.environ.get("OPEN5GS_KIE_SECRET", "")
-    if not value:
-        raise SystemExit("missing runner-only OPEN5GS_KIE_SECRET for independent live signature verification")
+    if not args.offline_no_verify and not value:
+        raise SystemExit("runner-only OPEN5GS_KIE_SECRET is required for live verification")
+    if args.offline_no_verify and value:
+        raise SystemExit("refusing offline bypass with a live verification key available")
     result = run(
         args.original_events, args.boundary_audit, args.reports,
-        value.encode(), args.output_dir, args.seed
+        None if args.offline_no_verify else value.encode(), args.output_dir, args.seed
     )
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
