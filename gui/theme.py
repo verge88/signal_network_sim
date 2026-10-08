@@ -12,26 +12,26 @@ CONFIG_PATH = os.path.join(CONFIG_DIR, "gui_view.json")
 
 THEMES: dict[str, dict] = {
     "light": {
-        "label": "Светлая", "ttk": "clam", "canvas_bg": "#f7f8fa",
+        "label": "Светлая", "ttk": "clam", "canvas_bg": "#f6f9fe",
         "grid": "#e8ebf1", "grid_major": "#d5dae4", "link": "#8d97a8",
         "link_hi": "#d04a4a", "node_text": "#ffffff", "node_label": "#2c313a",
         "outline": "#5a6273", "outline_master": "#1b1b1b",
         "outline_compromised": "#d04a4a", "sel_ring": "#d04a4a",
-        "pending": "#2f8f3f", "node_shade": 1.0, "panel_bg": "#f0f1f4",
+        "pending": "#2f8f3f", "node_shade": 1.0, "panel_bg": "#ffffff",
         "panel_fg": "#1d1f24", "field_bg": "#ffffff", "field_fg": "#1d1f24",
-        "button_bg": "#e2e5ea", "tab_bg": "#dfe3ea", "accent": "#3f7fc4",
+        "button_bg": "#edf2fa", "tab_bg": "#e9eff9", "accent": "#2563eb",
         "status_fg": "#4a5160", "hint_fg": "#5b6270",
         "zones": ["#4a7fb5", "#b5744a", "#5aa06a", "#8a5ab5", "#b5525a", "#4aa8a8", "#9a9a4a", "#7a7a8a"],
     },
     "dark": {
-        "label": "Тёмная", "ttk": "clam", "canvas_bg": "#171b22",
+        "label": "Тёмная", "ttk": "clam", "canvas_bg": "#0b1322",
         "grid": "#1f252e", "grid_major": "#2b333f", "link": "#5d6878",
         "link_hi": "#ff6b6b", "node_text": "#f2f5fa", "node_label": "#b6c0ce",
         "outline": "#7d8899", "outline_master": "#e8edf5",
         "outline_compromised": "#ff6b6b", "sel_ring": "#ffb347",
-        "pending": "#4bd07a", "node_shade": 0.92, "panel_bg": "#1e232b",
-        "panel_fg": "#e4e9f1", "field_bg": "#12161c", "field_fg": "#e4e9f1",
-        "button_bg": "#2a313b", "tab_bg": "#232a33", "accent": "#5b9fe0",
+        "pending": "#4bd07a", "node_shade": 0.96, "panel_bg": "#111c2e",
+        "panel_fg": "#e8eef9", "field_bg": "#0c1525", "field_fg": "#e8eef9",
+        "button_bg": "#1e3049", "tab_bg": "#19283e", "accent": "#4f9cf9",
         "status_fg": "#9aa5b5", "hint_fg": "#8a95a5",
         "zones": ["#5b9fe0", "#e09a5b", "#63c98a", "#b184e8", "#e8737f", "#4fc8c8", "#c9c46a", "#93a0b2"],
     },
@@ -192,7 +192,7 @@ def style_text(widget: tk.Text, pal: dict) -> None:
 
 @dataclass
 class ViewSettings:
-    theme: str = "light"
+    theme: str = "dark"
     ui_scale: float = 1.0
     font_scale: float = 1.0
     auto_dpi: bool = True
