@@ -80,7 +80,20 @@ def parse_nrf_journal(
                 entry = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            msg = str(entry.get("MESSAGE",""))
+            # systemd JSON export represents binary/non-UTF8 journal fields as
+            # lists of byte values. Open5GS emits ANSI escape codes in MESSAGE,
+            # so a plain str(list) loses all searchable event text.
+            raw_msg = entry.get("MESSAGE", "")
+            if isinstance(raw_msg, list) and all(
+                isinstance(v, int) and 0 <= v <= 255 for v in raw_msg
+            ):
+                msg = bytes(raw_msg).decode("utf-8", errors="replace")
+            elif isinstance(raw_msg, str):
+                msg = raw_msg
+            else:
+                continue
+            if entry.get("_SYSTEMD_UNIT") not in (None, "open5gs-nrfd.service"):
+                continue
             timestamp_us = entry.get("__REALTIME_TIMESTAMP")
             if timestamp_us is None:
                 continue
