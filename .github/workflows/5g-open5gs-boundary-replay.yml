@@ -1,0 +1,117 @@
+name: 5g-open5gs-boundary-replay
+
+on:
+  push:
+    branches:
+      - "experiment/5g-kie-full"
+    paths:
+      - "experiments/5g_kie_full/audit_open5gs_event_boundaries.py"
+      - "experiments/5g_kie_full/aggregate_open5gs_boundary_audit.py"
+      - "experiments/5g_kie_full/tests/test_open5gs_event_boundary_audit.py"
+      - "experiments/5g_kie_full/tests/test_open5gs_boundary_aggregate.py"
+      - "experiments/5g_kie_full/OPEN5GS_BOUNDARY_REPLAY.md"
+      - ".github/workflows/5g-open5gs-boundary-replay.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  replay:
+    name: Replay original seed ${{ matrix.seed }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [1729, 2707, 4051]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install audit dependencies
+        run: python -m pip install -q pandas numpy pytest
+
+      - name: Run regression tests
+        run: |
+          python -m pytest -q \
+            experiments/5g_kie_full/tests/test_open5gs_event_boundary_audit.py \
+            experiments/5g_kie_full/tests/test_open5gs_boundary_aggregate.py
+
+      - name: Retrieve frozen original-run artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-concealment-replication-${{ matrix.seed }}
+          run-id: 37767915524
+          github-token: ${{ github.token }}
+          path: replay/source
+
+      - name: Audit packet timestamps without changing detector alarms
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/5g_kie_full/audit_open5gs_event_boundaries.py \
+            --artifact-dir replay/source \
+            --seed ${{ matrix.seed }} \
+            --output-dir replay/out
+          echo "=== per-run audit diagnostics ==="
+          cat replay/out/boundary_audit_summary.json
+          echo "=== original unlabeled and boundary reassigned events ==="
+          python - <<'PY'
+          import pandas as pd
+          df=pd.read_csv("replay/out/boundary_audit_events.csv")
+          cols=[
+              "ts","nf","phase","cycle","audit_phase","audit_cycle",
+              "audit_status","raw_requests","assigned_requests",
+              "phase_fraction","concealment_alarm"
+          ]
+          print(df.loc[df["legacy_unlabeled"], cols].to_string(index=False))
+          PY
+
+      - name: Upload per-run audit artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5g-open5gs-boundary-replay-${{ matrix.seed }}
+          path: replay/out/
+          retention-days: 30
+          if-no-files-found: warn
+
+  aggregate:
+    name: Pool event-level audit across independent runs
+    needs: replay
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install audit dependencies
+        run: python -m pip install -q pandas numpy pytest
+
+      - name: Download all replay analyses
+        uses: actions/download-artifact@v4
+        with:
+          pattern: 5g-open5gs-boundary-replay-*
+          path: pooled/input
+
+      - name: Aggregate strict and unresolved evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/5g_kie_full/aggregate_open5gs_boundary_audit.py \
+            --input-root pooled/input \
+            --output-dir pooled/out \
+            --seeds 1729 2707 4051
+          echo "=== pooled phase metrics ==="
+          cat pooled/out/pooled_phase_metrics.csv
+          echo "=== per-run phase metrics ==="
+          cat pooled/out/pooled_per_runner_metrics.csv
+
+      - name: Upload aggregate audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5g-open5gs-boundary-audit-pooled
+          path: pooled/out/
+          retention-days: 30
+          if-no-files-found: warn
