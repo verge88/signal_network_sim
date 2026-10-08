@@ -636,14 +636,17 @@ class TopologyEditor(tk.Frame):
 
     def _update_status(self) -> None:
         m = self.topo.metrics()
-        name = os.path.basename(self.path) if self.path else "без имени"
+        name = os.path.basename(self.path) if self.path else "Новая топология"
+        marker = " • не сохранено" if self.dirty else ""
         self.status.config(
-            text=f"{PROTOCOLS[self.topo.protocol]['label']} | {name}"
-                 f"{'*' if self.dirty else ''} | узлов: {m['nodes']}, "
-                 f"линков: {m['links']}, мастеров: {m['masters']}, "
-                  f"компонент: {m['components']} | зум {self.scale:.2f} | "
-                  f"UI ×{self.view.ui_scale:.2f} | {THEMES[self.view.theme]['label']}",
-              style="Status.TLabel")
+            text=f"{PROTOCOLS[self.topo.protocol]['label']}  /  {name}{marker}"
+                 f"   ·   UI ×{self.view.ui_scale:.2f}"
+        )
+        self.footer_stats.config(
+            text=f"Узлы {m['nodes']}    Связи {m['links']}"
+                 f"    MASTER {m['masters']}    Компоненты {m['components']}"
+        )
+        self.zoom_lbl.config(text=f"{self.scale * 100:.0f}%")
 
     def _update_metrics(self) -> None:
         m = self.topo.metrics()
