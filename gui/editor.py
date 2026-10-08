@@ -399,6 +399,10 @@ class TopologyEditor(tk.Frame):
         self.master.bind("<Control-0>", lambda e: self.bump_ui_scale(None))
         self.master.bind("<Control-KP_Add>", lambda e: self.bump_ui_scale(+0.1))
         self.master.bind("<Control-KP_Subtract>", lambda e: self.bump_ui_scale(-0.1))
+        for number, mode in enumerate(("select", "node", "link", "delete"), 1):
+            self.master.bind(f"<Alt-Key-{number}>",
+                             lambda e, value=mode: self.choose_mode(value))
+        self.master.bind("<Escape>", lambda e: self.cancel_action())
 
     def _on_canvas_configure(self, ev) -> None:
         self.redraw()
@@ -710,6 +714,9 @@ class TopologyEditor(tk.Frame):
                 self.redraw()
 
     def on_drag(self, ev) -> None:
+        if ev.state & 0x0001 and hasattr(self, "_pan"):
+            self.on_pan_move(ev)
+            return
         if self._marquee:
             x0, y0, _, _ = self._marquee
             self._marquee = (x0, y0, ev.x, ev.y)
@@ -728,6 +735,8 @@ class TopologyEditor(tk.Frame):
         self.redraw()
 
     def on_release(self, ev) -> None:
+        if hasattr(self, "_pan"):
+            del self._pan
         if self._drag:
             self._drag = None
             self.mark_dirty()
@@ -788,15 +797,22 @@ class TopologyEditor(tk.Frame):
         self.offset = [ox + ev.x - sx, oy + ev.y - sy]
         self.redraw()
 
+    def zoom_by(self, factor: float, center: tuple[float, float] | None = None) -> None:
+        """Zoom around the pointer or the canvas center without jumping."""
+        x, y = center if center is not None else (
+            self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2
+        )
+        wx, wy = self.s2w(x, y)
+        self.scale = max(0.2, min(4.0, self.scale * factor))
+        nx, ny = self.w2s(wx, wy)
+        self.offset[0] += x - nx
+        self.offset[1] += y - ny
+        self.redraw()
+
     def on_wheel(self, ev, delta: int | None = None) -> None:
         d = delta if delta is not None else ev.delta
-        factor = 1.1 if d > 0 else 1 / 1.1
-        wx, wy = self.s2w(ev.x, ev.y)
-        self.scale = max(0.2, min(4.0, self.scale * factor))
-        nx_, ny_ = self.w2s(wx, wy)
-        self.offset[0] += ev.x - nx_
-        self.offset[1] += ev.y - ny_
-        self.redraw()
+        if d:
+            self.zoom_by(1.1 if d > 0 else 1 / 1.1, (ev.x, ev.y))
 
     # ── действия ───────────────────────────────────────────────────
     def _reset_pending(self) -> None:
