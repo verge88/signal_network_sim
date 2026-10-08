@@ -163,26 +163,87 @@ class TopologyEditor(tk.Frame):
         self.master.bind("<Control-l>", lambda e: self.open_ml_lab())
 
     def _build_toolbar(self) -> None:
-        bar = ttk.Frame(self, padding=(6, 4))
+        """A two-level workspace header keeps frequently used tools discoverable."""
+        bar = ttk.Frame(self, padding=(14, 10), style="Studio.TFrame")
         self.bar = bar
         bar.pack(side="top", fill="x")
-        ttk.Label(bar, text="Режим:").pack(side="left")
-        for val, label in (("select", "Выбор"), ("node", "Узел"),
-                           ("link", "Линк"), ("delete", "Удалить")):
-            ttk.Radiobutton(bar, text=label, value=val, variable=self.mode,
-                            command=self._reset_pending).pack(side="left", padx=2)
-        ttk.Separator(bar, orient="vertical").pack(side="left", fill="y", padx=8)
-        ttk.Label(bar, text="Тип узла:").pack(side="left")
-        self.type_box = ttk.Combobox(bar, textvariable=self.new_type, width=14,
-                                     state="readonly",
-                                     values=self.topo.node_type_names())
-        self.type_box.pack(side="left", padx=4)
-        ttk.Separator(bar, orient="vertical").pack(side="left", fill="y", padx=8)
-        ttk.Checkbutton(bar, text="Раскраска по зонам", variable=self.color_by_zone,
-                        command=self.redraw).pack(side="left")
-        ttk.Checkbutton(bar, text="Подписи", variable=self.show_labels,
-                        command=self.redraw).pack(side="left", padx=6)
-        ttk.Button(bar, text="Вписать в окно", command=self.fit_view).pack(side="right")
+
+        headline = ttk.Frame(bar, style="Studio.TFrame")
+        headline.pack(fill="x")
+        brand = ttk.Frame(headline, style="Studio.TFrame")
+        brand.pack(side="left")
+        ttk.Label(brand, text="◉  SIGNAL NETWORK", style="StudioBrand.TLabel").pack(anchor="w")
+        ttk.Label(brand, text="РЕДАКТОР СИГНАЛЬНЫХ СЕТЕЙ  /  SS7 · DIAMETER · SIP · 5G",
+                  style="StudioEyebrow.TLabel").pack(anchor="w", pady=(3, 0))
+        actions = ttk.Frame(headline, style="Studio.TFrame")
+        actions.pack(side="right")
+        ttk.Button(actions, text="Открыть", command=self.open_file,
+                   style="StudioSecondary.TButton").pack(side="left", padx=(0, 6))
+        ttk.Button(actions, text="Сохранить", command=self.save_file,
+                   style="StudioSecondary.TButton").pack(side="left", padx=(0, 6))
+        ttk.Button(actions, text="▶  Симуляция", command=self.run_simulation,
+                   style="StudioAccent.TButton").pack(side="left")
+
+        ttk.Separator(bar, orient="horizontal").pack(fill="x", pady=(10, 8))
+        row = ttk.Frame(bar, style="Studio.TFrame")
+        row.pack(fill="x")
+        ttk.Label(row, text="ИНСТРУМЕНТ", style="StudioEyebrow.TLabel").pack(
+            side="left", padx=(0, 8))
+        for value, label in (("select", "Выбор"), ("node", "Узел"),
+                             ("link", "Связь"), ("delete", "Удалить")):
+            ttk.Radiobutton(row, text=label, value=value, variable=self.mode,
+                            command=self._reset_pending,
+                            style="StudioMode.TRadiobutton").pack(side="left", padx=2)
+
+        zoom = ttk.Frame(row, style="Studio.TFrame")
+        zoom.pack(side="right")
+        ttk.Button(zoom, text="−", command=lambda: self.zoom_by(1 / 1.2),
+                   style="StudioSmall.TButton").pack(side="left")
+        self.zoom_lbl = ttk.Label(zoom, text="100%", width=6, anchor="center",
+                                  style="StudioZoom.TLabel")
+        self.zoom_lbl.pack(side="left", padx=4)
+        ttk.Button(zoom, text="+", command=lambda: self.zoom_by(1.2),
+                   style="StudioSmall.TButton").pack(side="left")
+        ttk.Button(zoom, text="Вписать", command=self.fit_view,
+                   style="StudioSecondary.TButton").pack(side="left", padx=(8, 0))
+
+        options = ttk.Frame(bar, style="Studio.TFrame")
+        options.pack(fill="x", pady=(8, 0))
+        ttk.Label(options, text="ТИП УЗЛА", style="StudioEyebrow.TLabel").pack(
+            side="left", padx=(0, 8))
+        self.type_box = ttk.Combobox(options, textvariable=self.new_type, width=16,
+                                     state="readonly", values=self.topo.node_type_names())
+        self.type_box.pack(side="left")
+        ttk.Checkbutton(options, text="Цвет по зонам", variable=self.color_by_zone,
+                        command=self.redraw).pack(side="left", padx=(14, 0))
+        ttk.Checkbutton(options, text="Подписи узлов", variable=self.show_labels,
+                        command=self.redraw).pack(side="left", padx=(10, 0))
+        ttk.Button(options, text="Горячие клавиши", command=self.show_shortcuts,
+                   style="StudioSmall.TButton").pack(side="right")
+
+    def show_shortcuts(self) -> None:
+        messagebox.showinfo(
+            "Горячие клавиши",
+            "Alt+1 — Выбор    Alt+2 — Узел    Alt+3 — Связь    Alt+4 — Удалить\\n"
+            "Esc — сбросить инструмент / действие\\n"
+            "Ctrl+N — Новая сеть    Ctrl+O — Открыть    Ctrl+S — Сохранить\\n"
+            "F8 — Панель инструментов    F9 — Инспектор\\n"
+            "F11 — Полный экран    F12 — Режим презентации\\n"
+            "Колесо мыши — Масштаб    Shift+ЛКМ — Перемещение схемы\\n"
+            "M — MASTER / SLAVE    C — Скомпрометирован    A — Автораскладка",
+            parent=self.master,
+        )
+
+    def choose_mode(self, mode: str) -> None:
+        self.mode.set(mode)
+        self._reset_pending()
+
+    def cancel_action(self) -> None:
+        self.mode.set("select")
+        self._pending_link = None
+        self._drag = None
+        self._marquee = None
+        self.redraw()
 
     def _build_body(self) -> None:
         body = ttk.Frame(self)
