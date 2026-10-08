@@ -426,13 +426,15 @@ class TopologyEditor(tk.Frame):
             style_menu(menu, self.pal)
         for text in self._texts:
             style_text(text, self.pal)
+        self.configure(bg=self.pal["panel_bg"])
         self.canvas.configure(bg=self.pal["canvas_bg"])
-        self.right.configure(width=max(200, int(view.panel_width * self.gs)))
-        self.master.minsize(int(760 * self.gs), int(520 * self.gs))
-        if view.panel_visible and not self.right.winfo_ismapped():
-            self.right.pack(side="right", fill="y")
-        elif not view.panel_visible and self.right.winfo_ismapped():
-            self.right.pack_forget()
+        self.right.configure(width=max(240, int(view.panel_width * self.gs)))
+        self.master.minsize(int(800 * self.gs), int(550 * self.gs))
+        visible_in_split = str(self.right) in self.split.panes()
+        if view.panel_visible and not visible_in_split:
+            self.split.add(self.right, weight=0)
+        elif not view.panel_visible and visible_in_split:
+            self.split.forget(self.right)
         if view.toolbar_visible and not self.bar.winfo_ismapped():
             self.bar.pack(side="top", fill="x")
         elif not view.toolbar_visible and self.bar.winfo_ismapped():
@@ -487,6 +489,13 @@ class TopologyEditor(tk.Frame):
         except tk.TclError:
             messagebox.showerror("Размер окна", f"Некорректная геометрия: {geometry}")
         self.after(60, self.fit_view)
+
+    def _remember_panel_width(self, _event=None) -> None:
+        """Persist the sash position when the inspector is resized."""
+        if self.view.panel_visible and self.right.winfo_width() > 0:
+            self.view.panel_width = max(
+                240, round(self.right.winfo_width() / max(0.5, self.gs))
+            )
 
     def toggle_panel(self) -> None:
         self.view.panel_visible = not self.view.panel_visible
