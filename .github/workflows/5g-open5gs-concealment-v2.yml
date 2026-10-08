@@ -202,6 +202,20 @@ jobs:
               raise SystemExit("insufficient NRF burst external evidence")
           PY
 
+      - name: Compare passive SBI and signed KIE
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}"
+          python experiments/5g_kie_full/run_open5gs_kie_analysis.py             --global-features "$OUT/real_sbi_global_features.csv"             --per-nf-features "$OUT/real_sbi_per_nf_features.csv"             --reports "$OUT/kie_reports.jsonl"             --ground-truth "$OUT/kie_ground_truth.jsonl"             --output-dir "$OUT"
+
+          echo "=== phase metrics ==="
+          cat "$OUT/kie_phase_metrics.csv"
+          echo "=== cycle metrics ==="
+          cat "$OUT/kie_cycle_metrics.csv"
+          echo "=== report validation ==="
+          cat "$OUT/kie_report_validation.json"
+
       - name: Audit packet-confirmed labels after frozen detection decisions
         shell: bash
         run: |
