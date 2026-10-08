@@ -143,3 +143,53 @@ def test_nrf_query_extraction_never_needs_labels():
     events=nrf_query_events(df)
     assert len(events)==2
     assert events["ts"].tolist()==[3.,41.]
+
+
+def test_binary_systemd_json_message_from_live_open5gs(tmp_path: Path):
+    """Regression for real journalctl -o json output containing bytes and ANSI."""
+    uuid = "0492e8e2-c305-41f1-8823-93e0bd858bc8"
+    ansi = (
+        "\x1b[32m10/08 10:42:54.419\x1b[0m: "
+        "[\x1b[33msbi\x1b[0m] \x1b[1;32mINFO\x1b[0m: "
+        f"[UDM] NFInstance associated [{uuid}]"
+    )
+    epoch = 1791456174.419809
+    records = [
+        {
+            "_SYSTEMD_UNIT": "open5gs-nrfd.service",
+            "__REALTIME_TIMESTAMP": str(round(epoch * 1e6)),
+            "MESSAGE": list(ansi.encode("utf-8")),
+        },
+        {
+            "_SYSTEMD_UNIT": "open5gs-nrfd.service",
+            "__REALTIME_TIMESTAMP": str(round((epoch + 1) * 1e6)),
+            "MESSAGE": "unrelated status",
+        },
+        {
+            "_SYSTEMD_UNIT": "open5gs-udmd.service",
+            "__REALTIME_TIMESTAMP": str(round((epoch + 2) * 1e6)),
+            "MESSAGE": list(ansi.encode("utf-8")),
+        },
+    ]
+    path = tmp_path / "nrf_binary.jsonl"
+    path.write_text(
+        "\n".join(json.dumps(record) for record in records) + "\n",
+        encoding="utf-8",
+    )
+    parsed = parse_nrf_journal(path, epoch)
+    assert len(parsed) == 1
+    assert parsed.iloc[0]["nf_instance_id"] == uuid
+    assert abs(float(parsed.iloc[0]["ts"]) - epoch) < 0.001
+
+
+def test_empty_external_journal_uses_unknown_not_fake_negative(tmp_path: Path):
+    path = tmp_path / "empty.jsonl"
+    path.write_text(
+        json.dumps({
+            "_SYSTEMD_UNIT": "open5gs-nrfd.service",
+            "__REALTIME_TIMESTAMP": "1791456174419809",
+            "MESSAGE": "Other events, no UDM association",
+        }) + "\n",
+        encoding="utf-8",
+    )
+    assert parse_nrf_journal(path, 1791456174.0).empty
