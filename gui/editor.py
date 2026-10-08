@@ -33,6 +33,7 @@ from .theme import (THEMES, WINDOW_PRESETS, ViewSettings, apply_ttk_theme,
 from .view_settings import ViewSettingsDialog
 from .node_shapes import draw_symbol, symbol_svg, symbol_contains
 from .studio_styles import apply_studio_styles
+from .inspector_scroll import InspectorScroll
 
 
 class TopologyEditor(tk.Frame):
@@ -274,11 +275,12 @@ class TopologyEditor(tk.Frame):
 
         nb = ttk.Notebook(right)
         nb.pack(fill="both", expand=True)
-        self.prop_tab = ttk.Frame(nb, padding=8)
+        self.prop_scroll = InspectorScroll(nb, self.pal)
+        self.prop_tab = self.prop_scroll.content
         self.scen_tab = ttk.Frame(nb, padding=8)
         self.sim_tab = ttk.Frame(nb, padding=8)
         self.log_tab = ttk.Frame(nb, padding=4)
-        nb.add(self.prop_tab, text="Свойства")
+        nb.add(self.prop_scroll, text="Свойства")
         nb.add(self.scen_tab, text="Сценарии")
         nb.add(self.sim_tab, text="Параметры")
         nb.add(self.log_tab, text="Журнал")
@@ -432,6 +434,7 @@ class TopologyEditor(tk.Frame):
             style_text(text, self.pal)
         self.configure(bg=self.pal["panel_bg"])
         self.canvas.configure(bg=self.pal["canvas_bg"])
+        self.prop_scroll.set_palette(self.pal)
         self.right.configure(width=max(240, int(view.panel_width * self.gs)))
         self.master.minsize(int(800 * self.gs), int(550 * self.gs))
         visible_in_split = str(self.right) in self.split.panes()
@@ -933,6 +936,7 @@ class TopologyEditor(tk.Frame):
     def _show_properties(self) -> None:
         for w in self.prop_tab.winfo_children():
             w.destroy()
+        self.prop_tab.columnconfigure(1, weight=1)
         if not self.selection:
             ttk.Label(self.prop_tab, wraplength=300, style="Hint.TLabel",
                       text="Ничего не выбрано.\n\nВыберите узел или линк на схеме, "
@@ -945,7 +949,7 @@ class TopologyEditor(tk.Frame):
             ttk.Label(self.prop_tab, text=label).grid(row=i, column=0, sticky="w", pady=2)
             var = tk.StringVar(value=str(value))
             self._fields[key] = var
-            ttk.Entry(self.prop_tab, textvariable=var, width=20).grid(
+            ttk.Entry(self.prop_tab, textvariable=var, width=14).grid(
                 row=i, column=1, sticky="e")
 
         if kind == "node":
@@ -982,7 +986,7 @@ class TopologyEditor(tk.Frame):
             self._compromised_var = cvar
             ttk.Label(self.prop_tab, text="interface_dist (JSON)").grid(
                 row=next_row + 1, column=0, columnspan=2, sticky="w", pady=(6, 0))
-            txt = tk.Text(self.prop_tab, height=7, width=34, font="TkFixedFont")
+            txt = tk.Text(self.prop_tab, height=7, width=28, font="TkFixedFont")
             txt.insert("1.0", json.dumps(n.interface_dist, indent=1))
             txt.grid(row=next_row + 2, column=0, columnspan=2, sticky="ew")
             self._iface_text = txt
