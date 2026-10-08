@@ -1,0 +1,277 @@
+name: 5g-open5gs-concealment-v2
+
+on:
+  push:
+    branches:
+      - "experiment/5g-kie-full"
+    paths:
+      - "experiments/5g_kie_full/run_open5gs_concealment_v2.py"
+      - "experiments/5g_kie_full/aggregate_open5gs_concealment_v2.py"
+      - "experiments/5g_kie_full/tests/test_open5gs_concealment_v2.py"
+      - "experiments/5g_kie_full/OPEN5GS_CONCEALMENT_V2.md"
+      - ".github/workflows/5g-open5gs-concealment-v2.yml"
+  workflow_dispatch:
+
+jobs:
+  open5gs-concealment-v2:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        seed: [10021, 11047, 12011]
+    env:
+      MPLBACKEND: Agg
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python dependencies
+        run: python -m pip install -r experiments/5g_kie_full/requirements.txt pyyaml
+
+      - name: Run KIE tests
+        run: |
+          python -m pytest -q             experiments/5g_kie_full/tests/test_open5gs_probe.py             experiments/5g_kie_full/tests/test_open5gs_real_features.py             experiments/5g_kie_full/tests/test_open5gs_kie.py experiments/5g_kie_full/tests/test_open5gs_semantic_kie.py experiments/5g_kie_full/tests/test_open5gs_concealment.py experiments/5g_kie_full/tests/test_open5gs_randomized_scenarios.py experiments/5g_kie_full/tests/test_open5gs_event_boundary_audit.py experiments/5g_kie_full/tests/test_open5gs_boundary_aggregate.py experiments/5g_kie_full/tests/test_open5gs_concealment_v2.py experiments/5g_kie_full/tests/test_open5gs_concealment_v2_aggregate.py
+
+      - name: Install Open5GS and capture tools
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y             software-properties-common ca-certificates curl jq tcpdump tshark python3-yaml
+          sudo add-apt-repository -y ppa:open5gs/latest
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y open5gs
+
+      - name: Start Open5GS, packet capture and signed KIE sidecar
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}"
+          mkdir -p "$OUT"
+          set +x
+          GENERATED_KIE_KEY="$(openssl rand -hex 32)"
+          echo "::add-mask::$GENERATED_KIE_KEY"
+          printf 'OPEN5GS_KIE_SECRET=%s\n' "$GENERATED_KIE_KEY" >> "$GITHUB_ENV"
+          export OPEN5GS_KIE_SECRET="$GENERATED_KIE_KEY"
+          unset GENERATED_KIE_KEY
+          set -x
+
+          dpkg-query -W -f='${Package} ${Version}\n' 'open5gs*' > "$OUT/open5gs_packages.txt" || true
+
+          services=(
+            open5gs-nrfd.service open5gs-scpd.service open5gs-udrd.service
+            open5gs-udmd.service open5gs-ausfd.service open5gs-pcfd.service
+            open5gs-nssfd.service open5gs-smfd.service open5gs-amfd.service
+          )
+          for unit in "${services[@]}"; do
+            if systemctl list-unit-files --type=service --no-legend "$unit" | grep -q "$unit"; then
+              sudo systemctl restart "$unit"
+            fi
+          done
+          sleep 30
+
+          sudo tcpdump -i lo -U -s 0 -w "$OUT/open5gs_sbi_kie.pcap" 'tcp port 7777'             > "$OUT/tcpdump.log" 2>&1 &
+          echo $! > "$OUT/tcpdump.pid"
+
+          cat > "$OUT/kie_control.json" <<'JSON'
+          {"phase":"baseline","mask_nfs":[]}
+          JSON
+
+          sudo -E nohup python experiments/5g_kie_full/open5gs_kie_sidecar.py             --reports "$OUT/kie_reports.jsonl"             --ground-truth "$OUT/kie_ground_truth.jsonl"             --control-file "$OUT/kie_control.json"             --interval-s 2             > "$OUT/kie_sidecar.log" 2>&1 &
+          echo $! > "$OUT/kie_sidecar.pid"
+          sleep 6
+
+      - name: Probe live SBI endpoints
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}"
+          python experiments/5g_kie_full/open5gs_probe.py             --config-dir /etc/open5gs             --output "$OUT/open5gs_endpoints.json"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          doc=json.loads(Path("experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}/open5gs_endpoints.json").read_text())
+          if not any(r["nf"].lower()=="nrf" and r["reachable"] for r in doc["endpoints"]):
+              raise SystemExit("NRF unreachable")
+          if doc["reachable_count"] < 6:
+              raise SystemExit(f"only {doc['reachable_count']} endpoints reachable")
+          PY
+
+      - name: Run balanced randomized truthful/hidden scenarios
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}"
+          python experiments/5g_kie_full/run_open5gs_randomized_scenarios.py \
+            --output-dir "$OUT" \
+            --seed "${{ matrix.seed }}" \
+            --cycles 6 \
+            --baseline-seconds 1200 \
+            --washout-seconds 25 \
+            --stable-seconds 20 \
+            --burst-requests 60
+          cat "$OUT/randomized_plan.json"
+          cat "$OUT/phase_intervals.csv"
+
+      - name: Stop collectors and export HTTP2 events
+        if: always()
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}"
+          if [ -f "$OUT/kie_sidecar.pid" ]; then
+            sudo kill "$(cat "$OUT/kie_sidecar.pid")" 2>/dev/null || true
+          fi
+          if [ -f "$OUT/tcpdump.pid" ]; then
+            sudo kill -INT "$(cat "$OUT/tcpdump.pid")" 2>/dev/null || true
+            sleep 3
+          fi
+          sudo chown -R "$(id -u):$(id -g)" "$OUT" || true
+
+          test -s "$OUT/open5gs_sbi_kie.pcap"
+          test -s "$OUT/kie_reports.jsonl"
+          test -s "$OUT/kie_ground_truth.jsonl"
+
+          tshark -r "$OUT/open5gs_sbi_kie.pcap"             -d tcp.port==7777,http2             -Y 'http2 || tcp.flags.reset == 1'             -T fields -E header=y -E separator=/t -E occurrence=a -E aggregator=,             -e frame.time_epoch -e ip.src -e ip.dst -e tcp.stream             -e tcp.flags.reset -e tcp.len -e http2.streamid -e http2.type             -e http2.header.name -e http2.header.value             > "$OUT/sbi_http2_events.tsv"
+
+      - name: Build real SBI features
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}"
+          python experiments/5g_kie_full/open5gs_real_features.py             --events "$OUT/sbi_http2_events.tsv"             --endpoints "$OUT/open5gs_endpoints.json"             --intervals "$OUT/phase_intervals.csv"             --output-dir "$OUT" --window-s 2
+
+      - name: Export independent NRF UDM-instance journal evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}"
+          sudo journalctl --no-pager -o json --since "-100 minutes" \
+            -u open5gs-nrfd.service > "$OUT/nrf_registry_journal.jsonl"
+          test -s "$OUT/nrf_registry_journal.jsonl"
+          echo "NRF journal event count:"
+          grep -c "NFInstance associated" "$OUT/nrf_registry_journal.jsonl" || true
+
+      - name: Score independent event/report concealment consistency
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}"
+          python experiments/5g_kie_full/run_open5gs_concealment.py \
+            --global-features "$OUT/real_sbi_global_features.csv" \
+            --per-nf-features "$OUT/real_sbi_per_nf_features.csv" \
+            --nrf-journal "$OUT/nrf_registry_journal.jsonl" \
+            --reports "$OUT/kie_reports.jsonl" \
+            --intervals "$OUT/phase_intervals.csv" \
+            --output-dir "$OUT"
+          echo "=== event-level specificity ==="
+          cat "$OUT/concealment_phase_metrics.csv"
+          echo "=== cycle-level event evidence ==="
+          cat "$OUT/concealment_cycle_metrics.csv"
+
+      - name: Verify real external event coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path("experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}")
+          doc=json.loads((root/"concealment_summary.json").read_text())
+          counts=doc["source_counts"]
+          print("Observed independent events:", counts)
+          # Coverage is distinct from alarm quality: a missing evidence stream
+          # is an instrumentation failure, not a negative detection result.
+          if counts["nrf_registry_journal_udm"] < 10:
+              raise SystemExit("insufficient independent UDM external evidence")
+          if counts["passive_pcap_nrf_burst"] < 10:
+              raise SystemExit("insufficient NRF burst external evidence")
+          PY
+
+      - name: Audit packet-confirmed labels after frozen detection decisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}"
+          python experiments/5g_kie_full/audit_open5gs_event_boundaries.py \
+            --artifact-dir "$OUT" \
+            --seed ${{ matrix.seed }} \
+            --output-dir "$OUT"
+          echo "=== packet-time corrected event coverage ==="
+          cat "$OUT/boundary_audit_summary.json"
+          cat "$OUT/boundary_audit_phase_metrics.csv"
+
+      - name: Score same witnessed events using unchanged v1 and lag-aware v2
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}"
+          python experiments/5g_kie_full/run_open5gs_concealment_v2.py \
+            --original-events "$OUT/concealment_events.csv" \
+            --boundary-audit "$OUT/boundary_audit_events.csv" \
+            --reports "$OUT/kie_reports.jsonl" \
+            --output-dir "$OUT" --seed ${{ matrix.seed }}
+          cat "$OUT/v2_concealment_phase_metrics.csv"
+          cat "$OUT/v2_alarm_deltas.csv"
+
+      - name: Collect Open5GS diagnostics
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          OUT="experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}"
+          sudo journalctl --no-pager --since "-45 minutes"             -u open5gs-nrfd.service -u open5gs-udmd.service -u open5gs-scpd.service             > "$OUT/open5gs_journal.txt" 2>&1 || true
+          systemctl --no-pager --full --type=service 'open5gs-*'             > "$OUT/open5gs_service_status.txt" 2>&1 || true
+
+      - name: Upload real Open5GS KIE results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5g-open5gs-concealment-v2-${{ matrix.seed }}
+          path: experiments/5g_kie_full/results_open5gs_v2_${{ matrix.seed }}/
+          retention-days: 30
+          if-no-files-found: warn
+
+  aggregate:
+    name: Aggregate independent v1 and v2 decisions
+    needs: open5gs-concealment-v2
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m pip install -q pandas numpy pytest
+
+      - name: Retrieve all three newly recorded Open5GS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: 5g-open5gs-concealment-v2-*
+          path: v2/input
+
+      - name: Compare v1/v2 across runners
+        run: |
+          python experiments/5g_kie_full/aggregate_open5gs_concealment_v2.py \
+            --input-root v2/input --output-dir v2/output \
+            --seeds 10021 11047 12011
+          cat v2/output/v2_pooled_phase_metrics.csv
+          cat v2/output/v2_pooled_summary.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: 5g-open5gs-concealment-v2-pooled
+          path: v2/output
+          if-no-files-found: warn
