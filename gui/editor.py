@@ -225,12 +225,12 @@ class TopologyEditor(tk.Frame):
     def show_shortcuts(self) -> None:
         messagebox.showinfo(
             "Горячие клавиши",
-            "Alt+1 — Выбор    Alt+2 — Узел    Alt+3 — Связь    Alt+4 — Удалить\\n"
-            "Esc — сбросить инструмент / действие\\n"
-            "Ctrl+N — Новая сеть    Ctrl+O — Открыть    Ctrl+S — Сохранить\\n"
-            "F8 — Панель инструментов    F9 — Инспектор\\n"
-            "F11 — Полный экран    F12 — Режим презентации\\n"
-            "Колесо мыши — Масштаб    Shift+ЛКМ — Перемещение схемы\\n"
+            "Alt+1 — Выбор    Alt+2 — Узел    Alt+3 — Связь    Alt+4 — Удалить\n"
+            "Esc — сбросить инструмент / действие\n"
+            "Ctrl+N — Новая сеть    Ctrl+O — Открыть    Ctrl+S — Сохранить\n"
+            "F8 — Панель инструментов    F9 — Инспектор\n"
+            "F11 — Полный экран    F12 — Режим презентации\n"
+            "Колесо мыши — Масштаб    Shift+ЛКМ — Перемещение схемы\n"
             "M — MASTER / SLAVE    C — Скомпрометирован    A — Автораскладка",
             parent=self.master,
         )
@@ -435,7 +435,7 @@ class TopologyEditor(tk.Frame):
         self.configure(bg=self.pal["panel_bg"])
         self.canvas.configure(bg=self.pal["canvas_bg"])
         self.prop_scroll.set_palette(self.pal)
-        self.right.configure(width=max(240, int(view.panel_width * self.gs)))
+        self.right.configure(width=max(300, int(view.panel_width * self.gs)))
         self.master.minsize(int(800 * self.gs), int(550 * self.gs))
         visible_in_split = str(self.right) in self.split.panes()
         if view.panel_visible and not visible_in_split:
@@ -501,7 +501,7 @@ class TopologyEditor(tk.Frame):
         """Persist the sash position when the inspector is resized."""
         if self.view.panel_visible and self.right.winfo_width() > 0:
             self.view.panel_width = max(
-                240, round(self.right.winfo_width() / max(0.5, self.gs))
+                300, round(self.right.winfo_width() / max(0.5, self.gs))
             )
 
     def toggle_panel(self) -> None:
