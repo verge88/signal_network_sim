@@ -57,7 +57,7 @@ def pool(root:Path, output_dir:Path, seeds:set[int]) -> dict:
         "total_events":int(len(full)),
         "known_phase_events":int(full.audit_phase.isin(PHASES).sum()),
         "unresolved_events":int(full.audit_phase.eq("unresolved").sum()),
-        "outside_protocol_events":int(~full.audit_phase.isin(PHASES+("unresolved",)).sum()),
+        "outside_protocol_events":int((~full.audit_phase.isin(PHASES+("unresolved",))).sum()),
         "original_boundary_unlabeled":int(full.legacy_unlabeled.sum()),
         "alarms_changed_v1_to_v2":int(full.alarm_changed.sum()),
         "phase_metrics":phases,
