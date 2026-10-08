@@ -136,23 +136,37 @@ def _read_csv(path: Path) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
-def audit_artifact(artifact_dir: Path, output_dir: Path, seed: int) -> dict[str, Any]:
+def audit_artifact(artifact_dir: Path, output_dir: Path, seed: int, event_window_only_replay: bool = False) -> dict[str, Any]:
     events = _read_csv(artifact_dir / "concealment_events.csv")
     phases = _read_csv(artifact_dir / "phase_intervals.csv")
     timestamps = raw_nrf_get_timestamps(
         artifact_dir / "sbi_http2_events.tsv",
         artifact_dir / "open5gs_endpoints.json",
     )
-    validation = json.loads(
-        (artifact_dir / "kie_report_validation.json").read_text(encoding="utf-8")
-    )
     old_summary = json.loads(
         (artifact_dir / "concealment_summary.json").read_text(encoding="utf-8")
     )
     if old_summary.get("signature_check") != "HMAC_verified":
-        raise ValueError("Original run did not report live signature verification")
-    if not validation.get("all_signatures_valid", False):
-        raise ValueError("Original run had invalid KIE signatures")
+        raise ValueError("Original event scorer did not enable live HMAC checks")
+
+    validation_path = artifact_dir / "kie_report_validation.json"
+    if validation_path.exists():
+        validation = json.loads(validation_path.read_text(encoding="utf-8"))
+        if not validation.get("all_signatures_valid", False):
+            raise ValueError("Original run had invalid KIE signatures")
+        signature_provenance = "live_all_reports_valid_original_run_not_rechecked"
+    else:
+        # The v2 collection workflow wrote event-level v1 decisions but
+        # omitted the separate all-reports validator. The old event scorer
+        # required HMAC-valid pre/post reports to make a decision, so only
+        # those event windows have prior integrity evidence.
+        if not event_window_only_replay:
+            raise FileNotFoundError(validation_path)
+        if "integrity_alarm" not in events or bool(events["integrity_alarm"].any()):
+            raise ValueError("Archived event-level integrity is insufficient")
+        signature_provenance = (
+            "original_live_event_windows_only_not_all_reports_or_rechecked"
+        )
 
     additions = [
         assign_using_packet_evidence(row, phases, timestamps)
@@ -220,7 +234,7 @@ def audit_artifact(artifact_dir: Path, output_dir: Path, seed: int) -> dict[str,
     summary = {
         "seed":seed,
         "replay_of_stored_decisions":True,
-        "signature_verification":"in_original_live_run_not_repeated",
+        "signature_verification":signature_provenance,
         "raw_nrf_get_packets":len(timestamps),
         "event_count":len(audited),
         "nrf_event_count":int(audited["nf"].eq("nrf").sum()),
@@ -260,8 +274,14 @@ def main() -> None:
     parser.add_argument("--artifact-dir", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--seed", type=int, required=True)
+    parser.add_argument(
+        "--event-window-only-replay", action="store_true",
+        help="Allow a missing all-reports validator only when live event-window checks are recorded",
+    )
     args=parser.parse_args()
-    summary=audit_artifact(args.artifact_dir,args.output_dir,args.seed)
+    summary=audit_artifact(
+        args.artifact_dir,args.output_dir,args.seed,args.event_window_only_replay
+    )
     print(json.dumps(summary,indent=2,ensure_ascii=False))
 
 
