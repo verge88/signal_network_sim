@@ -197,7 +197,7 @@ class ViewSettings:
     font_scale: float = 1.0
     auto_dpi: bool = True
     window_geometry: str = ""
-    panel_width: int = 340
+    panel_width: int = 400
     panel_visible: bool = True
     toolbar_visible: bool = True
     node_radius: float = 22.0
