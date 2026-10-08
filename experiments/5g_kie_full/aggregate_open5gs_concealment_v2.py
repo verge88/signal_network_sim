@@ -16,7 +16,7 @@ PHASES=("truthful_udm_restart","hidden_udm_restart",
 def pool(root:Path, output_dir:Path, seeds:set[int]) -> dict:
     pieces=[]
     for seed in sorted(seeds):
-        paths=list(root.rglob(f"results_open5gs_v2_{seed}/v2_concealment_events.csv"))
+        paths=list(root.rglob(f"5g-open5gs-concealment-v2-{seed}/v2_concealment_events.csv"))
         if len(paths)!=1:
             raise ValueError(f"Expected one complete runner {seed}; found {len(paths)}")
         rows=pd.read_csv(paths[0])
