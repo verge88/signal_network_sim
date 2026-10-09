@@ -300,43 +300,59 @@ class SemanticSbaSimulator(V6SemanticSbaSimulator):
         base: V6Window,
         event,
         spec: OperationalStateSpec,
-    ) -> Tuple[List[OriginObservation], FrozenSet[str]]:
+    ) -> Tuple[List[OriginObservation], FrozenSet[str], Tuple[int, ...]]:
+        """Perturb only *observed consistent* reports; return exact changed indices.
+
+        UNKNOWN is absence of evidence, not a positive observation that can
+        legitimately be changed into an inconsistency.  Already inconsistent
+        reports are also excluded: the operational process did not cause them.
+        """
         if self.operational.rng.random() >= self.operational_cfg.disturbance_manifest_probability:
-            return list(base.observations), frozenset()
+            return list(base.observations), frozenset(), ()
         disturbance_spec = DISTURBANCE_SPECS[spec.disturbance]
         primary = set(disturbance_spec.primary_origins)
         escalated = self.operational.rng.random() < disturbance_spec.escalation_probability
         out: List[OriginObservation] = []
+        changed_indices: List[int] = []
         for obs in base.observations:
-            if obs.event_id != event.event_id or obs.fact != spec.fact:
-                out.append(obs)
-                continue
-            force = obs.origin in primary or (
-                escalated and obs.origin == disturbance_spec.escalation_origin
+            force = (
+                obs.event_id == event.event_id
+                and obs.fact == spec.fact
+                and (
+                    obs.origin in primary
+                    or (escalated and obs.origin == disturbance_spec.escalation_origin)
+                )
             )
-            out.append(
-                replace(
+            if force and obs.state == EvidenceState.CONSISTENT:
+                changed_indices.append(len(out))
+                out.append(replace(
                     obs,
                     state=EvidenceState.INCONSISTENT,
                     confidence=max(float(obs.confidence), 0.85),
-                )
-                if force
-                else obs
-            )
-        return out, frozenset([event.event_id])
+                ))
+            else:
+                out.append(obs)
+        manifested_ids = (
+            frozenset([event.event_id]) if changed_indices else frozenset()
+        )
+        return out, manifested_ids, tuple(changed_indices)
 
     def _add_recovery(
         self,
         observations: List[OriginObservation],
         event,
         spec: OperationalStateSpec,
+        changed_indices: Tuple[int, ...],
     ) -> Tuple[List[OriginObservation], bool]:
-        affected = [
-            o for o in observations
-            if o.event_id == event.event_id
-            and o.fact == spec.fact
-            and o.state == EvidenceState.INCONSISTENT
-        ]
+        """Recover only reports whose state this transient actually changed."""
+        affected = [observations[i] for i in changed_indices]
+        if any(
+            o.event_id != event.event_id
+            or o.fact != spec.fact
+            or o.state != EvidenceState.INCONSISTENT
+            for o in affected
+        ):
+            raise ValueError("invalid operational recovery provenance")
         if (
             not affected
             or self.operational.rng.random()
@@ -399,9 +415,11 @@ class SemanticSbaSimulator(V6SemanticSbaSimulator):
             spec = STATE_SPECS[state]
             event = self.operational.choose_event(base)
             if event is not None:
-                observations, operational_ids = self._manifest_transient(base, event, spec)
+                observations, operational_ids, changed_indices = self._manifest_transient(
+                    base, event, spec
+                )
                 observations, recovery_emitted = self._add_recovery(
-                    observations, event, spec
+                    observations, event, spec, changed_indices
                 )
                 if recovery_emitted:
                     recovery_ids = frozenset([event.event_id])
