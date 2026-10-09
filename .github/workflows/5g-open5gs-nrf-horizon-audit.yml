@@ -6,6 +6,8 @@ on:
       - "experiment/kie-nrf-horizon-exposure-20261009"
     paths:
       - ".github/workflows/5g-open5gs-nrf-horizon-audit.yml"
+      - "experiments/5g_kie_full/replay_open5gs_nrf_horizons.py"
+      - "experiments/5g_kie_full/tests/test_open5gs_nrf_horizon_replay.py"
   workflow_dispatch:
 
 permissions:
