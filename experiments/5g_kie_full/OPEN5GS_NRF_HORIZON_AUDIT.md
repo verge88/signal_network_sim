@@ -19,7 +19,7 @@ observed v1/v2 trade-off. This is *retrospective sensitivity analysis*, not a
 new preregistered confirmatory trial or an additional 96 fresh interventions.
 
 - Archived sidecar HMAC was checked with a runner-only key during live capture.
-  Offline replay cannot reverify HMAC because the key was not archived.
+  Offline replay cannot reverify HMAC because the key was not archived.\n  Some collector files may contain appended post-validation reports; these are\n  counted separately and **excluded from every scored cutoff**. If removing\n  them changes the archived v1/v2 decisions, replay fails closed.
 - Detector inputs: independently witnessed NRF event epoch plus signed report
   timestamps and reported CPU tick deltas, and the archived validity
   provenance. No ground-truth labels, fault flags, masking metadata, or phase
