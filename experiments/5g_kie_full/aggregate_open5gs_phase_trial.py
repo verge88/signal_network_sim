@@ -17,9 +17,14 @@ from run_open5gs_phase_trial import (
 )
 
 RUNNERS = {
+    # Independent original prospective runners.
     21011: 1.0, 21013: 1.0,
     22011: 2.0, 22013: 2.0,
     24011: 4.0, 24013: 4.0,
+    # Fresh, independently randomized replication runners.
+    31011: 1.0, 31013: 1.0,
+    32011: 2.0, 32013: 2.0,
+    34011: 4.0, 34013: 4.0,
 }
 CATEGORIES = ("truthful_nrf_burst", "hidden_nrf_burst")
 
@@ -145,8 +150,8 @@ def summarize(input_root: Path, output_dir: Path) -> dict:
                 })
     out = pd.DataFrame(exposures)
     cov = pd.DataFrame(coverage)
-    if len(cov) != 72:
-        raise ValueError(f"expected 72 interventions, got {len(cov)}")
+    if len(cov) != 12*len(RUNNERS):
+        raise ValueError(f"expected {12*len(RUNNERS)} interventions, got {len(cov)}")
     output_dir.mkdir(parents=True, exist_ok=True)
     out.to_csv(output_dir / "trial_events.csv", index=False)
     cov.to_csv(output_dir / "trial_intervention_coverage.csv", index=False)
@@ -193,8 +198,8 @@ def summarize(input_root: Path, output_dir: Path) -> dict:
             })
     pd.DataFrame(runner).to_csv(output_dir / "runner_level_metrics.csv", index=False)
     summary = {
-        "classification": "prospective randomized six-runner proof-of-concept",
-        "design": FROZEN_DESIGN, "runners_per_cadence": 2,
+        "classification": "independent replication of prospective randomized phase trial",
+        "design": FROZEN_DESIGN, "runners_per_cadence": 4,
         "cadences_s": [1, 2, 4], "phase_fractions": list(PHASE_FRACTIONS),
         "profiles": ["short", "standard"],
         "planned_interventions": len(cov),
@@ -205,7 +210,7 @@ def summarize(input_root: Path, output_dir: Path) -> dict:
         "raw_witness_events": len(out), "report_validation": provenance,
         "interpretation": [
             "Assignments randomized prospectively inside each independent Open5GS runner.",
-            "Only two independent environments per cadence; no high-powered effect-size or p-value claim.",
+            "Four independent environments per cadence; repeated interventions within a runner are correlated, and no p-value claim is made.",
             "Truthful/hidden and sampling offset are not detector inputs.",
             "Any missing/ambiguous witness remains visible instead of becoming a model negative.",
             "NRF CPU ticks are proxy, and local signed sidecar masking is NOT a real compromised NF.",
