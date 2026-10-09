@@ -1,0 +1,140 @@
+name: 5g-open5gs-nrf-packet-onset-rescoring
+
+on:
+  push:
+    branches:
+      - "experiment/kie-nrf-packet-onset-rescoring-20261009"
+    paths:
+      - ".github/workflows/5g-open5gs-nrf-packet-onset-rescoring.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  packet-onset-replay:
+    name: Blind HTTP2 packet-onset and frozen KIE v1/v2 scoring on 12 environments
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install original reproducible analysis dependencies
+        run: python -m pip install -r experiments/5g_kie_full/requirements.txt
+      - name: Run frozen science-contract and packet-evidence tests
+        run: |
+          python -m pytest -q \
+            experiments/5g_kie_full/tests/test_open5gs_packet_onset_kie.py \
+            experiments/5g_kie_full/tests/test_open5gs_concealment.py \
+            experiments/5g_kie_full/tests/test_open5gs_concealment_v2.py \
+            experiments/5g_kie_full/tests/test_open5gs_raw_packet_phase.py
+      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-phase-${seed}
+          run-id: ${runid}
+          github-token: ${{ github.token }}
+          path: all/input/5g-open5gs-phase-${seed}
+
+      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-phase-${seed}
+          run-id: ${runid}
+          github-token: ${{ github.token }}
+          path: all/input/5g-open5gs-phase-${seed}
+
+      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-phase-${seed}
+          run-id: ${runid}
+          github-token: ${{ github.token }}
+          path: all/input/5g-open5gs-phase-${seed}
+
+      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-phase-${seed}
+          run-id: ${runid}
+          github-token: ${{ github.token }}
+          path: all/input/5g-open5gs-phase-${seed}
+
+      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-phase-${seed}
+          run-id: ${runid}
+          github-token: ${{ github.token }}
+          path: all/input/5g-open5gs-phase-${seed}
+
+      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-phase-${seed}
+          run-id: ${runid}
+          github-token: ${{ github.token }}
+          path: all/input/5g-open5gs-phase-${seed}
+
+      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-phase-${seed}
+          run-id: ${runid}
+          github-token: ${{ github.token }}
+          path: all/input/5g-open5gs-phase-${seed}
+
+      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-phase-${seed}
+          run-id: ${runid}
+          github-token: ${{ github.token }}
+          path: all/input/5g-open5gs-phase-${seed}
+
+      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-phase-${seed}
+          run-id: ${runid}
+          github-token: ${{ github.token }}
+          path: all/input/5g-open5gs-phase-${seed}
+
+      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-phase-${seed}
+          run-id: ${runid}
+          github-token: ${{ github.token }}
+          path: all/input/5g-open5gs-phase-${seed}
+
+      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-phase-${seed}
+          run-id: ${runid}
+          github-token: ${{ github.token }}
+          path: all/input/5g-open5gs-phase-${seed}
+
+      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-phase-${seed}
+          run-id: ${runid}
+          github-token: ${{ github.token }}
+          path: all/input/5g-open5gs-phase-${seed}
+
+      - name: Rescore blind physical NRF packet onset using unchanged v1/v2 detector rule
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/5g_kie_full/reevaluate_open5gs_packet_onset_kie.py \
+            --input-root all/input --output-dir all/output
+      - name: Upload packet-onset KIE audit for all 144 interventions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5g-nrf-frozen-kie-packet-onset-144
+          path: all/output/
+          if-no-files-found: error
+          retention-days: 30
