@@ -1,0 +1,50 @@
+name: 5g-sba-loo-falsification
+
+on:
+  push:
+    branches:
+      - experiment/sba-loo-falsification-20261009
+    paths:
+      - ".github/workflows/5g-sba-loo-falsification.yml"
+      - "5g/run_semantic_loo_falsification.py"
+      - "tests/test_sba_semantic_loo_falsification.py"
+      - "experiments/5g_sba_loo_falsification/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exploratory-loo:
+    name: Falsify single-origin min-LOO sensitivity
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: python -m pip install "numpy>=1.26,<3" "pandas>=2.1,<3"
+      - name: Run structural regression tests
+        run: python -m unittest discover -s tests -p "test_sba_semantic_loo_falsification.py" -v
+      - name: Run frozen five-seed synthetic pilot
+        run: |
+          set -o pipefail
+          python 5g/run_semantic_loo_falsification.py \
+            --seeds 111 112 113 114 115 \
+            --calib 600 \
+            --eval 300 \
+            --alpha 0.01 \
+            --out-dir runs/sba_loo_falsification/111_115 \
+            2>&1 | tee loo_experiment.log
+      - name: Upload pilot data and full provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sba-loo-falsification-111-115
+          path: |
+            runs/sba_loo_falsification/111_115/
+            loo_experiment.log
+          if-no-files-found: warn
+          retention-days: 30
