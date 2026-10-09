@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 import sys
 
 import numpy as np
@@ -11,7 +12,7 @@ import pytest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 
 from reevaluate_open5gs_packet_onset_kie import (
-    packet_onset_candidates,score_frozen,run,MIN_GET_IN_WINDOW,GAP_S,
+    packet_onset_candidates,score_frozen,run,_load_checked_prefix,MIN_GET_IN_WINDOW,GAP_S,
 )
 from run_open5gs_concealment import evaluate_one_event
 from run_open5gs_concealment_v2 import score_event_v2
@@ -108,3 +109,18 @@ def test_unknown_report_coverage_not_false_accusation():
 def test_offline_archive_absence_fails_closed(tmp_path):
     with pytest.raises(ValueError,match="exactly one independent artifact"):
         run(tmp_path,tmp_path/"output")
+
+
+def test_only_original_live_checked_prefix_passes_to_frozen_scorer(tmp_path):
+    reports=tmp_path/"kie_reports.jsonl"
+    rows=[
+        {"nf_id":"nrf","ts":100.0,"sequence":1,"reported":{"cpu_ticks_delta":1}},
+        {"nf_id":"nrf","ts":102.0,"sequence":2,"reported":{"cpu_ticks_delta":999999}},
+    ]
+    reports.write_text("".join(json.dumps(row)+"\\n" for row in rows))
+    signed=_load_checked_prefix(tmp_path,1)
+    assert signed.ts.tolist()==[100.0]
+    assert signed.cpu_delta.tolist()==[1.0]
+    assert len(signed)==1
+    with pytest.raises(ValueError,match="truncated"):
+        _load_checked_prefix(tmp_path,3)
