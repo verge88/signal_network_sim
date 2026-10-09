@@ -76,3 +76,40 @@ false accusations, signer compromise vulnerability and event detection latency.
 This tests actual sample aliasing instead of confusing an observed horizon
 association with a causal effect. Underlying NF compromise is still *not*
 implemented by the existing sidecar fault injection.
+
+## Completed archival replay (9 October 2026)
+
+[Successful workflow run #37919503648](https://github.com/verge88/signal_network_sim/actions/runs/37919503648);
+artifact `5g-open5gs-nrf-horizon-audit`. All 10 regression tests passed and
+all 48 independently witnessed NRF-event decisions reproduce the exact
+archived v1 (t+3) and v2 (t+4) alarm/state values.
+
+| Report deadline | Hidden alarms / known | Truthful alarms / known | Unknown hidden / truthful |
+| --- | ---: | ---: | ---: |
+| t+2 s | 18 / 22 | 2 / 18 | 2 / 6 |
+| t+3 s | 19 / 24 | 2 / 24 | 0 / 0 |
+| t+4 s | 17 / 24 | 1 / 24 | 0 / 0 |
+| t+5 s | 16 / 24 | 0 / 24 | 0 / 0 |
+| t+6 s | 15 / 24 | 0 / 24 | 0 / 0 |
+| t+8 s | 14 / 24 | 0 / 24 | 0 / 0 |
+
+At t+4 s, 22/24 hidden NRF events had a sample in the archived
+HMAC-validated prefix that was contemporaneous with active report masking;
+the other two had no masked sample in that window. Among 22 mask-exposed
+events, 17 were detected (selected-exposure descriptive subset only).
+
+The four archival sidecar files contained **34 appended reports** beyond the
+12,876 covered by the stored live validation. Replay excludes those 34
+records (10/16/2/6 for seeds 13007/14009/15013/16001, respectively);
+this is a provenance discrepancy, not evidence of failed HMAC verification.
+The truncated validated-prefix replay still exactly reproduces both legacy
+detectors on every NRF witness.
+
+These observations support a *trade-off within this laboratory fault-injection
+dataset* between extending the NRF acknowledgment horizon and missing short
+masked activity; they do not yet establish causality or generalize to a
+compromised production NF. The absence of false accusations at t+5 is not
+proof of an operational zero false-positive rate. The fact that t+5 appears
+preferable on one metric is **not** a recommendation to retune a detector
+using this same held-out dataset. A prospective randomized follow-up is
+required.
