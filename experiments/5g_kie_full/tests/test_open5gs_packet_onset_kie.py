@@ -117,7 +117,7 @@ def test_only_original_live_checked_prefix_passes_to_frozen_scorer(tmp_path):
         {"nf_id":"nrf","ts":100.0,"sequence":1,"reported":{"cpu_ticks_delta":1}},
         {"nf_id":"nrf","ts":102.0,"sequence":2,"reported":{"cpu_ticks_delta":999999}},
     ]
-    reports.write_text("".join(json.dumps(row)+"\\n" for row in rows))
+    reports.write_text("".join(json.dumps(row)+"\n" for row in rows))
     signed=_load_checked_prefix(tmp_path,1)
     assert signed.ts.tolist()==[100.0]
     assert signed.cpu_delta.tolist()==[1.0]
