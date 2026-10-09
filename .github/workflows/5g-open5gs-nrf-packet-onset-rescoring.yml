@@ -28,102 +28,101 @@ jobs:
             experiments/5g_kie_full/tests/test_open5gs_concealment.py \
             experiments/5g_kie_full/tests/test_open5gs_concealment_v2.py \
             experiments/5g_kie_full/tests/test_open5gs_raw_packet_phase.py
-      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+      - name: Restore original signed Open5GS/PCAP run 21011 (immutable CI 37920594864)
         uses: actions/download-artifact@v4
         with:
-          name: 5g-open5gs-phase-${seed}
-          run-id: ${runid}
+          name: 5g-open5gs-phase-21011
+          run-id: 37920594864
           github-token: ${{ github.token }}
-          path: all/input/5g-open5gs-phase-${seed}
+          path: all/input/5g-open5gs-phase-21011
 
-      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+      - name: Restore original signed Open5GS/PCAP run 21013 (immutable CI 37920594864)
         uses: actions/download-artifact@v4
         with:
-          name: 5g-open5gs-phase-${seed}
-          run-id: ${runid}
+          name: 5g-open5gs-phase-21013
+          run-id: 37920594864
           github-token: ${{ github.token }}
-          path: all/input/5g-open5gs-phase-${seed}
+          path: all/input/5g-open5gs-phase-21013
 
-      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+      - name: Restore original signed Open5GS/PCAP run 22011 (immutable CI 37920594864)
         uses: actions/download-artifact@v4
         with:
-          name: 5g-open5gs-phase-${seed}
-          run-id: ${runid}
+          name: 5g-open5gs-phase-22011
+          run-id: 37920594864
           github-token: ${{ github.token }}
-          path: all/input/5g-open5gs-phase-${seed}
+          path: all/input/5g-open5gs-phase-22011
 
-      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+      - name: Restore original signed Open5GS/PCAP run 22013 (immutable CI 37920594864)
         uses: actions/download-artifact@v4
         with:
-          name: 5g-open5gs-phase-${seed}
-          run-id: ${runid}
+          name: 5g-open5gs-phase-22013
+          run-id: 37920594864
           github-token: ${{ github.token }}
-          path: all/input/5g-open5gs-phase-${seed}
+          path: all/input/5g-open5gs-phase-22013
 
-      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+      - name: Restore original signed Open5GS/PCAP run 24011 (immutable CI 37920594864)
         uses: actions/download-artifact@v4
         with:
-          name: 5g-open5gs-phase-${seed}
-          run-id: ${runid}
+          name: 5g-open5gs-phase-24011
+          run-id: 37920594864
           github-token: ${{ github.token }}
-          path: all/input/5g-open5gs-phase-${seed}
+          path: all/input/5g-open5gs-phase-24011
 
-      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+      - name: Restore original signed Open5GS/PCAP run 24013 (immutable CI 37920594864)
         uses: actions/download-artifact@v4
         with:
-          name: 5g-open5gs-phase-${seed}
-          run-id: ${runid}
+          name: 5g-open5gs-phase-24013
+          run-id: 37920594864
           github-token: ${{ github.token }}
-          path: all/input/5g-open5gs-phase-${seed}
+          path: all/input/5g-open5gs-phase-24013
 
-      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+      - name: Restore original signed Open5GS/PCAP run 31011 (immutable CI 37926792064)
         uses: actions/download-artifact@v4
         with:
-          name: 5g-open5gs-phase-${seed}
-          run-id: ${runid}
+          name: 5g-open5gs-phase-31011
+          run-id: 37926792064
           github-token: ${{ github.token }}
-          path: all/input/5g-open5gs-phase-${seed}
+          path: all/input/5g-open5gs-phase-31011
 
-      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+      - name: Restore original signed Open5GS/PCAP run 31013 (immutable CI 37926792064)
         uses: actions/download-artifact@v4
         with:
-          name: 5g-open5gs-phase-${seed}
-          run-id: ${runid}
+          name: 5g-open5gs-phase-31013
+          run-id: 37926792064
           github-token: ${{ github.token }}
-          path: all/input/5g-open5gs-phase-${seed}
+          path: all/input/5g-open5gs-phase-31013
 
-      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+      - name: Restore original signed Open5GS/PCAP run 32011 (immutable CI 37926792064)
         uses: actions/download-artifact@v4
         with:
-          name: 5g-open5gs-phase-${seed}
-          run-id: ${runid}
+          name: 5g-open5gs-phase-32011
+          run-id: 37926792064
           github-token: ${{ github.token }}
-          path: all/input/5g-open5gs-phase-${seed}
+          path: all/input/5g-open5gs-phase-32011
 
-      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+      - name: Restore original signed Open5GS/PCAP run 32013 (immutable CI 37926792064)
         uses: actions/download-artifact@v4
         with:
-          name: 5g-open5gs-phase-${seed}
-          run-id: ${runid}
+          name: 5g-open5gs-phase-32013
+          run-id: 37926792064
           github-token: ${{ github.token }}
-          path: all/input/5g-open5gs-phase-${seed}
+          path: all/input/5g-open5gs-phase-32013
 
-      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+      - name: Restore original signed Open5GS/PCAP run 34011 (immutable CI 37926792064)
         uses: actions/download-artifact@v4
         with:
-          name: 5g-open5gs-phase-${seed}
-          run-id: ${runid}
+          name: 5g-open5gs-phase-34011
+          run-id: 37926792064
           github-token: ${{ github.token }}
-          path: all/input/5g-open5gs-phase-${seed}
+          path: all/input/5g-open5gs-phase-34011
 
-      - name: Restore original signed Open5GS/PCAP run ${seed} (immutable CI ${runid})
+      - name: Restore original signed Open5GS/PCAP run 34013 (immutable CI 37926792064)
         uses: actions/download-artifact@v4
         with:
-          name: 5g-open5gs-phase-${seed}
-          run-id: ${runid}
+          name: 5g-open5gs-phase-34013
+          run-id: 37926792064
           github-token: ${{ github.token }}
-          path: all/input/5g-open5gs-phase-${seed}
-
+          path: all/input/5g-open5gs-phase-34013
       - name: Rescore blind physical NRF packet onset using unchanged v1/v2 detector rule
         shell: bash
         run: |
