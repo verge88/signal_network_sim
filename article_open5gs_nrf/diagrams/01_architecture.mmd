@@ -1,0 +1,13 @@
+flowchart LR
+    NF["Потребитель NF"] -->|"HTTP/2 GET /nnrf-"| NRF["Open5GS NRF"]
+    NF -. "общий loopback SBI" .-> TCP["tcpdump → PCAP"]
+    NF -. "общий loopback SBI" .-> TSH["tshark → PCAPNG"]
+    TCP --> DEC1["Пакетный декодер"]
+    TSH --> DEC2["Отдельный CSV-парсер"]
+    DEC1 --> EVENT["Независимое событие и t₀"]
+    DEC2 --> EVENT
+    NRF --> SIDE["KIE sidecar: CPU ticks"]
+    SIDE --> SIGN["Отчеты HMAC"]
+    SIGN --> SCORE["KIE v1/v2"]
+    EVENT --> SCORE
+    SCORE --> OUT["Подтверждено / подозрение / неизвестно"]
