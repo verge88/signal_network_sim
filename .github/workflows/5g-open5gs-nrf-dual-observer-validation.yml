@@ -1,0 +1,287 @@
+name: 5g-open5gs-nrf-dual-observer-validation
+
+on:
+  push:
+    branches:
+      - "experiment/kie-independent-dual-observer-20261009"
+    paths:
+      - ".github/workflows/5g-open5gs-nrf-dual-observer-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  open5gs-phase-trial:
+    name: Open5GS independent Ubuntu24 (seed ${{ matrix.seed }}, KIE ${{ matrix.cadence }}s)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - {seed: 41011, cadence: 1.0}
+          - {seed: 41013, cadence: 1.0}
+          - {seed: 42011, cadence: 2.0}
+          - {seed: 42013, cadence: 2.0}
+          - {seed: 44011, cadence: 4.0}
+          - {seed: 44013, cadence: 4.0}
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python and test dependencies
+        run: |
+          python -m pip install -r experiments/5g_kie_full/requirements.txt pyyaml
+
+      - name: Run preregistered protocol and scientific-contract tests
+        run: |
+          python -m pytest -q \
+            experiments/5g_kie_full/tests/test_open5gs_phase_trial.py \
+            experiments/5g_kie_full/tests/test_open5gs_independent_validation.py \
+            experiments/5g_kie_full/tests/test_open5gs_packet_onset_kie.py \
+            experiments/5g_kie_full/tests/test_open5gs_raw_packet_phase.py \
+            experiments/5g_kie_full/tests/test_open5gs_concealment.py \
+            experiments/5g_kie_full/tests/test_open5gs_concealment_v2.py \
+            experiments/5g_kie_full/tests/test_open5gs_event_boundary_audit.py
+
+      - name: Install real Open5GS / capture tooling
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            software-properties-common ca-certificates curl jq tcpdump tshark python3-yaml
+          sudo add-apt-repository -y ppa:open5gs/latest
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y open5gs
+
+      - name: Start Open5GS, independent PCAP and signed KIE
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_independent_${{ matrix.seed }}"
+          mkdir -p "$OUT"
+          set +x
+          GENERATED_KIE_KEY="$(openssl rand -hex 32)"
+          echo "::add-mask::$GENERATED_KIE_KEY"
+          printf 'OPEN5GS_KIE_SECRET=%s\n' "$GENERATED_KIE_KEY" >> "$GITHUB_ENV"
+          export OPEN5GS_KIE_SECRET="$GENERATED_KIE_KEY"
+          unset GENERATED_KIE_KEY
+          dpkg-query -W -f='${Package} ${Version}\n' 'open5gs*' > "$OUT/open5gs_packages.txt" || true
+          services=(open5gs-nrfd.service open5gs-scpd.service open5gs-udrd.service
+                    open5gs-udmd.service open5gs-ausfd.service open5gs-pcfd.service
+                    open5gs-nssfd.service open5gs-smfd.service open5gs-amfd.service)
+          for unit in "${services[@]}"; do
+            if systemctl list-unit-files --type=service --no-legend "$unit" | grep -q "$unit"; then
+              sudo systemctl restart "$unit"
+            fi
+          done
+          sleep 30
+          sudo tcpdump -i lo -U -s 0 -w "$OUT/open5gs_sbi_kie.pcap" 'tcp port 7777' \
+            > "$OUT/tcpdump.log" 2>&1 &
+          echo $! > "$OUT/tcpdump.pid"
+          # Ubuntu 24 tshark's capture helper drops privileges before it
+          # opens output; the job workspace directory is not writable to its
+          # restricted capture identity. /tmp is writable on this isolated VM.
+          sudo nohup tshark -i lo -f 'tcp port 7777' \
+            -w "/tmp/observer_tshark_${{ matrix.seed }}.pcapng" -q \
+            > "$OUT/observer_tshark.log" 2>&1 &
+          echo $! > "$OUT/observer_tshark.pid"
+          sleep 4
+          printf '%s\n' '{"phase":"baseline","mask_nfs":[]}' > "$OUT/kie_control.json"
+          sudo -E nohup python experiments/5g_kie_full/open5gs_kie_sidecar.py \
+            --reports "$OUT/kie_reports.jsonl" \
+            --ground-truth "$OUT/kie_ground_truth.jsonl" \
+            --control-file "$OUT/kie_control.json" \
+            --interval-s "${{ matrix.cadence }}" > "$OUT/kie_sidecar.log" 2>&1 &
+          echo $! > "$OUT/kie_sidecar.pid"
+          sleep 6
+
+      - name: Probe real SBI endpoints
+        shell: bash
+        run: |
+          set -euxo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_independent_${{ matrix.seed }}"
+          python experiments/5g_kie_full/open5gs_probe.py \
+            --config-dir /etc/open5gs --output "$OUT/open5gs_endpoints.json"
+          python - "$OUT/open5gs_endpoints.json" <<'PY'
+          import json,sys
+          doc=json.load(open(sys.argv[1]))
+          if not any(x["nf"].lower()=="nrf" and x["reachable"] for x in doc["endpoints"]):
+              raise SystemExit("NRF unreachable")
+          if doc["reachable_count"] < 6:
+              raise SystemExit(f"insufficient live NFs: {doc['reachable_count']}")
+          PY
+
+      - name: Run fresh paired factorial randomization of NRF-onset phase
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_independent_${{ matrix.seed }}"
+          python experiments/5g_kie_full/run_open5gs_phase_trial.py \
+            --output-dir "$OUT" --seed "${{ matrix.seed }}" \
+            --kie-period-s "${{ matrix.cadence }}" \
+            --cycles 6 --baseline-seconds 180 \
+            --washout-seconds 12 --stable-seconds 10
+          cat "$OUT/phase_trial_manifest.json"
+          cat "$OUT/randomized_alignment.csv"
+
+      - name: Run two independent idle and two benign low-rate NRF negative controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_independent_${{ matrix.seed }}"
+          python experiments/5g_kie_full/run_open5gs_validation_controls.py --output-dir "$OUT"
+
+      - name: Stop collectors and freeze raw PCAP / signed reports
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          OUT="experiments/5g_kie_full/results_open5gs_independent_${{ matrix.seed }}"
+          if [ -f "$OUT/kie_sidecar.pid" ]; then
+            sudo kill "$(cat "$OUT/kie_sidecar.pid")" 2>/dev/null || true
+          fi
+          if [ -f "$OUT/tcpdump.pid" ]; then
+            sudo kill -INT "$(cat "$OUT/tcpdump.pid")" 2>/dev/null || true
+          fi
+          if [ -f "$OUT/observer_tshark.pid" ]; then
+            sudo kill -INT "$(cat "$OUT/observer_tshark.pid")" 2>/dev/null || true
+          fi
+          sleep 5
+          # Copy original observer capture bytes after stopping the recorder.
+          # Missing/empty capture fails closed; no fabricated witness evidence.
+          test -s "/tmp/observer_tshark_${{ matrix.seed }}.pcapng" || {
+            echo "::error::Second observer PCAPNG missing. Capture diagnostics:"
+            cat "$OUT/observer_tshark.log" || true
+            exit 1
+          }
+          sudo cp "/tmp/observer_tshark_${{ matrix.seed }}.pcapng" "$OUT/observer_tshark.pcapng"
+          sudo chown -R "$(id -u):$(id -g)" "$OUT" || true
+          test -s "$OUT/open5gs_sbi_kie.pcap"
+          test -s "$OUT/observer_tshark.pcapng"
+          test -s "$OUT/independent_negative_controls.csv"
+          test -s "$OUT/kie_reports.jsonl"
+          test -s "$OUT/kie_ground_truth.jsonl"
+          tshark -r "$OUT/open5gs_sbi_kie.pcap" -d tcp.port==7777,http2 \
+            -Y 'http2 || tcp.flags.reset == 1' -T fields \
+            -E header=y -E separator=/t -E occurrence=a -E aggregator=, \
+            -e frame.time_epoch -e ip.src -e ip.dst -e tcp.stream \
+            -e tcp.flags.reset -e tcp.len -e http2.streamid -e http2.type \
+            -e http2.header.name -e http2.header.value \
+            > "$OUT/sbi_http2_events.tsv"
+          tshark -r "$OUT/observer_tshark.pcapng" -d tcp.port==7777,http2 \
+            -Y 'http2 || tcp.flags.reset == 1' -T fields \
+            -E header=y -E separator=/t -E occurrence=a -E aggregator=, \
+            -e frame.time_epoch -e ip.src -e ip.dst -e tcp.stream \
+            -e tcp.flags.reset -e tcp.len -e http2.streamid -e http2.type \
+            -e http2.header.name -e http2.header.value \
+            > "$OUT/observer_tshark_http2_events.tsv"
+          cp /etc/os-release "$OUT/runner_os.txt"
+          tshark --version | head -n 1 > "$OUT/tshark_version.txt"
+          tcpdump --version 2>&1 | head -n 1 > "$OUT/tcpdump_version.txt"
+
+      - name: Validate every archived signed report with live HMAC key
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_independent_${{ matrix.seed }}"
+          python experiments/5g_kie_full/verify_live_kie_phase_trial.py \
+            --reports "$OUT/kie_reports.jsonl" \
+            --truth "$OUT/kie_ground_truth.jsonl" \
+            --output "$OUT/kie_report_validation.json"
+
+      - name: Extract PCAP features, independent NRF witnesses and signed KIE decisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="experiments/5g_kie_full/results_open5gs_independent_${{ matrix.seed }}"
+          python experiments/5g_kie_full/open5gs_real_features.py \
+            --events "$OUT/sbi_http2_events.tsv" \
+            --endpoints "$OUT/open5gs_endpoints.json" \
+            --intervals "$OUT/phase_intervals.csv" \
+            --output-dir "$OUT" --window-s 2
+          sudo journalctl --no-pager -o json --since "-100 minutes" \
+            -u open5gs-nrfd.service > "$OUT/nrf_registry_journal.jsonl"
+          python experiments/5g_kie_full/run_open5gs_concealment.py \
+            --global-features "$OUT/real_sbi_global_features.csv" \
+            --per-nf-features "$OUT/real_sbi_per_nf_features.csv" \
+            --nrf-journal "$OUT/nrf_registry_journal.jsonl" \
+            --reports "$OUT/kie_reports.jsonl" \
+            --intervals "$OUT/phase_intervals.csv" \
+            --output-dir "$OUT"
+          python experiments/5g_kie_full/audit_open5gs_event_boundaries.py \
+            --artifact-dir "$OUT" --output-dir "$OUT" \
+            --seed "${{ matrix.seed }}"
+          python experiments/5g_kie_full/run_open5gs_concealment_v2.py \
+            --original-events "$OUT/concealment_events.csv" \
+            --boundary-audit "$OUT/boundary_audit_events.csv" \
+            --reports "$OUT/kie_reports.jsonl" --output-dir "$OUT" \
+            --seed "${{ matrix.seed }}"
+          cat "$OUT/boundary_audit_summary.json"
+          cat "$OUT/v2_concealment_phase_metrics.csv"
+
+      - name: Open5GS diagnostics
+        if: always()
+        shell: bash
+        run: |
+          set -u
+          OUT="experiments/5g_kie_full/results_open5gs_independent_${{ matrix.seed }}"
+          sudo journalctl --no-pager --since "-40 minutes" \
+            -u open5gs-nrfd.service -u open5gs-udmd.service -u open5gs-scpd.service \
+            > "$OUT/open5gs_journal.txt" 2>&1 || true
+          systemctl --no-pager --full --type=service 'open5gs-*' \
+            > "$OUT/open5gs_service_status.txt" 2>&1 || true
+          sudo chown -R "$(id -u):$(id -g)" "$OUT" || true
+
+      - name: Upload independently collected phase-trial artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5g-independent-phase-${{ matrix.seed }}
+          path: experiments/5g_kie_full/results_open5gs_independent_${{ matrix.seed }}/
+          if-no-files-found: warn
+          retention-days: 30
+
+  aggregate:
+    name: Compare dual independent packet observers and KIE on six Ubuntu24 runners
+    needs: open5gs-phase-trial
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m pip install -r experiments/5g_kie_full/requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: 5g-independent-phase-*
+          path: validation/input
+      - name: Cross-check independent HTTP2 observer, signed KIE and negative controls
+        run: |
+          set -euo pipefail
+          python experiments/5g_kie_full/validate_open5gs_dual_observer.py \
+            --input-root validation/input --output-dir validation/output
+          cat validation/output/independent_validation_summary.json
+          cat validation/output/independent_validation_by_condition.csv
+          cat validation/output/independent_negative_controls.csv
+      - name: Upload independent two-capture validation outcome
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5g-open5gs-independent-dual-observer-pooled
+          path: validation/output/
+          if-no-files-found: error
+          retention-days: 30
