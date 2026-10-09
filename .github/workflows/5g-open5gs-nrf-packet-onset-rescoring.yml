@@ -6,6 +6,8 @@ on:
       - "experiment/kie-nrf-packet-onset-rescoring-20261009"
     paths:
       - ".github/workflows/5g-open5gs-nrf-packet-onset-rescoring.yml"
+      - "experiments/5g_kie_full/reevaluate_open5gs_packet_onset_kie.py"
+      - "experiments/5g_kie_full/tests/test_open5gs_packet_onset_kie.py"
   workflow_dispatch:
 
 permissions:
