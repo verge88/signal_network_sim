@@ -1,0 +1,79 @@
+name: 5g-open5gs-nrf-horizon-audit
+
+on:
+  push:
+    branches:
+      - "experiment/kie-nrf-horizon-exposure-20261009"
+    paths:
+      - ".github/workflows/5g-open5gs-nrf-horizon-audit.yml"
+      - "experiments/5g_kie_full/replay_open5gs_nrf_horizons.py"
+      - "experiments/5g_kie_full/tests/test_open5gs_nrf_horizon_replay.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  replay:
+    name: Archived Open5GS NRF horizon/coverage audit
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install analysis dependencies
+        run: python -m pip install -r experiments/5g_kie_full/requirements.txt pytest
+      - name: Test frozen decisions and metadata isolation
+        run: python -m pytest -q experiments/5g_kie_full/tests/test_open5gs_nrf_horizon_replay.py
+
+      - name: Restore independent runner 13007 from recovery
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-stress-13007
+          run-id: 37908173468
+          github-token: ${{ github.token }}
+          path: stress/input/5g-open5gs-stress-13007
+
+      - name: Restore independent runner 15013 from recovery
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-stress-15013
+          run-id: 37908173468
+          github-token: ${{ github.token }}
+          path: stress/input/5g-open5gs-stress-15013
+
+      - name: Restore independent runner 14009 from original stress
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-stress-14009
+          run-id: 37820113809
+          github-token: ${{ github.token }}
+          path: stress/input/5g-open5gs-stress-14009
+
+      - name: Restore independent runner 16001 from original stress
+        uses: actions/download-artifact@v4
+        with:
+          name: 5g-open5gs-stress-16001
+          run-id: 37820113809
+          github-token: ${{ github.token }}
+          path: stress/input/5g-open5gs-stress-16001
+
+      - name: Replay held decisions over fixed horizons; crosscheck v1 and v2
+        shell: bash
+        run: |
+          set -euo pipefail
+          python experiments/5g_kie_full/replay_open5gs_nrf_horizons.py \
+            --input-root stress/input \
+            --output-dir stress/horizon_audit
+          cat stress/horizon_audit/frozen_detector_crosschecks.csv
+          cat stress/horizon_audit/nrf_horizon_pooled_exploratory.csv
+          cat stress/horizon_audit/signed_report_provenance.csv
+
+      - name: Upload explanatory tables and provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5g-open5gs-nrf-horizon-audit
+          path: stress/horizon_audit
+          retention-days: 30
+          if-no-files-found: warn
