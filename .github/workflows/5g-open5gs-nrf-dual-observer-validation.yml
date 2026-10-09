@@ -94,8 +94,11 @@ jobs:
           sudo tcpdump -i lo -U -s 0 -w "$OUT/open5gs_sbi_kie.pcap" 'tcp port 7777' \
             > "$OUT/tcpdump.log" 2>&1 &
           echo $! > "$OUT/tcpdump.pid"
+          # Ubuntu 24 tshark's capture helper drops privileges before it
+          # opens output; the job workspace directory is not writable to its
+          # restricted capture identity. /tmp is writable on this isolated VM.
           sudo nohup tshark -i lo -f 'tcp port 7777' \
-            -w "$OUT/observer_tshark.pcapng" -q \
+            -w "/tmp/observer_tshark_${{ matrix.seed }}.pcapng" -q \
             > "$OUT/observer_tshark.log" 2>&1 &
           echo $! > "$OUT/observer_tshark.pid"
           sleep 4
@@ -160,6 +163,14 @@ jobs:
             sudo kill -INT "$(cat "$OUT/observer_tshark.pid")" 2>/dev/null || true
           fi
           sleep 5
+          # Copy original observer capture bytes after stopping the recorder.
+          # Missing/empty capture fails closed; no fabricated witness evidence.
+          test -s "/tmp/observer_tshark_${{ matrix.seed }}.pcapng" || {
+            echo "::error::Second observer PCAPNG missing. Capture diagnostics:"
+            cat "$OUT/observer_tshark.log" || true
+            exit 1
+          }
+          sudo cp "/tmp/observer_tshark_${{ matrix.seed }}.pcapng" "$OUT/observer_tshark.pcapng"
           sudo chown -R "$(id -u):$(id -g)" "$OUT" || true
           test -s "$OUT/open5gs_sbi_kie.pcap"
           test -s "$OUT/observer_tshark.pcapng"
