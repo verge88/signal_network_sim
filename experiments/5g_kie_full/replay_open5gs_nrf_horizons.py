@@ -78,6 +78,24 @@ def pair_signed_truth(report_rows: list[dict], truth_rows: list[dict]) -> pd.Dat
     return joined.drop(columns=["_merge"])
 
 
+def live_verified_prefix(
+    reports: list[dict], truth: list[dict], live_count: int
+) -> tuple[list[dict], list[dict]]:
+    """Retain only samples covered by live HMAC validation, never silently
+    treat later appended reports as authenticated offline.
+    """
+    if live_count < 1 or live_count > len(reports):
+        raise ValueError("invalid HMAC-validated report count")
+    verified = reports[:live_count]
+    ids = {(str(r["nf_id"]).lower(), int(r["sequence"]), float(r["ts"]))
+           for r in verified}
+    kept_truth = [r for r in truth if
+                  (str(r["nf_id"]).lower(), int(r["sequence"]), float(r["ts"])) in ids]
+    if len(kept_truth) != live_count:
+        raise ValueError("no collector truth for all HMAC-validated samples")
+    return verified, kept_truth
+
+
 def replay(input_root: Path, output_dir: Path) -> dict:
     event_rows = []
     crosschecks = []
@@ -98,10 +116,16 @@ def replay(input_root: Path, output_dir: Path) -> dict:
             raise ValueError(f"live HMAC provenance failed: {seed}")
         report_rows = jsonl(root / "kie_reports.jsonl")
         truth_rows = jsonl(root / "kie_ground_truth.jsonl")
-        if len(report_rows) != int(live["report_count"]):
-            raise ValueError(f"report count mismatches live verification: {seed}")
-        samples = pair_signed_truth(report_rows, truth_rows)
-        signed = load_signed_reports(root / "kie_reports.jsonl", None)
+        verified_rows, verified_truth = live_verified_prefix(
+            report_rows, truth_rows, int(live["report_count"])
+        )
+        samples = pair_signed_truth(verified_rows, verified_truth)
+        # load_signed_reports parses bytes, but cannot reverify HMAC offline.
+        # Exclude any appended reports beyond the source-run validated prefix.
+        signed_all = load_signed_reports(root / "kie_reports.jsonl", None)
+        signed = signed_all.merge(
+            samples[["nf", "ts"]], on=["nf", "ts"], how="inner", validate="one_to_one"
+        )
         signed_nrf = signed[signed.nf == "nrf"].reset_index(drop=True)
         masked_nrf = samples[samples.nf == "nrf"]
         original = pd.read_csv(root / "concealment_events.csv")
@@ -167,7 +191,10 @@ def replay(input_root: Path, output_dir: Path) -> dict:
         provenance.append({
             "seed": seed, "live_hmac_verified": bool(live["all_signatures_valid"]),
             "offline_hmac_reverified": False,
-            "signed_reports": len(report_rows), "paired_samples": len(samples),
+            "archived_reports": len(report_rows),
+            "live_validated_reports": len(verified_rows),
+            "excluded_postvalidation_reports": len(report_rows) - len(verified_rows),
+            "paired_samples": len(samples),
         })
 
     table = pd.DataFrame(event_rows)
