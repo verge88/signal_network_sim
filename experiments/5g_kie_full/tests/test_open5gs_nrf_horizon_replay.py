@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from replay_open5gs_nrf_horizons import (
-    HORIZONS, pair_signed_truth, score_nrf_event,
+    HORIZONS, pair_signed_truth, score_nrf_event, live_verified_prefix,
 )
 
 
@@ -94,3 +94,16 @@ def test_duplicate_sample_fails_closed():
     reports, truth = pair_rows()
     with pytest.raises(ValueError, match="duplicate sample"):
         pair_signed_truth(reports + [reports[0]], truth)
+
+
+def test_live_verified_prefix_excludes_later_unverified_rows():
+    reports, truth = pair_rows()
+    verified, paired_truth = live_verified_prefix(reports, truth, 1)
+    assert verified == reports[:1]
+    assert paired_truth == truth[:1]
+
+
+def test_live_verified_prefix_rejects_unmatched_truth():
+    reports, truth = pair_rows()
+    with pytest.raises(ValueError, match="collector truth"):
+        live_verified_prefix(reports, truth[:1], 2)
