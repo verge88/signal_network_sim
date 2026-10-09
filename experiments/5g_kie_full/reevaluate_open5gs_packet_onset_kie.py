@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -107,15 +108,51 @@ def _archive_provenance(directory: Path, seed: int, period: float) -> dict:
         raise ValueError(f"live original KIE HMAC/collector evidence failed: {seed}")
     reports_file=directory/"kie_reports.jsonl"
     reports=[json.loads(x) for x in reports_file.read_text().splitlines() if x.strip()]
-    if len(reports)!=int(verify["report_count"]):
-        raise ValueError(f"archived KIE reports differ from signed run count: {seed}")
+    collector_file=directory/"kie_ground_truth.jsonl"
+    collected=[json.loads(x) for x in collector_file.read_text().splitlines() if x.strip()]
+    validated=int(verify["report_count"])
+    if len(reports)<validated or len(collected)<validated:
+        raise ValueError(f"archived KIE/collector truncated before the live HMAC checkpoint: {seed}")
+    # The original live validator checked an in-run snapshot with an ephemeral
+    # key. Artifacts could contain POST-CHECKPOINT appended rows. We can only
+    # score the first N once-verified report rows, never infer that the tail
+    # was HMAC-verified. Pair the same prefix to the original collector.
+    ident=lambda rows: {
+        (str(x["nf_id"]).lower(),int(x["sequence"]),float(x["ts"]))
+        for x in rows
+    }
+    verified_reports=reports[:validated]
+    verified_truth=collected[:validated]
+    if (len(ident(verified_reports))!=validated or
+        len(ident(verified_truth))!=validated or
+        ident(verified_reports)!=ident(verified_truth)):
+        raise ValueError(f"archived live-verified prefix does not pair to collector: {seed}")
     return {
         "seed":seed,"period_s":period,
         "original_live_hmac_validated":True,
         "offline_hmac_reverified":False,
-        "original_signed_reports":len(reports),
+        "original_signed_reports":validated,
+        "archived_report_rows":len(reports),
+        "postverification_unvalidated_rows_excluded":len(reports)-validated,
+        "archived_collector_rows":len(collected),
+        "postverification_collector_rows_excluded":len(collected)-validated,
         "archived_report_sha256":hashlib.sha256(reports_file.read_bytes()).hexdigest(),
     }
+
+
+def _load_checked_prefix(directory: Path, verified: int) -> pd.DataFrame:
+    """Reuse exactly the frozen signed-report parser on the live-checked prefix."""
+    path=directory/"kie_reports.jsonl"
+    lines=[line for line in path.read_text().splitlines() if line.strip()]
+    if len(lines)<verified:
+        raise ValueError("live-checked report prefix was truncated")
+    # The same original bytes are fed to the original parser. No new secret is
+    # available: valid_signature=True is an explicit archived-live provenance
+    # placeholder, NOT a re-verification of historical HMAC signatures.
+    with tempfile.TemporaryDirectory(prefix="verified-kie-prefix-") as tmp:
+        prefix=Path(tmp)/"original-verified-reports.jsonl"
+        prefix.write_text("\n".join(lines[:verified])+"\n",encoding="utf-8")
+        return load_signed_reports(prefix,secret=None)
 
 
 def _trial_inventory(directory: Path, seed: int, period: float) -> pd.DataFrame:
@@ -180,9 +217,9 @@ def evaluate_runner(directory: Path, seed: int, period: float) -> tuple[pd.DataF
     candidates=packet_onset_candidates(requests)
     if candidates.empty:
         raise ValueError(f"no packet-onset independent witnesses: {seed}")
-    signed=load_signed_reports(directory/"kie_reports.jsonl",secret=None)
-    # As above, offline valid_signature=True is strictly provenance-based,
-    # NOT a new cryptographic verification of archived historical keys.
+    signed=_load_checked_prefix(directory,provenance["original_signed_reports"])
+    # As above, offline valid_signature=True is strictly provenance-based
+    # only for the original in-run live-checked prefix; trailing rows excluded.
     scored=score_frozen(candidates,signed)
 
     trials=_trial_inventory(directory,seed,period)
@@ -320,6 +357,7 @@ def run(input_root: Path, output_dir: Path) -> dict:
         "external_event_timestamp_changed":True,
         "historical_offline_hmac_reverified":False,
         "archived_live_hmac_provenance_checked":True,
+        "postverification_unvalidated_reports_excluded":sum(p["postverification_unvalidated_rows_excluded"] for p in provenance),
         "new_witnesses_exposed_to_mask":int(newly.exposed_to_mask.sum()),
         "new_witnesses_v1_evaluable":int(newly.v1_known.eq(True).sum()),
         "new_witnesses_v2_evaluable":int(newly.v2_known.eq(True).sum()),
