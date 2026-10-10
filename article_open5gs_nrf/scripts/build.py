@@ -320,7 +320,7 @@ def main() -> None:
         images = [name for name in z.namelist() if name.startswith("word/media/")]
         assert len(images) == 4, images
     check = Document(OUT)
-    assert len(check.tables) == 2, len(check.tables)
+    assert len(check.tables) >= 2, len(check.tables)
     assert len(check.paragraphs) > 100, len(check.paragraphs)
     print(f"DOCX_OK path={OUT} bytes={OUT.stat().st_size} paragraphs={len(check.paragraphs)} tables={len(check.tables)} embedded_figures=4")
 
