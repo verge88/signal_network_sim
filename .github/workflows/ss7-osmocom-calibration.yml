@@ -104,7 +104,7 @@ jobs:
           s = t.read_text()
           marker = "/usr/local/bin/tcpdump-stop.sh nplab-m3ua-test"
           inject = r'''echo "=== controlled M3UA DATA calibration load ==="
-          if ! guile -s /data/osmocom_m3ua_load.scm > /data/calibration-load.log 2>&1; then
+          if ! guile -l /root/.guile -s /data/osmocom_m3ua_load.scm > /data/calibration-load.log 2>&1; then
               cat /data/calibration-load.log >&2
               exit 1
           fi
