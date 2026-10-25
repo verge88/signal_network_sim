@@ -1,30 +1,38 @@
-"""SS7 calibration from an independent Osmocom M3UA/SCTP trace.
+"""Calibrate SS7/SIGTRAN transport overhead from Osmocom M3UA DATA traffic.
 
-Only transport/control quantities observable in the Osmocom software-in-the-loop
-run are calibrated. MAP/TCAP/ISUP workload semantics are intentionally not
-inferred from an M3UA conformance trace. The trace is split chronologically:
-the first part is used for fitting and the last part is a holdout.
+The calibration is deliberately narrow and physically interpretable:
+a controlled set of M3UA DATA payload sizes is sent through an independent
+Osmocom stack.  Calibration payload sizes and holdout payload sizes are
+separate.  The fitted parameter is per-message M3UA/SCTP/IP overhead used by
+the canonical SS7 simulator's link-load and queueing model.
+
+This does *not* fit traffic intensity, attack priors, MAP/TCAP/ISUP operation
+mixes or operator workload distributions to a conformance test.
 """
 from __future__ import annotations
 
 import argparse
 import json
-import math
-from dataclasses import asdict, dataclass, replace
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, Iterable, Tuple
+from typing import Dict, Iterable, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
 
 try:
-    from .fix import RngBook, SimConfig, Ss7Sim
+    from .fix import MSG_BYTES, RngBook, SimConfig, Ss7Sim
 except ImportError:
-    from fix import RngBook, SimConfig, Ss7Sim
+    from fix import MSG_BYTES, RngBook, SimConfig, Ss7Sim
 
 
-TRACE_COLUMNS = ("t", "frame_len", "src_port", "dst_port", "info")
-SCHEMA = "ss7-osmocom-calibration-v1"
+SCHEMA = "ss7-osmocom-calibration-v2"
+TRACE_COLUMNS = (
+    "t", "frame_len", "ip_len", "src_port", "dst_port",
+    "m3ua_len", "opc", "dpc", "si",
+)
+DEFAULT_PAYLOAD_SIZES = (24, 40, 56, 72, 92, 152, 192, 256)
+DEFAULT_HOLDOUT_SIZES = (40, 72, 192, 256)
 
 
 @dataclass(frozen=True)
@@ -32,16 +40,32 @@ class TraceStats:
     duration_s: float
     n_frames: int
     frames_per_s: float
-    bytes_per_s: float
     frame_len_p50: float
     frame_len_p95: float
+    ip_len_p50: float
+    ip_len_p95: float
+    m3ua_len_p50: float
+    m3ua_len_p95: float
     interarrival_p50_ms: float
     interarrival_p95_ms: float
     interarrival_cv: float
-    data_frames: int
-    data_frames_per_s: float
-    control_frames: int
-    control_share: float
+
+
+def _parse_int_list(value: str | Sequence[int]) -> Tuple[int, ...]:
+    if isinstance(value, str):
+        parts = [p.strip() for p in value.split(",") if p.strip()]
+        vals = tuple(int(p) for p in parts)
+    else:
+        vals = tuple(int(v) for v in value)
+    if not vals or any(v <= 0 for v in vals):
+        raise ValueError("payload sizes must be positive integers")
+    if len(set(vals)) != len(vals):
+        raise ValueError("payload sizes must be unique")
+    return vals
+
+
+def _pad4(n: float) -> float:
+    return float(4 * int(np.ceil(float(n) / 4.0)))
 
 
 def load_trace(path: str | Path) -> pd.DataFrame:
@@ -50,55 +74,21 @@ def load_trace(path: str | Path) -> pd.DataFrame:
     if missing:
         raise ValueError(f"trace is missing columns: {missing}")
     out = df.loc[:, TRACE_COLUMNS].copy()
-    for col in ("t", "frame_len", "src_port", "dst_port"):
+    for col in TRACE_COLUMNS:
         out[col] = pd.to_numeric(out[col], errors="coerce")
-    out["info"] = out["info"].fillna("").astype(str)
-    out = out.dropna(subset=["t", "frame_len"]).sort_values("t")
-    out = out[out["frame_len"] > 0].reset_index(drop=True)
+    out = out.dropna().sort_values("t").reset_index(drop=True)
+    out = out[(out["frame_len"] > 0) & (out["ip_len"] > 0)
+              & (out["m3ua_len"] > 0)]
     if out.empty:
-        raise ValueError("trace contains no usable M3UA/SCTP frames")
-    return out
-
-
-def frame_kind(info: str) -> str:
-    text = str(info).upper()
-    if "DATA" in text or "PAYLOAD" in text:
-        return "data"
-    if any(token in text for token in (
-        "ASPUP", "ASPAC", "ASPDN", "ASPIA", "BEAT", "NOTIFY",
-        "ERROR", "DAUD", "DAVA", "DUNA", "SCON", "DUPU", "DRST",
-    )):
-        return "control"
-    return "other"
-
-
-def split_trace(df: pd.DataFrame, train_fraction: float = 0.60
-                ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    if not 0.25 <= train_fraction <= 0.80:
-        raise ValueError("train_fraction must be in [0.25, 0.80]")
-    if len(df) < 20:
-        raise ValueError("at least 20 M3UA/SCTP frames are required")
-    t0, t1 = float(df["t"].min()), float(df["t"].max())
-    cut = t0 + (t1 - t0) * train_fraction
-    train = df[df["t"] <= cut].copy()
-    holdout = df[df["t"] > cut].copy()
-    if len(train) < 8 or len(holdout) < 8:
-        idx = max(8, min(len(df) - 8, int(round(len(df) * train_fraction))))
-        train, holdout = df.iloc[:idx].copy(), df.iloc[idx:].copy()
-    if train.empty or holdout.empty:
-        raise ValueError("trace cannot be split into calibration and holdout")
-    return train.reset_index(drop=True), holdout.reset_index(drop=True)
+        raise ValueError("trace contains no usable controlled M3UA DATA frames")
+    return out.reset_index(drop=True)
 
 
 def summarize_trace(df: pd.DataFrame) -> TraceStats:
     t = df["t"].to_numpy(float)
-    lengths = df["frame_len"].to_numpy(float)
     duration = max(float(t.max() - t.min()), 1e-9)
     diffs = np.diff(t)
     diffs = diffs[diffs > 0]
-    kinds = df["info"].map(frame_kind)
-    n_data = int((kinds == "data").sum())
-    n_control = int((kinds == "control").sum())
     if diffs.size:
         mean_dt = float(diffs.mean())
         cv = float(diffs.std(ddof=0) / mean_dt) if mean_dt > 0 else 0.0
@@ -106,101 +96,173 @@ def summarize_trace(df: pd.DataFrame) -> TraceStats:
         p95_dt = float(np.quantile(diffs, 0.95) * 1000.0)
     else:
         cv = p50_dt = p95_dt = 0.0
+
+    def q(col: str, p: float) -> float:
+        return float(np.quantile(df[col].to_numpy(float), p))
+
     return TraceStats(
         duration_s=duration,
         n_frames=int(len(df)),
         frames_per_s=float(len(df) / duration),
-        bytes_per_s=float(lengths.sum() / duration),
-        frame_len_p50=float(np.quantile(lengths, 0.50)),
-        frame_len_p95=float(np.quantile(lengths, 0.95)),
+        frame_len_p50=q("frame_len", 0.50),
+        frame_len_p95=q("frame_len", 0.95),
+        ip_len_p50=q("ip_len", 0.50),
+        ip_len_p95=q("ip_len", 0.95),
+        m3ua_len_p50=q("m3ua_len", 0.50),
+        m3ua_len_p95=q("m3ua_len", 0.95),
         interarrival_p50_ms=p50_dt,
         interarrival_p95_ms=p95_dt,
         interarrival_cv=cv,
-        data_frames=n_data,
-        data_frames_per_s=float(n_data / duration),
-        control_frames=n_control,
-        control_share=float(n_control / max(1, len(df))),
     )
 
 
-def _rate_basis(df: pd.DataFrame) -> Tuple[str, pd.DataFrame]:
-    kinds = df["info"].map(frame_kind)
-    data = df[kinds == "data"]
-    if len(data) >= max(5, int(math.ceil(0.05 * len(df)))):
-        return "m3ua_data_frames", data
-    return "all_m3ua_sctp_frames", df
+def infer_payload_sizes(
+    df: pd.DataFrame,
+    payload_sizes: Sequence[int] = DEFAULT_PAYLOAD_SIZES,
+) -> Tuple[pd.DataFrame, float]:
+    """Map controlled M3UA message lengths back to known generated payloads.
+
+    The GitHub Action generates payload sizes that are all 32-bit aligned.
+    Hence every controlled DATA message has:
+        m3ua_len = payload_bytes + constant_m3ua_overhead.
+    Pairing sorted unique lengths with sorted generated sizes makes the
+    inference independent of send order and retransmissions.
+    """
+    expected = tuple(sorted(_parse_int_list(payload_sizes)))
+    observed = tuple(sorted(int(v) for v in df["m3ua_len"].unique()))
+    if len(observed) != len(expected):
+        raise ValueError(
+            "controlled trace has unexpected M3UA length cardinality: "
+            f"observed={observed}, expected {len(expected)} sizes={expected}"
+        )
+
+    offsets = np.asarray(observed, dtype=float) - np.asarray(expected, dtype=float)
+    if float(offsets.max() - offsets.min()) > 1e-9:
+        raise ValueError(
+            "M3UA length is not a constant-overhead mapping for controlled "
+            f"payloads: offsets={offsets.tolist()}"
+        )
+    m3ua_overhead = float(np.median(offsets))
+    if m3ua_overhead <= 0:
+        raise ValueError("inferred M3UA overhead must be positive")
+
+    mapping = dict(zip(observed, expected))
+    out = df.copy()
+    out["payload_bytes"] = out["m3ua_len"].round().astype(int).map(mapping)
+    if out["payload_bytes"].isna().any():
+        raise ValueError("failed to map all controlled M3UA lengths to payloads")
+    out["payload_bytes"] = out["payload_bytes"].astype(int)
+    return out, m3ua_overhead
 
 
-def trace_rate_series(df: pd.DataFrame, window_s: float = 1.0,
-                      basis: str = "all_m3ua_sctp_frames") -> np.ndarray:
-    if window_s <= 0:
-        raise ValueError("window_s must be positive")
-    selected = df
-    if basis == "m3ua_data_frames":
-        selected = df[df["info"].map(frame_kind) == "data"]
-    if selected.empty:
-        return np.zeros(0, dtype=float)
-    t = selected["t"].to_numpy(float)
-    start = float(df["t"].min())
-    stop = float(df["t"].max())
-    n = max(1, int(math.floor((stop - start) / window_s)) + 1)
-    idx = np.floor((t - start) / window_s).astype(int)
-    idx = np.clip(idx, 0, n - 1)
-    return np.bincount(idx, minlength=n).astype(float) / window_s
-
-
-def _base_busiest_link_rate(cfg: SimConfig, seed: int) -> Tuple[float, Ss7Sim]:
-    sim = Ss7Sim(cfg, RngBook(seed), size_capacities=False)
-    offered = sim._nominal_offered()
-    if not offered or sim.mean_msg_bits <= 0:
-        raise RuntimeError("canonical SS7 model has no offered load")
-    return float(max(offered.values()) / sim.mean_msg_bits), sim
-
-
-def _reference_capacity(rate_hz: float, mean_msg_bits: float,
-                        target_rho: float) -> Dict[str, float | int]:
-    if not 0.05 < target_rho < 0.95:
-        raise ValueError("target_rho must be in (0.05, 0.95)")
-    payload_bps = max(0.0, rate_hz * mean_msg_bits)
-    required_bps = payload_bps / target_rho
-    n64 = max(1, int(math.ceil(required_bps / 64_000.0)))
-    if n64 <= 16:
-        link_kbps, n_links = 64.0, n64
-    else:
-        link_kbps = 2048.0
-        n_links = max(1, int(math.ceil(required_bps / 2_048_000.0)))
-    return {
-        "reference_payload_bps": float(payload_bps),
-        "target_rho": float(target_rho),
-        "recommended_link_kbps": float(link_kbps),
-        "recommended_n_links": int(n_links),
-        "recommended_capacity_bps": float(link_kbps * 1000.0 * n_links),
-    }
-
-
-def fit_profile(train: pd.DataFrame, cfg: SimConfig, *, seed: int = 42,
-                target_rho: float = 0.50) -> Dict:
-    stats = summarize_trace(train)
-    basis, selected = _rate_basis(train)
-    selected_duration = max(
-        float(selected["t"].max() - selected["t"].min()), 1e-9
+def size_summary(df: pd.DataFrame) -> pd.DataFrame:
+    return (
+        df.groupby("payload_bytes", as_index=False)
+        .agg(
+            n_frames=("t", "size"),
+            m3ua_len_median=("m3ua_len", "median"),
+            ip_len_median=("ip_len", "median"),
+            frame_len_median=("frame_len", "median"),
+            ip_len_p95=("ip_len", lambda s: float(np.quantile(s, 0.95))),
+        )
+        .sort_values("payload_bytes")
+        .reset_index(drop=True)
     )
-    observed_rate = float(len(selected) / selected_duration)
-    base_rate, sim = _base_busiest_link_rate(cfg, seed)
-    flow_scale = observed_rate / max(base_rate, 1e-12)
-    capacity = _reference_capacity(observed_rate, sim.mean_msg_bits, target_rho)
-    return {
+
+
+def fit_transport_profile(
+    annotated: pd.DataFrame,
+    holdout_sizes: Sequence[int] = DEFAULT_HOLDOUT_SIZES,
+    *,
+    min_frames_per_size: int = 10,
+) -> Tuple[Dict, pd.DataFrame]:
+    holdout_set = set(_parse_int_list(holdout_sizes))
+    summary = size_summary(annotated)
+    all_sizes = set(int(v) for v in summary["payload_bytes"])
+    if not holdout_set < all_sizes:
+        raise ValueError(
+            "holdout sizes must be a non-empty proper subset of observed sizes"
+        )
+
+    if int(summary["n_frames"].min()) < int(min_frames_per_size):
+        raise ValueError(
+            f"need >= {min_frames_per_size} frames for every payload size; "
+            f"minimum is {int(summary['n_frames'].min())}"
+        )
+
+    train = summary[~summary["payload_bytes"].isin(holdout_set)].copy()
+    hold = summary[summary["payload_bytes"].isin(holdout_set)].copy()
+    if len(train) < 3 or len(hold) < 2:
+        raise ValueError("need at least 3 calibration and 2 holdout payload sizes")
+
+    # Physically constrained fit: IP packet bytes = aligned MTP3-user payload
+    # + fixed M3UA/SCTP/IPv4 encapsulation overhead.
+    train_overheads = (
+        train["ip_len_median"].to_numpy(float)
+        - train["payload_bytes"].map(_pad4).to_numpy(float)
+    )
+    transport_overhead = float(np.median(train_overheads))
+
+    m3ua_overheads = (
+        train["m3ua_len_median"].to_numpy(float)
+        - train["payload_bytes"].map(_pad4).to_numpy(float)
+    )
+    m3ua_overhead = float(np.median(m3ua_overheads))
+    sctp_ip_overhead = float(transport_overhead - m3ua_overhead)
+
+    hold["predicted_ip_len"] = (
+        hold["payload_bytes"].map(_pad4) + transport_overhead
+    )
+    hold["abs_error_bytes"] = (
+        hold["predicted_ip_len"] - hold["ip_len_median"]
+    ).abs()
+    hold["relative_error"] = (
+        hold["abs_error_bytes"] / hold["ip_len_median"].clip(lower=1.0)
+    )
+
+    app_values = np.asarray(list(MSG_BYTES.values()), dtype=float)
+    app_mean = float(app_values.mean())
+    effective_mean_wire = float(
+        np.mean([_pad4(v) + transport_overhead for v in app_values])
+    )
+
+    cfg = SimConfig(seed=42)
+    base = Ss7Sim(cfg, RngBook(cfg.seed), size_capacities=False)
+    calibrated = Ss7Sim(cfg, RngBook(cfg.seed), size_capacities=False)
+    calibrated.transport_overhead_bytes = transport_overhead
+    calibrated.mean_msg_bits = calibrated._mean_wire_message_bits()
+    base_off = max(base._nominal_offered().values())
+    cal_off = max(calibrated._nominal_offered().values())
+
+    profile = {
         "schema": SCHEMA,
-        "scope": "M3UA/SCTP software-in-the-loop transport/control calibration",
+        "scope": "controlled M3UA DATA encapsulation calibration",
         "source": "Osmocom OsmoSTP + nplab/m3ua-testtool",
-        "rate_basis": basis,
-        "observed_train_rate_hz": observed_rate,
-        "canonical_reference_rate_hz": base_rate,
-        "flow_scale": float(flow_scale),
-        "canonical_mean_message_bits": float(sim.mean_msg_bits),
-        **capacity,
-        "train_trace": asdict(stats),
+        "transport_overhead_bytes": transport_overhead,
+        "m3ua_overhead_bytes": m3ua_overhead,
+        "sctp_ipv4_overhead_bytes": sctp_ip_overhead,
+        "canonical_application_mean_bytes": app_mean,
+        "effective_mean_wire_bytes": effective_mean_wire,
+        "effective_mean_message_bits": effective_mean_wire * 8.0,
+        "wire_bytes_multiplier": effective_mean_wire / max(app_mean, 1e-12),
+        "canonical_busiest_link_bps_before": float(base_off),
+        "canonical_busiest_link_bps_after": float(cal_off),
+        "canonical_busiest_link_load_multiplier": float(
+            cal_off / max(base_off, 1e-12)
+        ),
+        "calibration_payload_sizes": [
+            int(v) for v in train["payload_bytes"].tolist()
+        ],
+        "holdout_payload_sizes": [
+            int(v) for v in hold["payload_bytes"].tolist()
+        ],
+        "validation_mae_bytes": float(hold["abs_error_bytes"].mean()),
+        "validation_max_abs_error_bytes": float(hold["abs_error_bytes"].max()),
+        "validation_median_relative_error": float(
+            hold["relative_error"].median()
+        ),
         "untouched_model_families": [
+            "traffic-rate priors",
             "MAP/TCAP/ISUP operation mix",
             "attack priors and attack semantics",
             "measurement/reporting noise",
@@ -209,161 +271,136 @@ def fit_profile(train: pd.DataFrame, cfg: SimConfig, *, seed: int = 42,
             "integrity/key-custody model",
         ],
     }
+    return profile, hold.reset_index(drop=True)
 
 
-def calibrated_template(cfg: SimConfig, profile: Dict, *,
-                        seed: int | None = None) -> Ss7Sim:
-    """Return canonical Ss7Sim with only the fitted traffic scale applied."""
+def calibrated_template(
+    cfg: SimConfig,
+    profile: Dict,
+    *,
+    seed: int | None = None,
+) -> Ss7Sim:
     fit = profile.get("fit", profile)
-    scale = float(fit["flow_scale"])
-    if not np.isfinite(scale) or scale <= 0:
-        raise ValueError("flow_scale must be finite and positive")
+    overhead = float(fit["transport_overhead_bytes"])
+    if not np.isfinite(overhead) or overhead <= 0:
+        raise ValueError("transport_overhead_bytes must be finite and positive")
     run_seed = cfg.seed if seed is None else int(seed)
     sim = Ss7Sim(cfg, RngBook(run_seed), size_capacities=False)
-    sim.flows = [replace(flow, rate=float(flow.rate * scale))
-                 for flow in sim.flows]
+    sim.transport_overhead_bytes = overhead
+    sim.mean_msg_bits = sim._mean_wire_message_bits()
     return sim
 
 
-def synthetic_rate_series(cfg: SimConfig, profile: Dict, *, seed: int = 42,
-                          n_windows: int = 40) -> np.ndarray:
-    sim = calibrated_template(cfg, profile, seed=seed)
-    out = []
-    for t in range(max(1, int(n_windows))):
-        _, _, meta = sim.step_true(t, [])
-        offered = meta.get("offered", {})
-        rate = (max(offered.values()) / sim.mean_msg_bits
-                if offered and sim.mean_msg_bits > 0 else 0.0)
-        out.append(float(rate))
-    return np.asarray(out, dtype=float)
-
-
-def _ks_statistic(a: Iterable[float], b: Iterable[float]) -> float:
-    aa = np.sort(np.asarray(list(a), dtype=float))
-    bb = np.sort(np.asarray(list(b), dtype=float))
-    aa = aa[np.isfinite(aa)]
-    bb = bb[np.isfinite(bb)]
-    if aa.size == 0 or bb.size == 0:
-        return float("nan")
-    grid = np.union1d(aa, bb)
-    fa = np.searchsorted(aa, grid, side="right") / aa.size
-    fb = np.searchsorted(bb, grid, side="right") / bb.size
-    return float(np.max(np.abs(fa - fb)))
-
-
-def comparison_table(real_rate: np.ndarray,
-                     synthetic_rate: np.ndarray) -> pd.DataFrame:
-    def q(x: np.ndarray, p: float) -> float:
-        return float(np.quantile(x, p)) if x.size else float("nan")
-    real_med = q(real_rate, 0.50)
-    syn_med = q(synthetic_rate, 0.50)
-    return pd.DataFrame([{
-        "quantity": "reference_link_frames_per_s",
-        "real_p10": q(real_rate, 0.10),
-        "real_p50": real_med,
-        "real_p90": q(real_rate, 0.90),
-        "synthetic_p10": q(synthetic_rate, 0.10),
-        "synthetic_p50": syn_med,
-        "synthetic_p90": q(synthetic_rate, 0.90),
-        "ks_statistic": _ks_statistic(real_rate, synthetic_rate),
-        "relative_median_error": (
-            abs(syn_med - real_med) / max(abs(real_med), 1e-12)
-        ),
-    }])
-
-
-def run_calibration(trace_path: str | Path, out_dir: str | Path, *,
-                    seed: int = 42, train_fraction: float = 0.60,
-                    window_s: float = 1.0, target_rho: float = 0.50,
-                    max_validation_windows: int = 80,
-                    min_frames: int = 20) -> Dict:
+def run_calibration(
+    trace_path: str | Path,
+    out_dir: str | Path,
+    *,
+    payload_sizes: Sequence[int] = DEFAULT_PAYLOAD_SIZES,
+    holdout_sizes: Sequence[int] = DEFAULT_HOLDOUT_SIZES,
+    min_frames_per_size: int = 10,
+) -> Dict:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    trace = load_trace(trace_path)
-    if len(trace) < min_frames:
-        raise ValueError(
-            f"need at least {min_frames} usable frames, got {len(trace)}"
-        )
-    train, holdout = split_trace(trace, train_fraction)
-    cfg = SimConfig(seed=seed)
-    fit = fit_profile(train, cfg, seed=seed, target_rho=target_rho)
-    basis = fit["rate_basis"]
-    real_rate = trace_rate_series(holdout, window_s=window_s, basis=basis)
-    n_syn = min(max_validation_windows, max(10, int(real_rate.size)))
-    syn_rate = synthetic_rate_series(cfg, fit, seed=seed + 1, n_windows=n_syn)
-    comparison = comparison_table(real_rate, syn_rate)
 
+    raw = load_trace(trace_path)
+    annotated, inferred_m3ua_overhead = infer_payload_sizes(raw, payload_sizes)
+    fit, holdout = fit_transport_profile(
+        annotated,
+        holdout_sizes,
+        min_frames_per_size=min_frames_per_size,
+    )
+    # Cross-check the direct message-length inference against the grouped fit.
+    if abs(float(fit["m3ua_overhead_bytes"]) - inferred_m3ua_overhead) > 1e-9:
+        raise RuntimeError("inconsistent inferred M3UA overhead")
+
+    summary = size_summary(annotated)
+    holdout_set = set(_parse_int_list(holdout_sizes))
     result = {
         "schema": SCHEMA,
         "method": {
-            "split": "chronological",
-            "train_fraction": float(train_fraction),
-            "holdout_fraction": float(1.0 - train_fraction),
-            "window_s": float(window_s),
-            "seed": int(seed),
+            "design": "controlled payload-size calibration with size holdout",
+            "payload_sizes": [int(v) for v in _parse_int_list(payload_sizes)],
+            "holdout_sizes": [int(v) for v in _parse_int_list(holdout_sizes)],
+            "min_frames_per_size": int(min_frames_per_size),
         },
         "fit": fit,
-        "holdout_trace": asdict(summarize_trace(holdout)),
-        "validation": comparison.iloc[0].to_dict(),
+        "trace": asdict(summarize_trace(annotated)),
         "claim_boundary": (
-            "This is software-in-the-loop validation against an independent "
-            "Osmocom M3UA/SCTP implementation, not operator traffic and not "
-            "a calibration of MAP/TCAP/ISUP workload semantics."
+            "This calibrates M3UA/SCTP/IPv4 encapsulation overhead using "
+            "controlled DATA messages handled by an independent Osmocom "
+            "implementation. It is not operator traffic and does not calibrate "
+            "traffic-rate or MAP/TCAP/ISUP workload distributions."
         ),
     }
-    (out / "calibrated_profile.json").write_text(
-        json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
-    comparison.to_csv(out / "holdout_comparison.csv", index=False)
-    train.to_csv(out / "calibration_trace.csv", index=False)
-    holdout.to_csv(out / "holdout_trace.csv", index=False)
 
-    v = result["validation"]
-    summary = f"""# SS7 / Osmocom calibration
+    (out / "calibrated_profile.json").write_text(
+        json.dumps(result, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    annotated.to_csv(out / "controlled_data_trace.csv", index=False)
+    summary["split"] = np.where(
+        summary["payload_bytes"].isin(holdout_set), "holdout", "calibration"
+    )
+    summary.to_csv(out / "payload_size_summary.csv", index=False)
+    holdout.to_csv(out / "holdout_validation.csv", index=False)
+
+    md = f"""# SS7 / Osmocom controlled transport calibration
 
 - Source: Osmocom OsmoSTP + nplab M3UA test tool
-- Scope: M3UA/SCTP software-in-the-loop transport/control calibration
-- Split: first {train_fraction:.0%} fit, final {1-train_fraction:.0%} holdout
-- Rate basis: {fit['rate_basis']}
-- Observed fit rate: {fit['observed_train_rate_hz']:.3f} frames/s
-- Canonical reference rate: {fit['canonical_reference_rate_hz']:.3f} messages/s
-- Fitted traffic scale: {fit['flow_scale']:.6f}
-- Holdout KS statistic: {v['ks_statistic']:.4f}
-- Holdout median relative error: {v['relative_median_error']:.4f}
-- Reference link recommendation: {fit['recommended_n_links']} x {fit['recommended_link_kbps']:.0f} kbit/s at rho={fit['target_rho']:.2f}
+- Controlled DATA frames: {len(annotated)}
+- Payload sizes: {', '.join(map(str, result['method']['payload_sizes']))} bytes
+- Calibration sizes: {', '.join(map(str, fit['calibration_payload_sizes']))}
+- Holdout sizes: {', '.join(map(str, fit['holdout_payload_sizes']))}
+- Fitted M3UA overhead: {fit['m3ua_overhead_bytes']:.1f} bytes/message
+- Fitted SCTP+IPv4 overhead: {fit['sctp_ipv4_overhead_bytes']:.1f} bytes/message
+- Total transport overhead applied to simulator: {fit['transport_overhead_bytes']:.1f} bytes/message
+- Holdout MAE: {fit['validation_mae_bytes']:.3f} bytes
+- Holdout max absolute error: {fit['validation_max_abs_error_bytes']:.3f} bytes
+- Holdout median relative error: {fit['validation_median_relative_error']:.6f}
+- Canonical busiest-link load multiplier after calibration: {fit['canonical_busiest_link_load_multiplier']:.3f}x
 
 **Claim boundary:** {result['claim_boundary']}
 """
-    (out / "summary.md").write_text(summary, encoding="utf-8")
+    (out / "summary.md").write_text(md, encoding="utf-8")
     return result
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
-        description="Calibrate canonical SS7 model from an Osmocom M3UA trace"
+        description="Calibrate canonical SS7 transport overhead from Osmocom M3UA DATA"
     )
-    ap.add_argument("--trace", required=True,
-                    help="normalized CSV exported by tshark")
+    ap.add_argument("--trace", required=True)
     ap.add_argument("--out", default="ss7_calibration_osmocom")
-    ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--train-fraction", type=float, default=0.60)
-    ap.add_argument("--window-s", type=float, default=1.0)
-    ap.add_argument("--target-rho", type=float, default=0.50)
-    ap.add_argument("--max-validation-windows", type=int, default=80)
-    ap.add_argument("--min-frames", type=int, default=20)
-    args = ap.parse_args(argv)
-    result = run_calibration(
-        args.trace, args.out, seed=args.seed,
-        train_fraction=args.train_fraction, window_s=args.window_s,
-        target_rho=args.target_rho,
-        max_validation_windows=args.max_validation_windows,
-        min_frames=args.min_frames,
+    ap.add_argument(
+        "--payload-sizes",
+        default=",".join(map(str, DEFAULT_PAYLOAD_SIZES)),
     )
+    ap.add_argument(
+        "--holdout-sizes",
+        default=",".join(map(str, DEFAULT_HOLDOUT_SIZES)),
+    )
+    ap.add_argument("--min-frames-per-size", type=int, default=10)
+    args = ap.parse_args(argv)
+
+    result = run_calibration(
+        args.trace,
+        args.out,
+        payload_sizes=_parse_int_list(args.payload_sizes),
+        holdout_sizes=_parse_int_list(args.holdout_sizes),
+        min_frames_per_size=args.min_frames_per_size,
+    )
+    fit = result["fit"]
     print(json.dumps({
         "profile": str(Path(args.out) / "calibrated_profile.json"),
-        "flow_scale": result["fit"]["flow_scale"],
-        "ks_statistic": result["validation"]["ks_statistic"],
-        "relative_median_error": result["validation"]["relative_median_error"],
+        "transport_overhead_bytes": fit["transport_overhead_bytes"],
+        "validation_mae_bytes": fit["validation_mae_bytes"],
+        "validation_max_abs_error_bytes": fit["validation_max_abs_error_bytes"],
+        "validation_median_relative_error": fit[
+            "validation_median_relative_error"
+        ],
+        "canonical_busiest_link_load_multiplier": fit[
+            "canonical_busiest_link_load_multiplier"
+        ],
     }, ensure_ascii=False, indent=2))
     return 0
 
