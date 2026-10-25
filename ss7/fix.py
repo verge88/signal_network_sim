@@ -736,6 +736,9 @@ class Ss7Sim:
         p = cfg.priors
         rt = book["topology"]
         self.topo = Topology(cfg, rt) if topo is None else topo
+        # Optional measured per-message SIGTRAN/IP overhead.  Zero preserves
+        # the pre-calibration scientific baseline bit-for-bit.
+        self.transport_overhead_bytes = 0.0
         if template is not None:
             self.rel_sigma = template.rel_sigma
             self.background = template.background
@@ -746,6 +749,9 @@ class Ss7Sim:
             self._ar_phi = dict(template._ar_phi)
             self._ar_sig = dict(template._ar_sig)
             self._ar_x = {n: 0.0 for n in self.topo.nodes}
+            self.transport_overhead_bytes = float(
+                getattr(template, "transport_overhead_bytes", 0.0)
+            )
             self.mean_msg_bits = template.mean_msg_bits
             return
         self.rel_sigma = float(rt.uniform(*p.meas_rel_sigma))
@@ -757,7 +763,7 @@ class Ss7Sim:
         self._ar_phi = {n: float(rt.uniform(*p.ar_phi)) for n in self.topo.nodes}
         self._ar_sig = {n: float(rt.uniform(*p.ar_rel_sigma)) for n in self.topo.nodes}
         self._ar_x = {n: 0.0 for n in self.topo.nodes}
-        self.mean_msg_bits = 8.0 * float(np.mean(list(MSG_BYTES.values())))
+        self.mean_msg_bits = self._mean_wire_message_bits()
         if size_capacities:
             self.topo.size_capacities(self._nominal_offered(), rt, p)
 
@@ -784,11 +790,36 @@ class Ss7Sim:
                 fl.append(Flow(e, h, Service.SMS_MT, float(rng.gamma(1.5, 0.18))))
         return fl
 
+    @staticmethod
+    def _pad4_bytes(n: float) -> float:
+        return float(4 * int(np.ceil(float(n) / 4.0)))
+
+    def _message_wire_bytes(self, message_type: str) -> float:
+        base = float(MSG_BYTES[message_type])
+        if self.transport_overhead_bytes <= 0.0:
+            return base
+        # M3UA parameters are 32-bit aligned; measured overhead includes the
+        # M3UA/SCTP/IP encapsulation around the aligned user payload.
+        return self._pad4_bytes(base) + self.transport_overhead_bytes
+
+    def _service_bits(self, tmpl: Dict[str, int]) -> float:
+        return 8.0 * sum(
+            self._message_wire_bytes(m) * c for m, c in tmpl.items()
+        )
+
+    def _mean_wire_message_bits(self) -> float:
+        if self.transport_overhead_bytes <= 0.0:
+            return 8.0 * float(np.mean(list(MSG_BYTES.values())))
+        return 8.0 * float(np.mean([
+            self._pad4_bytes(v) + self.transport_overhead_bytes
+            for v in MSG_BYTES.values()
+        ]))
+
     def _nominal_offered(self) -> Dict[Tuple[int, int], float]:
         off: Dict[Tuple[int, int], float] = {}
         for f in self.flows:
             tmpl = SERVICE_TEMPLATE[f.service]
-            bits = 8.0 * sum(MSG_BYTES[m] * c for m, c in tmpl.items())
+            bits = self._service_bits(tmpl)
             r = self.topo.route(f.src, f.dst)
             for path, sh in zip(r.paths, r.shares):
                 for u, v in zip(path[:-1], path[1:]):
@@ -851,7 +882,7 @@ class Ss7Sim:
                     continue
                 pending.append((f, path, int(cnt)))
                 tmpl = SERVICE_TEMPLATE[f.service]
-                bits = 8.0 * sum(MSG_BYTES[m] * c for m, c in tmpl.items())
+                bits = self._service_bits(tmpl)
                 for u, v in zip(path[:-1], path[1:]):
                     k = (min(u, v), max(u, v))
                     offered[k] = offered.get(k, 0.0) + cnt * bits / dt
@@ -883,7 +914,7 @@ class Ss7Sim:
                            "dlg": (0, 0), "ep": ep, "path": path, "n": h,
                            "dst": dstz}
             tmpl = SERVICE_TEMPLATE[Service.SMS_MT]
-            bits = 8.0 * sum(MSG_BYTES[m] * c for m, c in tmpl.items())
+            bits = self._service_bits(tmpl)
             for u, v in zip(path[:-1], path[1:]):
                 k = (min(u, v), max(u, v))
                 offered[k] = offered.get(k, 0.0) + h * bits / dt

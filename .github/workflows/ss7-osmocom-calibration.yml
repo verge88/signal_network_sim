@@ -1,0 +1,222 @@
+name: SS7 Osmocom calibration
+
+on:
+  workflow_dispatch:
+    inputs:
+      osmocom_ref:
+        description: "Pinned osmocom/docker-playground commit"
+        required: false
+        default: "f69f41a668434affd22acf490829c4e76f2d4a02"
+  pull_request:
+    paths:
+      - ".github/workflows/ss7-osmocom-calibration.yml"
+      - "ss7/fix.py"
+      - "ss7/osmocom_calibration.py"
+      - "ss7/osmocom_m3ua_load.scm"
+      - "ss7/README_OSMOCOM_CALIBRATION.md"
+      - "tests/test_ss7_osmocom_calibration.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ss7-osmocom-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  OSMOCOM_DOCKER_REF: ${{ inputs.osmocom_ref || 'f69f41a668434affd22acf490829c4e76f2d4a02' }}
+
+jobs:
+  unit:
+    name: Calibration unit tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas networkx scikit-learn
+
+      - name: Run scientific-contract and calibration tests
+        run: |
+          python -m unittest \
+            tests.test_stage1_scientific_contract \
+            tests.test_ss7_osmocom_calibration \
+            -v
+
+  osmocom-calibration:
+    name: Osmocom software-in-the-loop calibration
+    needs: unit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install analysis tools
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends tshark bc
+          sudo modprobe sctp || true
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas networkx scikit-learn
+
+      - name: Checkout and prepare pinned Osmocom testbed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none https://github.com/osmocom/docker-playground.git /tmp/osmocom-docker-playground
+          git -C /tmp/osmocom-docker-playground checkout "$OSMOCOM_DOCKER_REF"
+          git -C /tmp/osmocom-docker-playground rev-parse HEAD
+
+          TESTDIR=/tmp/osmocom-docker-playground/nplab-m3ua-test
+          cp ss7/osmocom_m3ua_load.scm "$TESTDIR/osmocom_m3ua_load.scm"
+
+          # nplab-m3ua-test itself is Guile/SCTP based. Upstream currently
+          # prebuilds an unrelated TITAN image whose legacy 9.0.0 package has
+          # disappeared. Drop only that unused prebuild dependency.
+          sed -i '/"debian-bookworm-titan"/d' "$TESTDIR/jenkins.sh"
+
+          # Put the controlled DATA generator in the tester volume and execute
+          # it while the official OsmoSTP SGP testbed and packet capture are
+          # still alive.
+          python - <<'PY'
+          from pathlib import Path
+
+          root = Path("/tmp/osmocom-docker-playground/nplab-m3ua-test")
+          j = root / "jenkins.sh"
+          s = j.read_text()
+          old = "cp m3ua-param-testtool.scm all-sgp-tests.txt $VOL_BASE_DIR/m3ua-tester/"
+          new = "cp m3ua-param-testtool.scm all-sgp-tests.txt osmocom_m3ua_load.scm $VOL_BASE_DIR/m3ua-tester/"
+          if old not in s:
+              raise SystemExit("upstream jenkins.sh copy command changed")
+          j.write_text(s.replace(old, new))
+
+          t = root / "test.sh"
+          s = t.read_text()
+          marker = "/usr/local/bin/tcpdump-stop.sh nplab-m3ua-test"
+          inject = r'''echo "=== controlled M3UA DATA calibration load ==="
+          if ! guile -l /root/.guile -s /data/osmocom_m3ua_load.scm > /data/calibration-load.log 2>&1; then
+              cat /data/calibration-load.log >&2
+              exit 1
+          fi
+          cat /data/calibration-load.log
+          /usr/local/bin/tcpdump-stop.sh nplab-m3ua-test'''
+          if marker not in s:
+              raise SystemExit("upstream test.sh stop marker changed")
+          t.write_text(s.replace(marker, inject))
+          PY
+
+          grep -A8 'docker_images_require' "$TESTDIR/jenkins.sh"
+          tail -n 12 "$TESTDIR/test.sh"
+          mkdir -p artifacts/osmocom artifacts/calibration
+
+      - name: Run official Osmocom M3UA suite and controlled DATA load
+        working-directory: /tmp/osmocom-docker-playground/nplab-m3ua-test
+        env:
+          IMAGE_SUFFIX: latest
+          NO_LIST_OSMO_PACKAGES: "1"
+        shell: bash
+        run: |
+          set -o pipefail
+          ./jenkins.sh 2>&1 | tee "$GITHUB_WORKSPACE/artifacts/osmocom/osmocom-suite.log"
+
+      - name: Collect Osmocom logs and PCAP
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts/osmocom
+          if [ -e /tmp/logs ]; then
+            cp -aL /tmp/logs/. artifacts/osmocom/logs/ || true
+          fi
+          PCAP_GZ="$(find -L /tmp/logs -type f -name 'nplab-m3ua-test*.pcap.gz' -print -quit 2>/dev/null || true)"
+          if [ -n "$PCAP_GZ" ]; then
+            cp "$PCAP_GZ" artifacts/osmocom/osmocom-m3ua.pcap.gz
+          fi
+
+      - name: Extract controlled M3UA DATA trace with tshark
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s artifacts/osmocom/osmocom-m3ua.pcap.gz
+          gzip -cd artifacts/osmocom/osmocom-m3ua.pcap.gz > artifacts/osmocom/osmocom-m3ua.pcap
+
+          {
+            printf '%s\n' 't,frame_len,src_port,dst_port,info'
+            tshark -r artifacts/osmocom/osmocom-m3ua.pcap \
+              -Y 'm3ua || sctp.port == 2905' \
+              -T fields \
+              -e frame.time_epoch \
+              -e frame.len \
+              -e sctp.srcport \
+              -e sctp.dstport \
+              -e _ws.col.Info \
+              -E header=n -E separator=, -E quote=d -E occurrence=f
+          } > artifacts/osmocom/osmocom-m3ua.csv
+
+          {
+            printf '%s\n' 't,frame_len,ip_len,src_port,dst_port,m3ua_len,opc,dpc,si'
+            tshark -r artifacts/osmocom/osmocom-m3ua.pcap \
+              -Y 'm3ua.protocol_data_si == 15' \
+              -T fields \
+              -e frame.time_epoch \
+              -e frame.len \
+              -e ip.len \
+              -e sctp.srcport \
+              -e sctp.dstport \
+              -e m3ua.message_length \
+              -e m3ua.protocol_data_opc \
+              -e m3ua.protocol_data_dpc \
+              -e m3ua.protocol_data_si \
+              -E header=n -E separator=, -E quote=d -E occurrence=f
+          } > artifacts/osmocom/osmocom-m3ua-data.csv
+
+          DATA_ROWS=$(( $(wc -l < artifacts/osmocom/osmocom-m3ua-data.csv) - 1 ))
+          echo "controlled M3UA DATA rows: $DATA_ROWS"
+          test "$DATA_ROWS" -ge 200
+
+      - name: Fit transport overhead and validate on held-out payload sizes
+        run: |
+          python ss7/osmocom_calibration.py \
+            --trace artifacts/osmocom/osmocom-m3ua-data.csv \
+            --out artifacts/calibration \
+            --payload-sizes 24,40,56,72,92,152,192,256 \
+            --holdout-sizes 40,72,192,256 \
+            --min-frames-per-size 20
+          cat artifacts/calibration/summary.md
+          cat artifacts/calibration/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record upstream provenance
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "signal_network_sim_commit=$(git rev-parse HEAD)"
+            echo "osmocom_docker_playground_commit=$OSMOCOM_DOCKER_REF"
+            echo "runner_image=${ImageOS:-unknown}"
+            echo "generated_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > artifacts/provenance.txt
+
+      - name: Upload calibration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ss7-osmocom-calibration-${{ github.run_id }}
+          path: |
+            artifacts/calibration/
+            artifacts/osmocom/
+            artifacts/provenance.txt
+          if-no-files-found: warn
+          retention-days: 30
