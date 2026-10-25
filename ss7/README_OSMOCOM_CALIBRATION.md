@@ -1,72 +1,79 @@
-# Калибровка SS7-модели по Osmocom
+# Калибровка SS7/SIGTRAN по Osmocom
 
-Этот контур предназначен для независимой **software-in-the-loop** проверки
-транспортной части SS7/SIGTRAN-модели без физического стенда.
+Контур выполняет независимую **software-in-the-loop** калибровку транспортной
+части canonical SS7-модели без физического стенда.
 
-## Что запускается в GitHub Actions
+Главный принцип: conformance-трафик Osmocom не используется как суррогат
+операторской нагрузки. Вместо этого поверх реального M3UA/SCTP стека
+генерируется контролируемая серия M3UA DATA сообщений с известными размерами
+payload. По ней оценивается физически интерпретируемый параметр:
+**добавочный объём M3UA/SCTP/IPv4 на одно сигнальное сообщение**.
 
-Workflow \`.github/workflows/ss7-osmocom-calibration.yml\`:
+## GitHub Actions
 
-1. фиксирует конкретный commit \`osmocom/docker-playground\`;
-2. запускает официальный набор \`nplab-m3ua-test\` против \`OsmoSTP\`;
-3. сохраняет PCAP SCTP/M3UA обмена между независимыми программными
-   реализациями;
-4. нормализует трассу через \`tshark\`;
-5. первые 60% трассы использует только для оценки параметров;
-6. последние 40% оставляет как временной holdout;
-7. запускает \`ss7/osmocom_calibration.py\`;
-8. публикует PCAP, CSV, профиль калибровки, holdout-сравнение, логи и
-   provenance как GitHub Actions artifact.
+Workflow .github/workflows/ss7-osmocom-calibration.yml:
 
-Workflow можно запустить вручную во вкладке **Actions → SS7 Osmocom
-calibration → Run workflow**.
+1. фиксирует commit osmocom/docker-playground;
+2. строит и запускает OsmoSTP и официальный nplab/m3ua-testtool;
+3. выполняет официальный M3UA SGP suite как проверку работоспособности стека;
+4. не останавливая testbed и packet capture, запускает ss7/osmocom_m3ua_load.scm;
+5. генератор отправляет по 30 M3UA DATA сообщений для payload:
+   24, 40, 56, 72, 92, 152, 192, 256 байт;
+6. для калибровочных сообщений используется отдельный Service Indicator SI=15,
+   поэтому они однозначно отделяются от conformance traffic;
+7. tshark извлекает frame.len, ip.len, m3ua.message_length, OPC/DPC/SI и SCTP ports;
+8. ss7/osmocom_calibration.py оценивает transport overhead;
+9. часть размеров payload используется только как holdout;
+10. PCAP, CSV, профиль, holdout-таблица, логи и provenance сохраняются как artifact.
 
-## Что именно калибруется
+## Fit / holdout
 
-Из M3UA/SCTP-трассы измеряются частота кадров, размеры кадров, интервалы между
-кадрами и доля управляющего обмена. Для интенсивности используется
-\`M3UA DATA\`, если таких кадров достаточно; иначе используется явно
-помеченный fallback по всем M3UA/SCTP кадрам.
+По умолчанию fit использует payload 24, 56, 92, 152 байт.
+Holdout использует 40, 72, 192, 256 байт.
 
-Калибровщик оценивает:
+Разделение выполняется по размерам payload, а не случайным разбиением кадров.
+Holdout проверяет переносимость найденного encapsulation overhead на размеры
+сообщений, не использованные при оценке параметра.
 
-- множитель интенсивности \`flow_scale\` относительно canonical SS7
-  source-of-truth \`ss7/fix.py\`;
-- рекомендованную пропускную способность **эталонного linkset** при заданном
-  \`target_rho\`;
-- согласие распределения интенсивности на отложенной части трассы
-  (квантили, KS-статистика и относительная ошибка медианы).
+Физически ограниченная модель:
 
-Функция \`calibrated_template()\` возвращает \`Ss7Sim\` с применённым
-\`flow_scale\`. Такой template можно передавать в существующий
-\`build_dataset(..., sim_template=..., topo=..., size_capacities=False)\`.
+IP_bytes = align4(payload_bytes) + transport_overhead_bytes.
 
-## Что намеренно не калибруется
+Дополнительно отдельно оцениваются M3UA overhead, SCTP+IPv4 overhead, holdout MAE,
+максимальная абсолютная ошибка и медианная относительная ошибка.
 
-M3UA conformance-тесты не являются операторской нагрузкой. Поэтому по ним
-**не оцениваются** распределения MAP/TCAP/ISUP операций, параметры атак,
-суточный профиль, AR-динамика, шум отчётности и модель ключей/целостности.
+## Интеграция с canonical SS7-моделью
 
-Корректная формулировка для диссертации:
+В ss7/fix.py добавлен параметр transport_overhead_bytes.
+При значении 0 поведение модели остаётся прежним. После калибровки
+calibrated_template() устанавливает измеренный overhead, и он учитывается
+только в расчёте битовой нагрузки linkset и очередей.
 
-> Выполнена независимая software-in-the-loop калибровка транспортных
-> характеристик модели SS7/SIGTRAN по трассам, сформированным сторонней
-> реализацией Osmocom OsmoSTP/M3UA. Калибровочная и проверочная части трассы
-> разделены во времени. Эксперимент не интерпретируется как валидация на
-> операторском трафике.
+Количество транзакций и частоты сообщений не масштабируются; attack priors и
+распределение MAP/TCAP/ISUP операций не подгоняются.
 
-Это сильнее полностью внутренней проверки генератора, но не заменяет
-эксплуатационную валидацию на данных оператора.
+Это принципиально отличается от раннего варианта flow_scale: произвольная
+частота conformance suite больше не используется для калибровки нагрузки.
+
+## Граница научного утверждения
+
+> Транспортная составляющая имитационной модели SS7/SIGTRAN откалибрована по
+> контролируемым M3UA DATA сообщениям, сформированным независимой программной
+> реализацией Osmocom. Параметр encapsulation overhead оценён на одной группе
+> размеров сообщений и проверен на отложенной группе размеров.
+
+Нельзя утверждать, что этим экспериментом откалибрована операторская нагрузка
+или распределения MAP/TCAP/ISUP.
 
 ## Артефакты
 
-После прогона workflow формируются:
-
-- \`artifacts/osmocom/osmocom-m3ua.pcap.gz\`;
-- \`artifacts/osmocom/osmocom-m3ua.csv\`;
-- \`artifacts/calibration/calibrated_profile.json\`;
-- \`artifacts/calibration/calibration_trace.csv\`;
-- \`artifacts/calibration/holdout_trace.csv\`;
-- \`artifacts/calibration/holdout_comparison.csv\`;
-- \`artifacts/calibration/summary.md\`;
-- \`artifacts/provenance.txt\`.
+- osmocom/osmocom-m3ua.pcap.gz — исходный packet capture;
+- osmocom/osmocom-m3ua.csv — полный M3UA/SCTP trace;
+- osmocom/osmocom-m3ua-data.csv — контролируемые M3UA DATA;
+- calibration/calibrated_profile.json;
+- calibration/controlled_data_trace.csv;
+- calibration/payload_size_summary.csv;
+- calibration/holdout_validation.csv;
+- calibration/summary.md;
+- osmocom/logs/.../calibration-load.log;
+- provenance.txt.
