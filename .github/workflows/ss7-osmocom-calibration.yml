@@ -82,6 +82,16 @@ jobs:
           git clone --filter=blob:none https://github.com/osmocom/docker-playground.git /tmp/osmocom-docker-playground
           git -C /tmp/osmocom-docker-playground checkout "$OSMOCOM_DOCKER_REF"
           git -C /tmp/osmocom-docker-playground rev-parse HEAD
+
+          # nplab-m3ua-test itself uses sigtran-tests (Guile/SCTP), not TITAN.
+          # Upstream jenkins.sh still lists debian-bookworm-titan as an
+          # unrelated prebuild dependency; that image currently fails because
+          # eclipse-titan-optdir-9.0.0 disappeared from the package feed.
+          # Remove only this unused dependency and keep the official M3UA test
+          # tool, OsmoSTP config and test cases unchanged.
+          sed -i '/"debian-bookworm-titan"/d'             /tmp/osmocom-docker-playground/nplab-m3ua-test/jenkins.sh
+          grep -A8 'docker_images_require'             /tmp/osmocom-docker-playground/nplab-m3ua-test/jenkins.sh
+
           mkdir -p artifacts/osmocom artifacts/calibration
 
       - name: Run official Osmocom M3UA SGP suite against OsmoSTP
