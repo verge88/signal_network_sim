@@ -1,0 +1,166 @@
+name: SS7 Osmocom calibration
+
+on:
+  workflow_dispatch:
+    inputs:
+      osmocom_ref:
+        description: "Pinned osmocom/docker-playground commit"
+        required: false
+        default: "f69f41a668434affd22acf490829c4e76f2d4a02"
+      train_fraction:
+        description: "Chronological fit fraction; the rest is holdout"
+        required: false
+        default: "0.60"
+      target_rho:
+        description: "Reference link utilization for capacity recommendation"
+        required: false
+        default: "0.50"
+  pull_request:
+    paths:
+      - ".github/workflows/ss7-osmocom-calibration.yml"
+      - "ss7/osmocom_calibration.py"
+      - "ss7/README_OSMOCOM_CALIBRATION.md"
+      - "tests/test_ss7_osmocom_calibration.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ss7-osmocom-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  OSMOCOM_DOCKER_REF: ${{ inputs.osmocom_ref || 'f69f41a668434affd22acf490829c4e76f2d4a02' }}
+  TRAIN_FRACTION: ${{ inputs.train_fraction || '0.60' }}
+  TARGET_RHO: ${{ inputs.target_rho || '0.50' }}
+
+jobs:
+  unit:
+    name: Calibration unit tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas networkx scikit-learn
+
+      - name: Run SS7 calibration tests
+        run: python -m unittest tests.test_ss7_osmocom_calibration -v
+
+  osmocom-calibration:
+    name: Osmocom software-in-the-loop calibration
+    needs: unit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install analysis tools
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends tshark bc
+          sudo modprobe sctp || true
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas networkx scikit-learn
+
+      - name: Checkout pinned Osmocom docker playground
+        run: |
+          git clone --filter=blob:none https://github.com/osmocom/docker-playground.git /tmp/osmocom-docker-playground
+          git -C /tmp/osmocom-docker-playground checkout "$OSMOCOM_DOCKER_REF"
+          git -C /tmp/osmocom-docker-playground rev-parse HEAD
+          mkdir -p artifacts/osmocom artifacts/calibration
+
+      - name: Run official Osmocom M3UA SGP suite against OsmoSTP
+        working-directory: /tmp/osmocom-docker-playground/nplab-m3ua-test
+        env:
+          IMAGE_SUFFIX: latest
+          NO_LIST_OSMO_PACKAGES: "1"
+        shell: bash
+        run: |
+          set -o pipefail
+          ./jenkins.sh 2>&1 | tee "$GITHUB_WORKSPACE/artifacts/osmocom/osmocom-suite.log"
+
+      - name: Collect Osmocom logs and PCAP
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts/osmocom
+          if [ -e /tmp/logs ]; then
+            cp -aL /tmp/logs/. artifacts/osmocom/logs/ || true
+          fi
+          PCAP_GZ="$(find -L /tmp/logs -type f -name 'nplab-m3ua-test*.pcap.gz' -print -quit 2>/dev/null || true)"
+          if [ -n "$PCAP_GZ" ]; then
+            cp "$PCAP_GZ" artifacts/osmocom/osmocom-m3ua.pcap.gz
+          fi
+
+      - name: Normalize M3UA/SCTP trace with tshark
+        shell: bash
+        run: |
+          test -s artifacts/osmocom/osmocom-m3ua.pcap.gz
+          gzip -cd artifacts/osmocom/osmocom-m3ua.pcap.gz > artifacts/osmocom/osmocom-m3ua.pcap
+          {
+            printf '%s\n' 't,frame_len,src_port,dst_port,info'
+            tshark -r artifacts/osmocom/osmocom-m3ua.pcap \
+              -Y 'm3ua || sctp.port == 2905' \
+              -T fields \
+              -e frame.time_epoch \
+              -e frame.len \
+              -e sctp.srcport \
+              -e sctp.dstport \
+              -e _ws.col.Info \
+              -E header=n \
+              -E separator=, \
+              -E quote=d \
+              -E occurrence=f
+          } > artifacts/osmocom/osmocom-m3ua.csv
+          test "$(wc -l < artifacts/osmocom/osmocom-m3ua.csv)" -gt 20
+
+      - name: Fit on calibration interval and validate on chronological holdout
+        run: |
+          python ss7/osmocom_calibration.py \
+            --trace artifacts/osmocom/osmocom-m3ua.csv \
+            --out artifacts/calibration \
+            --seed 42 \
+            --train-fraction "$TRAIN_FRACTION" \
+            --target-rho "$TARGET_RHO" \
+            --window-s 1.0
+          cat artifacts/calibration/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record upstream provenance
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "signal_network_sim_commit=$(git rev-parse HEAD)"
+            echo "osmocom_docker_playground_commit=$OSMOCOM_DOCKER_REF"
+            echo "runner_image=$ImageOS"
+            echo "generated_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > artifacts/provenance.txt
+
+      - name: Upload calibration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ss7-osmocom-calibration-${{ github.run_id }}
+          path: |
+            artifacts/calibration/
+            artifacts/osmocom/
+            artifacts/provenance.txt
+          if-no-files-found: warn
+          retention-days: 30
