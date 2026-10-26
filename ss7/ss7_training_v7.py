@@ -84,6 +84,10 @@ try:
     import torch.nn as nn
     _HAS_TORCH = True
 except Exception:                                               # pragma: no cover
+    torch = None
+    class _NNStub:
+        Module = object
+    nn = _NNStub()
     _HAS_TORCH = False
 
 
@@ -117,6 +121,7 @@ class TrainingConfig:
     key_custody: str = KeyCustody.NODE_SOFTWARE.value
     sophistication: str = Sophistication.ADAPTIVE.value
     feature_set: str = "OWN+INV"
+    transport_overhead_bytes: float = 0.0
 
     # операционные параметры оценки
     alerts_per_day: float = 20.0        # бюджет тревог на всю сеть
@@ -695,7 +700,9 @@ def gate_null_test(cfg: TrainingConfig, cols: Sequence[str],
         print(f"    нулевой тест на топологии датасета: "
               f"{len(topo.nodes)} узлов, зон {len(topo.zone_sp)}, days={sc.days}")
     try:
-        rep = null_test(sc, cols, topo=topo)
+        rep = null_test(
+            sc, cols, topo=topo,
+            transport_overhead_bytes=cfg.transport_overhead_bytes)
         if not isinstance(rep, dict) or not rep.get("passed") or rep.get("skipped"):
             raise AssertionError(f"Нулевой тест не пройден: {rep!r}")
         if not rep.get("role_diagnostic_passed", False):
@@ -766,9 +773,13 @@ def detectability_curve(cfg: TrainingConfig, rates=(0.0, 0.05, 0.15, 0.4, 1.0, 2
     for h in rates:
         sc = cfg.sim_config()
         sc.seed = cfg.seed + 4000 + int(h * 1000)
-        df, _, _ = build_dataset(sc, episodes_kw=dict(
-            n_compromise=10, n_normal=6, n_ext=4, force_hidden=float(h),
-            soph=Sophistication(cfg.sophistication)))
+        df, _, _ = build_dataset(
+            sc,
+            episodes_kw=dict(
+                n_compromise=10, n_normal=6, n_ext=4,
+                force_hidden=float(h),
+                soph=Sophistication(cfg.sophistication)),
+            transport_overhead_bytes=cfg.transport_overhead_bytes)
         cols = resolve_feature_columns(df, base)
         tr, va, te = blocked_split(df, sc, RngBook(sc.seed)["split"])
         if te["label"].sum() < 10 or tr["label"].sum() < 10:
@@ -787,7 +798,9 @@ def sophistication_sweep(cfg: TrainingConfig) -> pd.DataFrame:
     for s in Sophistication:
         sc = cfg.sim_config()
         sc.seed = cfg.seed + 7000 + hash(s.value) % 1000
-        df, _, _ = build_dataset(sc, episodes_kw=dict(soph=s))
+        df, _, _ = build_dataset(
+            sc, episodes_kw=dict(soph=s),
+            transport_overhead_bytes=cfg.transport_overhead_bytes)
         cols = resolve_feature_columns(df, base)
         tr, va, te = blocked_split(df, sc, RngBook(sc.seed)["split"])
         if te["label"].sum() < 10:
@@ -803,7 +816,8 @@ def sophistication_sweep(cfg: TrainingConfig) -> pd.DataFrame:
 def lomfo_ablation(cfg: TrainingConfig) -> pd.DataFrame:
     """Leave-one-masking-family-out: обучение без семейства, тест на нём."""
     sc = cfg.sim_config()
-    df, _, _ = build_dataset(sc)
+    df, _, _ = build_dataset(
+        sc, transport_overhead_bytes=cfg.transport_overhead_bytes)
     cols = resolve_feature_columns(df, FEATURE_SETS[cfg.feature_set])
     rng = RngBook(sc.seed)["split"]
     out = []
@@ -882,8 +896,10 @@ def multiseed(cfg: TrainingConfig, seeds: Sequence[int],
     for s in seeds:
         c = TrainingConfig(**{**asdict(cfg), "seed": int(s)})
         sc = c.sim_config()
-        df, _, _ = build_dataset(sc, episodes_kw=dict(
-            soph=Sophistication(cfg.sophistication)))
+        df, _, _ = build_dataset(
+            sc,
+            episodes_kw=dict(soph=Sophistication(cfg.sophistication)),
+            transport_overhead_bytes=cfg.transport_overhead_bytes)
         cols = resolve_feature_columns(df, base)
         tr, va, te = blocked_split(df, sc, RngBook(sc.seed)["split"])
         M = prepare_matrices(tr, va, te, cols)
@@ -929,13 +945,16 @@ def load_or_build(cfg: TrainingConfig) -> pd.DataFrame:
         json.dumps({"seed": sc.seed, "days": sc.days,
                     "custody": sc.key_custody.value,
                     "soph": cfg.sophistication,
+                    "transport_overhead_bytes": cfg.transport_overhead_bytes,
                     "fw": sc.feat_window, "zw": sc.z_window},
                    sort_keys=True).encode()).hexdigest()[:16]
     path = os.path.join(cfg.cache_dir, f"ss7_{key}.parquet")
     if cfg.use_cache and os.path.exists(path):
         return pd.read_parquet(path)
-    df, _, _ = build_dataset(sc, episodes_kw=dict(
-        soph=Sophistication(cfg.sophistication)))
+    df, _, _ = build_dataset(
+        sc,
+        episodes_kw=dict(soph=Sophistication(cfg.sophistication)),
+        transport_overhead_bytes=cfg.transport_overhead_bytes)
     if cfg.use_cache:
         os.makedirs(cfg.cache_dir, exist_ok=True)
         try:
@@ -954,6 +973,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--days", type=float, default=6.0)
     ap.add_argument("--feature-set", default="OWN+INV", choices=list(FEATURE_SETS))
+    ap.add_argument(
+        "--transport-overhead-bytes", type=float, default=0.0,
+        help="измеренный M3UA/SCTP/IP overhead на сообщение; 0 сохраняет baseline")
     ap.add_argument("--custody", default=KeyCustody.NODE_SOFTWARE.value,
                     choices=[k.value for k in KeyCustody])
     ap.add_argument("--soph", default=Sophistication.ADAPTIVE.value,
@@ -986,10 +1008,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     cfg = TrainingConfig(seed=a.seed, days=(1.5 if a.quick else a.days),
                          key_custody=a.custody, sophistication=a.soph,
                          feature_set=a.feature_set,
+                         transport_overhead_bytes=a.transport_overhead_bytes,
                          alerts_per_day=a.alerts_per_day,
                          op_prevalence=a.op_prevalence,
                          use_torch=not a.no_torch, use_cache=not a.no_cache,
                          quick=a.quick, data_path=a.data, out_dir=a.out_dir)
+    if (not np.isfinite(cfg.transport_overhead_bytes)
+            or cfg.transport_overhead_bytes < 0):
+        raise ValueError("--transport-overhead-bytes must be finite and non-negative")
     run_dir = os.path.join(cfg.out_dir, f"{cfg.fingerprint()}_seed{cfg.seed}")
     os.makedirs(run_dir, exist_ok=True)
     save = lambda name, obj: (obj.to_csv(os.path.join(run_dir, name), index=False)
@@ -998,7 +1024,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print("=" * 84)
     print(f"SS7 training  |  fingerprint={cfg.fingerprint()}  out={run_dir}")
     print(f"torch={'да' if (_HAS_TORCH and cfg.use_torch) else 'нет'}  "
-          f"custody={cfg.key_custody}  soph={cfg.sophistication}")
+          f"custody={cfg.key_custody}  soph={cfg.sophistication}  "
+          f"transport_overhead={cfg.transport_overhead_bytes:.1f} B/msg")
 
     print("\n[1] Датасет")
     df = load_or_build(cfg)
