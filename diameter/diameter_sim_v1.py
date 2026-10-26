@@ -314,7 +314,8 @@ class SimulationConfig:
     avg_message_size_bytes: int = 500  # legacy fallback for non-S6a traffic
     # Optional software-in-the-loop calibration from real S6a transactions.
     # S6a counters in this simulator represent transactions (AIR, ULR, ...),
-    # so the calibrated quantity is request+answer IP bytes per transaction.
+    # so the calibrated quantity is request+answer Diameter protocol bytes
+    # per transaction. TCP/IP framing remains outside this legacy load model.
     s6a_transaction_size_bytes: Optional[float] = None
     s6a_command_transaction_size_bytes: Dict[str, float] = field(
         default_factory=dict
@@ -746,7 +747,7 @@ class DiameterTrafficGenerator:
         # Before calibration the legacy model used one fixed 500-byte
         # value for every Diameter transaction.  When an independently
         # measured S6a profile is present, only the S6a part is replaced by
-        # request+answer IP bytes measured on Open5GS; traffic counts and all
+        # request+answer Diameter bytes measured on Open5GS; traffic counts and all
         # non-S6a priors remain unchanged.
         default_bytes = float(self.config.avg_message_size_bytes)
         cmd_sizes = {
