@@ -118,6 +118,21 @@ def by_attack(scores, attack_types, thr, attack_list):
     return out
 
 
+def normalize_score01(scores):
+    """Robust [0, 1] normalization for heterogeneous stacking scores."""
+    arr = np.asarray(scores, dtype=float).copy()
+    finite = np.isfinite(arr)
+    if not finite.any():
+        return np.zeros_like(arr, dtype=float)
+    fill = float(np.median(arr[finite]))
+    arr = np.nan_to_num(arr, nan=fill, posinf=fill, neginf=fill)
+    p1, p99 = np.percentile(arr, [1, 99])
+    scale = float(p99 - p1)
+    if not np.isfinite(scale) or scale <= 1e-12:
+        return np.zeros_like(arr, dtype=float)
+    return np.clip((arr - p1) / scale, 0.0, 1.0)
+
+
 def build_row(name, scores, y, attack_types, thr, spec, family):
     scores = np.nan_to_num(np.asarray(scores, float))
     y = np.asarray(y)
@@ -455,13 +470,13 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
             record(f"Ens:{k}", s_t[k], th)
 
     # ── 10. Мета-ансамбль ──
-    def n01(s):
-        p1, p99 = np.percentile(s, 1), np.percentile(s, 99)
-        return np.clip((s - p1) / (p99 - p1 + 1e-9), 0, 1)
-
     keys = list(base_train.keys())
-    meta_tr = np.column_stack([n01(base_train[k]) for k in keys])
-    meta_te = np.column_stack([n01(base_test[k]) for k in keys])
+    meta_tr = np.column_stack([
+        normalize_score01(base_train[k]) for k in keys
+    ])
+    meta_te = np.column_stack([
+        normalize_score01(base_test[k]) for k in keys
+    ])
     meta = GradientBoostingClassifier(n_estimators=200, learning_rate=0.05,
                                       max_depth=3, random_state=seed)
     meta.fit(meta_tr, y_train)
