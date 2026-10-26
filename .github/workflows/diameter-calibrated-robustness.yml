@@ -1,0 +1,117 @@
+name: Diameter calibrated robustness 10 seeds
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/diameter-calibrated-robustness.yml"
+      - "diameter/diameter_sim_v1.py"
+      - "diameter/diameter_training_calibrated.py"
+      - "diameter/ms_multiseed_core.py"
+      - "diameter/run_seeds_diameter_calibrated.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diameter-calibrated-robustness-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  classical-10-seed:
+    name: Classical robustness, seeds 42-51
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas scipy scikit-learn networkx matplotlib
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Train classical models on 10 regenerated calibrated datasets
+        run: |
+          python diameter/run_seeds_diameter_calibrated.py \
+            42 43 44 45 46 47 48 49 50 51 \
+            --regen \
+            --no-seq \
+            --no-svm \
+            --no-neural \
+            --out artifacts/robustness10
+
+      - name: Verify 10-seed scientific contract
+        run: |
+          python - <<'PY'
+          import glob, json, math
+          expected = 794.2608695652174
+          manifests = sorted(glob.glob("artifacts/robustness10/seed_*/manifest_seed*.json"))
+          assert len(manifests) == 10, manifests
+          null_means = []
+          for path in manifests:
+              m = json.load(open(path, encoding="utf-8"))
+              assert abs(
+                  m["sim_config_overrides"]["s6a_transaction_size_bytes"]
+                  - expected
+              ) < 1e-9, path
+              split = m["split_report"]
+              assert split["mode"] == "episode_time_component_holdout", path
+              assert split["group_overlap"] is False, path
+              assert split["compromise_rows"]["train"] > 0, path
+              assert split["compromise_rows"]["test"] > 0, path
+              assert m["cascade_stage2"]["enabled"] is True, path
+              assert set(m["cascade_stage2"]["classes"]) == {0, 1}, path
+              assert m["meta_stacking"]["fit_partition"] == "validation", path
+              assert m["meta_stacking"]["test_labels_used_for_fit"] is False, path
+              assert m["permutation_null_passed"] is True, (
+                  path, m["permutation_null_auc"]
+              )
+              null_means.append(float(m["permutation_null_auc_mean"]))
+          print("validated 10 manifests")
+          print("permutation-null means:", null_means)
+          print("mean permutation-null AUC:", sum(null_means) / len(null_means))
+          PY
+
+      - name: Print compromise robustness summary
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          p = "artifacts/robustness10/all_seed_metrics.csv"
+          df = pd.read_csv(p)
+          cols = [
+              "name", "seed", "auc_pr", "f1", "fpr",
+              "compromise_recall", "recall_at_1pct_fpr",
+              "episode_recall", "false_incidents_per_day",
+          ]
+          keep = [
+              "Gradient Boosting", "Cascade", "Cascade-Stage2",
+              "Meta-Ensemble", "Random Forest",
+          ]
+          print(df[df["name"].isin(keep)][cols].to_string(index=False))
+          print("\nMean/std:")
+          print(
+              df[df["name"].isin(keep)]
+              .groupby("name")[
+                  ["auc_pr", "f1", "fpr", "compromise_recall",
+                   "recall_at_1pct_fpr", "episode_recall",
+                   "false_incidents_per_day"]
+              ]
+              .agg(["mean", "std"])
+              .to_string()
+          )
+          PY
+
+      - name: Upload 10-seed robustness artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: diameter-calibrated-robustness10-${{ github.run_id }}
+          path: artifacts/robustness10/
+          retention-days: 30
