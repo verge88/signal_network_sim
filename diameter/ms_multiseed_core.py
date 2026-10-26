@@ -48,7 +48,7 @@ DEFAULT_COMPARISONS = [
     # (модель A, модель B, метрика) — проверяем A > B
     ("Cascade",           "Random Forest",      "compromise_recall"),
     ("Cascade",           "Cascade-Stage1",     "compromise_recall"),
-    ("Cascade",           "Autoencoder",        "recall_at_1pct_fpr"),
+    ("Cascade",           "Autoencoder",        "recall_at_val_1pct_fpr"),
     ("Meta-Ensemble",     "Random Forest",      "f1"),
     ("Random Forest",     "RF (no MS)",         "f1"),
     ("Random Forest",     "RF (no MS)",         "compromise_recall"),
@@ -57,9 +57,21 @@ DEFAULT_COMPARISONS = [
     ("VAE",               "Autoencoder",        "auc_pr"),
 ]
 
-BASE_METRICS = ["auc_roc", "auc_pr", "f1", "fpr",
-                "compromise_recall", "recall_at_1pct_fpr",
-                "episode_recall", "false_incidents_per_day"]
+BASE_METRICS = [
+    "auc_roc", "auc_pr", "f1", "fpr", "compromise_recall",
+    # Deprecated compatibility alias: this is a post-hoc ROC diagnostic whose
+    # threshold is selected from TEST negatives.
+    "recall_at_1pct_fpr",
+    "recall_at_1pct_fpr_posthoc",
+    # Deployable operating point: threshold selected from VALIDATION negatives
+    # and then applied unchanged to test.
+    "recall_at_val_1pct_fpr",
+    "test_fpr_at_val_1pct_threshold",
+    "compromise_recall_at_val_1pct_fpr",
+    "episode_recall", "episode_recall_at_val_1pct_fpr",
+    "false_incidents_per_day",
+    "false_incidents_per_day_at_val_1pct_threshold",
+]
 
 
 @dataclass
@@ -94,7 +106,7 @@ def _set_seed(seed: int):
 
 
 def recall_at_fpr(scores, y, target_fpr=0.01):
-    """Полнота при фиксированном FPR — честная метрика для статьи."""
+    """Post-hoc ROC diagnostic: threshold is selected from the same labels."""
     scores = np.nan_to_num(np.asarray(scores, float))
     y = np.asarray(y)
     if (y == 0).sum() == 0:
@@ -104,6 +116,37 @@ def recall_at_fpr(scores, y, target_fpr=0.01):
     tp = ((yp == 1) & (y == 1)).sum()
     fn = ((yp == 0) & (y == 1)).sum()
     return 100.0 * tp / max(1, tp + fn), thr
+
+
+def threshold_from_reference_fpr(scores, y, target_fpr=0.01):
+    """Calibrate a threshold on a reference partition's negative labels only.
+
+    The returned threshold guarantees empirical reference FPR <= target_fpr,
+    including score ties. It must then be applied unchanged to a disjoint test
+    partition.
+    """
+    scores = np.nan_to_num(np.asarray(scores, float))
+    y = np.asarray(y)
+    neg = scores[y == 0]
+    if len(neg) == 0:
+        return np.nan, np.nan
+
+    allowed_fp = int(np.floor(float(target_fpr) * len(neg)))
+    desc = np.sort(neg)[::-1]
+    if allowed_fp <= 0:
+        thr = np.nextafter(float(desc[0]), np.inf)
+    elif allowed_fp >= len(desc):
+        thr = -np.inf
+    else:
+        cutoff = float(desc[allowed_fp - 1])
+        # With >= threshold, ties at the cutoff can exceed the FP budget.
+        # Move just above the tied value when necessary.
+        thr = cutoff
+        if int(np.sum(neg >= thr)) > allowed_fp:
+            thr = np.nextafter(cutoff, np.inf)
+
+    empirical_fpr = float(np.mean(neg >= thr))
+    return float(thr), empirical_fpr
 
 
 def by_attack(scores, attack_types, thr, attack_list):
@@ -180,13 +223,42 @@ def count_false_incidents(test_df, predictions, labels):
     return int(incidents)
 
 
-def build_row(name, scores, y, attack_types, thr, spec, family):
+def build_row(name, scores, y, attack_types, thr, spec, family,
+              validation_scores=None, validation_y=None,
+              operating_target_fpr=0.01):
     scores = np.nan_to_num(np.asarray(scores, float))
     y = np.asarray(y)
     yp = (scores >= thr).astype(int)
     multi = len(np.unique(y)) > 1
     tn, fp, fn, tp = confusion_matrix(y, yp, labels=[0, 1]).ravel()
-    r1, _ = recall_at_fpr(scores, y, 0.01)
+
+    # Historical metric retained only for compatibility. Its threshold is
+    # selected from test negatives, so it is explicitly labelled post-hoc.
+    r1_posthoc, _ = recall_at_fpr(scores, y, operating_target_fpr)
+
+    op_thr = np.nan
+    val_fpr = np.nan
+    op_recall = np.nan
+    op_test_fpr = np.nan
+    op_compromise = np.nan
+    if validation_scores is not None and validation_y is not None:
+        op_thr, val_fpr = threshold_from_reference_fpr(
+            validation_scores, validation_y, operating_target_fpr
+        )
+        if np.isfinite(op_thr):
+            op_yp = (scores >= op_thr).astype(int)
+            op_tn, op_fp, op_fn, op_tp = confusion_matrix(
+                y, op_yp, labels=[0, 1]
+            ).ravel()
+            op_recall = 100.0 * op_tp / max(1, op_tp + op_fn)
+            op_test_fpr = (
+                op_fp / (op_fp + op_tn) if (op_fp + op_tn) else np.nan
+            )
+            op_rec = by_attack(
+                scores, attack_types, op_thr, spec.attack_types
+            )
+            op_compromise = op_rec.get(spec.compromise_attack, np.nan)
+
     row = dict(
         name=name, family=family, threshold=float(thr),
         auc_roc=roc_auc_score(y, scores) if multi else np.nan,
@@ -194,7 +266,14 @@ def build_row(name, scores, y, attack_types, thr, spec, family):
         f1=f1_score(y, yp, zero_division=0),
         fpr=fp / (fp + tn) if (fp + tn) else 0.0,
         tp=int(tp), fp=int(fp), fn=int(fn), tn=int(tn),
-        recall_at_1pct_fpr=r1,
+        # Deprecated alias preserved so historical tables remain readable.
+        recall_at_1pct_fpr=r1_posthoc,
+        recall_at_1pct_fpr_posthoc=r1_posthoc,
+        val_1pct_fpr_threshold=op_thr,
+        val_fpr_at_val_1pct_threshold=val_fpr,
+        recall_at_val_1pct_fpr=op_recall,
+        test_fpr_at_val_1pct_threshold=op_test_fpr,
+        compromise_recall_at_val_1pct_fpr=op_compromise,
     )
     rec = by_attack(scores, attack_types, thr, spec.attack_types)
     for a in spec.attack_types:
@@ -293,13 +372,20 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
     base_val, base_test = {}, {}   # leakage-safe meta stacking
 
     def record(name, s_test, thr, family="unsup",
-               y=None, atypes=None, keep=True):
+               y=None, atypes=None, keep=True,
+               s_val=None, y_val_ref=None):
         primary_rows = y is None and atypes is None and len(s_test) == len(test_df)
         y = y_test if y is None else y
         atypes = atk_test if atypes is None else atypes
+        if y_val_ref is None and primary_rows:
+            y_val_ref = y_val
         if keep:
             model_scores[name] = np.asarray(s_test, float)
-        row = build_row(name, s_test, y, atypes, thr, spec, family)
+        row = build_row(
+            name, s_test, y, atypes, thr, spec, family,
+            validation_scores=s_val,
+            validation_y=y_val_ref,
+        )
 
         if primary_rows and "attack_episode_id" in test_df.columns:
             yp = (np.nan_to_num(np.asarray(s_test, float)) >= thr).astype(int)
@@ -347,6 +433,42 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
                 float(row["fp"]) / test_days
                 if np.isfinite(test_days) and test_days > 0 else np.nan
             )
+
+            op_thr = row.get("val_1pct_fpr_threshold", np.nan)
+            if np.isfinite(op_thr):
+                yp_op = (
+                    np.nan_to_num(np.asarray(s_test, float)) >= op_thr
+                ).astype(int)
+                op_false_incidents = count_false_incidents(
+                    test_df, yp_op, y_test
+                )
+                row["false_incidents_at_val_1pct_threshold"] = int(
+                    op_false_incidents
+                )
+                row["false_incidents_per_day_at_val_1pct_threshold"] = (
+                    float(op_false_incidents) / test_days
+                    if np.isfinite(test_days) and test_days > 0 else np.nan
+                )
+
+                epi = test_df["attack_episode_id"].astype(str).to_numpy()
+                attack_mask = np.asarray(y_test) == 1
+                episode_ids = sorted({
+                    e for e in epi[attack_mask]
+                    if e and e.lower() not in ("nan", "none")
+                })
+                detected_op = 0
+                for eid in episode_ids:
+                    m = (epi == eid) & attack_mask
+                    if np.any(yp_op[m] == 1):
+                        detected_op += 1
+                row["episode_recall_at_val_1pct_fpr"] = (
+                    100.0 * detected_op / len(episode_ids)
+                    if episode_ids else np.nan
+                )
+            else:
+                row["false_incidents_at_val_1pct_threshold"] = np.nan
+                row["false_incidents_per_day_at_val_1pct_threshold"] = np.nan
+                row["episode_recall_at_val_1pct_fpr"] = np.nan
         else:
             row["n_test_episodes"] = np.nan
             row["n_detected_episodes"] = np.nan
@@ -354,6 +476,9 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
             row["false_incidents"] = np.nan
             row["false_incidents_per_day"] = np.nan
             row["false_positive_windows_per_day"] = np.nan
+            row["false_incidents_at_val_1pct_threshold"] = np.nan
+            row["false_incidents_per_day_at_val_1pct_threshold"] = np.nan
+            row["episode_recall_at_val_1pct_fpr"] = np.nan
 
         rows.append(row)
         ep = row.get("episode_recall", np.nan)
@@ -402,7 +527,7 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
                           random_state=seed).fit(X_train_norm)
     iso_v, iso_t = -iso.score_samples(X_val), -iso.score_samples(X_test)
     th, _ = mod.find_threshold(iso_v, y_val, pct)
-    record("Isolation Forest", iso_t, th)
+    record("Isolation Forest", iso_t, th, s_val=iso_v)
     base_val["iso"] = iso_v; base_test["iso"] = iso_t
 
     # ── 2. One-Class SVM ──
@@ -411,7 +536,7 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
                           gamma="scale").fit(X_train_norm)
         svm_v, svm_t = -svm.score_samples(X_val), -svm.score_samples(X_test)
         th, _ = mod.find_threshold(svm_v, y_val, pct)
-        record("One-Class SVM", svm_t, th)
+        record("One-Class SVM", svm_t, th, s_val=svm_v)
         base_val["svm"] = svm_v
         base_test["svm"] = svm_t
 
@@ -427,7 +552,7 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
         ae_v = ae_tr.reconstruction_error(X_val)
         ae_t = ae_tr.reconstruction_error(X_test)
         th, _ = mod.find_threshold(ae_v, y_val, pct)
-        record("Autoencoder", ae_t, th)
+        record("Autoencoder", ae_t, th, s_val=ae_v)
         base_val["ae"] = ae_v
         base_test["ae"] = ae_t
         ae_hist = getattr(ae_tr, "train_losses", [])
@@ -441,7 +566,7 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
         vae_v = vae_tr.anomaly_score(X_val)
         vae_t = vae_tr.anomaly_score(X_test)
         th, _ = mod.find_threshold(vae_v, y_val, pct)
-        record("VAE", vae_t, th)
+        record("VAE", vae_t, th, s_val=vae_v)
         base_val["vae"] = vae_v
         base_test["vae"] = vae_t
         vae_hist = getattr(vae_tr, "train_losses", [])
@@ -470,8 +595,11 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
             lt.fit(seq_tr, seq_vn if len(seq_vn) else None)
             th, _ = mod.find_threshold(lt.reconstruction_error(seq_v),
                                        seq_yv, pct)
-            record("LSTM-AE", lt.reconstruction_error(seq_t), th,
-                   family="unsup-seq", y=seq_yt, atypes=seq_atk, keep=False)
+            record(
+                "LSTM-AE", lt.reconstruction_error(seq_t), th,
+                family="unsup-seq", y=seq_yt, atypes=seq_atk, keep=False,
+                s_val=lt.reconstruction_error(seq_v), y_val_ref=seq_yv,
+            )
 
             tat = mod.TemporalAttentionAE(input_dim=n_feat, hidden_dim=64,
                                           n_heads=4, n_layers=2,
@@ -481,9 +609,12 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
             tt.fit(seq_tr, seq_vn if len(seq_vn) else None)
             th, _ = mod.find_threshold(tt.reconstruction_error(seq_v),
                                        seq_yv, pct)
-            record("Temporal-Attention-AE", tt.reconstruction_error(seq_t),
-                   th, family="unsup-seq", y=seq_yt, atypes=seq_atk,
-                   keep=False)
+            record(
+                "Temporal-Attention-AE", tt.reconstruction_error(seq_t),
+                th, family="unsup-seq", y=seq_yt, atypes=seq_atk,
+                keep=False, s_val=tt.reconstruction_error(seq_v),
+                y_val_ref=seq_yv,
+            )
         else:
             print("  [skip] недостаточно последовательностей для LSTM/TA-AE")
 
@@ -491,28 +622,39 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
     rf = RandomForestClassifier(n_estimators=cfg.rf_trees, random_state=seed,
                                 class_weight="balanced", n_jobs=-1)
     rf.fit(X_train, y_train)
+    rf_v = rf.predict_proba(X_val)[:, 1]
     rf_t = rf.predict_proba(X_test)[:, 1]
-    record("Random Forest", rf_t, 0.5, family="oracle")
-    base_val["rf"] = rf.predict_proba(X_val)[:, 1]; base_test["rf"] = rf_t
+    record("Random Forest", rf_t, 0.5, family="oracle", s_val=rf_v)
+    base_val["rf"] = rf_v; base_test["rf"] = rf_t
 
     gb = GradientBoostingClassifier(n_estimators=cfg.gb_estimators,
                                     learning_rate=cfg.gb_lr, max_depth=5,
                                     random_state=seed)
     gb.fit(X_train, y_train)
+    gb_v = gb.predict_proba(X_val)[:, 1]
     gb_t = gb.predict_proba(X_test)[:, 1]
-    record("Gradient Boosting", gb_t, 0.5, family="oracle")
-    base_val["gb"] = gb.predict_proba(X_val)[:, 1]; base_test["gb"] = gb_t
+    record("Gradient Boosting", gb_t, 0.5, family="oracle", s_val=gb_v)
+    base_val["gb"] = gb_v; base_test["gb"] = gb_t
 
     # ── 8. Каскадный детектор + его этапы ──
     casc = mod.CascadeCompromiseDetector(cfg, seed)
     casc.fit(X_train, y_train, Xtr_c, ytr_c)
+    casc_v = casc.predict_proba(X_val, Xva_c)
     casc_t = casc.predict_proba(X_test, Xte_c)
-    record("Cascade", casc_t, 0.5, family="oracle")
-    record("Cascade-Stage1", casc.predict_proba_stage1(X_test), 0.5,
-           family="oracle")
-    record("Cascade-Stage2", casc.predict_proba_stage2(Xte_c), 0.5,
-           family="oracle")
-    base_val["casc"] = casc.predict_proba(X_val, Xva_c)
+    casc_s1_v = casc.predict_proba_stage1(X_val)
+    casc_s1_t = casc.predict_proba_stage1(X_test)
+    casc_s2_v = casc.predict_proba_stage2(Xva_c)
+    casc_s2_t = casc.predict_proba_stage2(Xte_c)
+    record("Cascade", casc_t, 0.5, family="oracle", s_val=casc_v)
+    record(
+        "Cascade-Stage1", casc_s1_t, 0.5,
+        family="oracle", s_val=casc_s1_v,
+    )
+    record(
+        "Cascade-Stage2", casc_s2_t, 0.5,
+        family="oracle", s_val=casc_s2_v,
+    )
+    base_val["casc"] = casc_v
     base_test["casc"] = casc_t
 
     # ── 9. Специализированный ансамбль (медленно → по флагу) ──
@@ -522,7 +664,7 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
         s_v, s_t = ens.score(X_val), ens.score(X_test)
         for k in sorted(s_t.keys()):
             th, _ = mod.find_threshold(s_v[k], y_val, pct)
-            record(f"Ens:{k}", s_t[k], th)
+            record(f"Ens:{k}", s_t[k], th, s_val=s_v[k])
 
     # ── 10. Мета-ансамбль ──
     keys = list(base_val.keys())
@@ -537,8 +679,13 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
     meta = GradientBoostingClassifier(n_estimators=200, learning_rate=0.05,
                                       max_depth=3, random_state=seed)
     meta.fit(meta_val, y_val)
-    record("Meta-Ensemble", meta.predict_proba(meta_te)[:, 1], 0.5,
-           family="stacked")
+    record(
+        "Meta-Ensemble", meta.predict_proba(meta_te)[:, 1], 0.5,
+        family="stacked",
+        # No validation-calibrated operating point here: validation labels
+        # already fitted the meta-model. A nested calibration partition is
+        # required before this metric can be reported without optimism.
+    )
 
     # ── 11. Аблации (для проверки значимости вклада признаков) ──
     ms = [c for c in pipe.feature_cols if c in mod.MS_FEATURES]
@@ -553,8 +700,9 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
                                    random_state=seed,
                                    class_weight="balanced", n_jobs=-1)
         m.fit(X_train[:, idx], y_train)
-        record(tag, m.predict_proba(X_test[:, idx])[:, 1], 0.5,
-               family="ablation")
+        m_v = m.predict_proba(X_val[:, idx])[:, 1]
+        m_t = m.predict_proba(X_test[:, idx])[:, 1]
+        record(tag, m_t, 0.5, family="ablation", s_val=m_v)
 
     # ── сохранение ──
     df_res = pd.DataFrame(rows)
@@ -593,6 +741,16 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
             "fit_partition": "validation",
             "base_score_normalization_reference": "validation",
             "test_labels_used_for_fit": False,
+        },
+        "operating_point": {
+            "target_fpr": 0.01,
+            "threshold_reference": "validation_negative_labels",
+            "test_labels_used_for_threshold": False,
+            "posthoc_compatibility_metric": "recall_at_1pct_fpr_posthoc",
+            "deployable_metric": "recall_at_val_1pct_fpr",
+            "meta_ensemble_deployable_metric": (
+                "not_reported_validation_is_meta_fit_partition"
+            ),
         },
         "cascade_stage2": {
             "enabled": bool(getattr(casc, "stage2_enabled", True)),
@@ -716,8 +874,10 @@ def run_seeds(spec: ProtocolSpec, seeds: List[int], csv=None, out=None,
     # ── печать сводки ──
     print(f"\n{'='*90}\n  [{spec.name}] СВОДКА по {len(seeds)} сидам "
           f"(mean ± std)\n{'='*90}")
-    head = ["auc_roc", "auc_pr", "f1", "fpr", "compromise_recall",
-            "recall_at_1pct_fpr"]
+    head = [
+        "auc_roc", "auc_pr", "f1", "fpr", "compromise_recall",
+        "recall_at_val_1pct_fpr", "test_fpr_at_val_1pct_threshold",
+    ]
     print(f"{'Модель':<26s}" + "".join(f"{h:>22s}" for h in head if h in table))
     for i in table.index:
         print(f"{i[0]:<26s}" + "".join(f"{table.loc[i, h]:>22s}"
