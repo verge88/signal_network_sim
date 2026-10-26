@@ -96,6 +96,18 @@ class RegressionTests(unittest.TestCase):
                     training.gate_null_test(training.TrainingConfig(), [], False)
                 self.assertFalse(training.gate_null_test(training.TrainingConfig(), [], True)["passed"])
 
+    def test_meta_group_holdout_preserves_both_classes(self):
+        groups = np.repeat(np.arange(20), 20)
+        labels = np.zeros(len(groups), dtype=int)
+        labels[np.isin(groups, [1, 5, 9, 13, 17])] = 1
+        a, b = training._group_holdout(groups, labels, seed=42)
+        self.assertTrue(a.any())
+        self.assertTrue(b.any())
+        self.assertFalse(np.any(a & b))
+        self.assertEqual(set(labels[a]), {0, 1})
+        self.assertEqual(set(labels[b]), {0, 1})
+        self.assertFalse(set(groups[a]) & set(groups[b]))
+
     def test_split_classes_disjoint_episodes_and_time_gap(self):
         df = pd.DataFrame({"t": np.arange(2880), "label": 0, "episode_id": -1})
         for e, (lo, hi) in enumerate([(2561,2879),(2236,2422),(2044,2250),(125,508)]):

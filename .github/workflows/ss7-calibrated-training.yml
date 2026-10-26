@@ -1,0 +1,158 @@
+name: SS7 calibrated model training
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/ss7-calibrated-training.yml"
+      - "ss7/fix.py"
+      - "ss7/ss7_training_v7.py"
+      - "ss7/osmocom_calibration.py"
+      - "tests/test_ss7_osmocom_calibration.py"
+      - "tests/test_ss7_regressions.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ss7-calibrated-training-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  TRANSPORT_OVERHEAD_BYTES: "80.0"
+
+jobs:
+  validate:
+    name: Scientific and regression checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas networkx scikit-learn
+      - name: Run SS7 checks
+        run: |
+          python -m unittest \
+            tests.test_stage1_scientific_contract \
+            tests.test_ss7_regressions \
+            tests.test_ss7_osmocom_calibration \
+            -v
+
+  classical-multiseed:
+    name: Classical models, 3 regenerated seeds
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas networkx scikit-learn
+      - name: Train calibrated classical models
+        env:
+          OMP_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+        run: |
+          python ss7/ss7_training_v7.py \
+            --seed 42 \
+            --days 6 \
+            --feature-set OWN+INV \
+            --soph adaptive \
+            --transport-overhead-bytes "$TRANSPORT_OVERHEAD_BYTES" \
+            --no-torch \
+            --no-cache \
+            --seeds 42 43 44 \
+            --metric episode_recall \
+            --multiseed-models rule_baseline isolation_forest random_forest hist_gb meta_ensemble cascade \
+            --out-dir artifacts/classical
+      - name: Publish classical summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Calibrated SS7 classical training"
+            echo
+            echo "- transport overhead: $TRANSPORT_OVERHEAD_BYTES B/message"
+            echo "- simulation: 6 days"
+            echo "- seeds: 42, 43, 44 (regenerated topology/traffic/episodes)"
+            for f in $(find artifacts/classical -type f \( -name models.csv -o -name multiseed_agg.csv -o -name multiseed_tests.csv \) 2>/dev/null | sort); do
+              echo
+              echo "### $(basename "$f")"
+              echo '~~~csv'
+              cat "$f"
+              echo '~~~'
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload classical training artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ss7-calibrated-classical-${{ github.run_id }}
+          path: artifacts/classical/
+          if-no-files-found: warn
+          retention-days: 30
+
+  stack-verification:
+    name: RF + meta ensemble verification, seed 42
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas networkx scikit-learn
+      - name: Train calibrated RF and meta ensemble
+        env:
+          OMP_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+        run: |
+          python ss7/ss7_training_v7.py \
+            --seed 42 \
+            --days 6 \
+            --feature-set OWN+INV \
+            --soph adaptive \
+            --transport-overhead-bytes "$TRANSPORT_OVERHEAD_BYTES" \
+            --no-torch \
+            --no-cache \
+            --models random_forest meta_ensemble \
+            --out-dir artifacts/stack
+      - name: Publish stacking summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Calibrated SS7 stacking verification"
+            echo
+            echo "- transport overhead: $TRANSPORT_OVERHEAD_BYTES B/message"
+            echo "- simulation: 6 days"
+            echo "- seed: 42"
+            for f in $(find artifacts/stack -type f \( -name models.csv -o -name manifest.json -o -name null_test.json \) 2>/dev/null | sort); do
+              echo
+              echo "### $(basename "$f")"
+              echo '~~~'
+              cat "$f"
+              echo '~~~'
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload stacking artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ss7-calibrated-stack-${{ github.run_id }}
+          path: artifacts/stack/
+          if-no-files-found: warn
+          retention-days: 30
