@@ -31,6 +31,13 @@ CALIBRATION_PROVENANCE = {
     "holdout_mae_bytes": 6.684615384615341,
     "holdout_median_relative_error": 0.010041784372528633,
     "holdout_p90_relative_error": 0.022593,
+    "counter_semantics": (
+        "The simulator's legacy *_count/total_messages names are treated as "
+        "modeled Diameter command operations/transactions: scenario procedure "
+        "composition counts AIR/ULR/CCR-I operations, while an Open5GS S6a "
+        "calibration target contains the paired request+answer Diameter PDUs. "
+        "This is a simulator abstraction, not an operator-counter validation."
+    ),
     "claim_boundary": (
         "Protocol-real Open5GS S6a size calibration; not operator traffic "
         "and not a calibration of traffic or attack priors."
