@@ -95,7 +95,7 @@ jobs:
               got = m["sim_config_overrides"]["s6a_transaction_size_bytes"]
               assert abs(got - expected) < 1e-9, (path, got)
               split = m["split_report"]
-              assert split["mode"] == "episode_and_time_block_group_holdout"
+              assert split["mode"] == "episode_time_component_holdout"
               assert split["group_overlap"] is False
               assert len(split["episodes"]["test"]) >= 2
               assert split["compromise_rows"]["train"] > 0, path
