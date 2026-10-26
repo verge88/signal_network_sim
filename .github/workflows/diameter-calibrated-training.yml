@@ -103,6 +103,8 @@ jobs:
               assert m["cascade_stage2"]["enabled"] is True, (
                   path, m["cascade_stage2"]
               )
+              assert m["meta_stacking"]["fit_partition"] == "validation"
+              assert m["meta_stacking"]["test_labels_used_for_fit"] is False
               assert set(m["cascade_stage2"]["classes"]) == {0, 1}, (
                   path, m["cascade_stage2"]
               )
@@ -158,6 +160,8 @@ jobs:
           assert m["split_report"]["compromise_rows"]["test"] > 0
           assert m["cascade_stage2"]["enabled"] is True
           assert set(m["cascade_stage2"]["classes"]) == {0, 1}
+          assert m["meta_stacking"]["fit_partition"] == "validation"
+          assert m["meta_stacking"]["test_labels_used_for_fit"] is False
           assert m["permutation_null_passed"] is True
           assert "Autoencoder" in m["models"]
           assert "VAE" in m["models"]
