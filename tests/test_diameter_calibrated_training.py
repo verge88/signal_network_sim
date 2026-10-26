@@ -180,6 +180,39 @@ class DiameterCalibratedTrainingTests(unittest.TestCase):
         # node 8: interval 10 = one incident.
         self.assertEqual(count_false_incidents(df, yp, y), 3)
 
+
+    def test_attack_and_same_time_background_share_split_component(self):
+        cfg = TrainingConfig(seed=11, split_normal_block_intervals=10)
+        pipe = DataPipeline(cfg)
+        df = pd.DataFrame([
+            {
+                "interval": 100,
+                "time_s": 1500,
+                "node_id": 7,
+                "node_type": "MME",
+                "attack_type": "location_tracking",
+                "is_anomaly": 1,
+            },
+            {
+                "interval": 100,
+                "time_s": 1500,
+                "node_id": 8,
+                "node_type": "MME",
+                "attack_type": "none",
+                "is_anomaly": 0,
+            },
+            {
+                "interval": 101,
+                "time_s": 1515,
+                "node_id": 9,
+                "node_type": "MME",
+                "attack_type": "none",
+                "is_anomaly": 0,
+            },
+        ])
+        out = pipe._annotate_groups(df)
+        self.assertEqual(out["split_group"].nunique(), 1)
+
     def test_attack_episode_is_not_split_by_normal_time_block(self):
         cfg = TrainingConfig(seed=7, split_normal_block_intervals=10)
         pipe = DataPipeline(cfg)
