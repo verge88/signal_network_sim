@@ -1,9 +1,9 @@
 """Scientific training adapter for the Open5GS-calibrated Diameter simulator.
 
 This module reuses the v1 model zoo but replaces the row-random split with a
-grouped holdout. Attack episodes stay intact; normal traffic is grouped in
-contiguous time blocks shared by all nodes so zone/temporal neighbours do not
-leak across train/validation/test.
+grouped holdout. Attack episodes stay intact and are unioned with every
+contiguous normal-time block they touch, so contemporaneous zone/temporal
+neighbours cannot land in another train/validation/test partition.
 """
 from __future__ import annotations
 
@@ -71,13 +71,45 @@ class DataPipeline(base.DataPipeline):
         block = int(self.config.split_normal_block_intervals)
         if block <= 0:
             raise ValueError("split_normal_block_intervals must be positive")
-        normal_group = "N:" + (out["interval"].astype(int) // block).astype(str)
-        out["split_group"] = np.where(
-            attack_mask,
-            out["attack_episode_id"],
-            normal_group,
+        out["_normal_block"] = (
+            out["interval"].astype(int) // block
+        ).astype(int)
+
+        # Build connected components of {normal time block <-> attack episode}.
+        # If an attack episode spans several blocks, all those blocks and all
+        # rows from every node in them must remain in the same partition. This
+        # prevents contemporaneous zone/background rows from leaking across
+        # train/validation/test while still keeping whole attack episodes intact.
+        parent = {}
+
+        def find(key):
+            parent.setdefault(key, key)
+            if parent[key] != key:
+                parent[key] = find(parent[key])
+            return parent[key]
+
+        def union(a, b):
+            ra, rb = find(a), find(b)
+            if ra != rb:
+                parent[rb] = ra
+
+        for b in sorted(out["_normal_block"].unique()):
+            find(f"B:{int(b)}")
+
+        attacked_rows = out.loc[attack_mask]
+        for episode_id, part in attacked_rows.groupby("attack_episode_id"):
+            ekey = f"E:{episode_id}"
+            find(ekey)
+            for b in sorted(part["_normal_block"].unique()):
+                union(ekey, f"B:{int(b)}")
+
+        out["split_group"] = [
+            find(f"B:{int(b)}") for b in out["_normal_block"].to_numpy()
+        ]
+        return (
+            out.sort_values("_row_order")
+            .drop(columns=["_row_order", "_normal_block"])
         )
-        return out.sort_values("_row_order").drop(columns="_row_order")
 
     @staticmethod
     def _split_ok(train, val, test, cfg) -> bool:
@@ -180,7 +212,7 @@ class DataPipeline(base.DataPipeline):
             "test": set(test["split_group"].astype(str)),
         }
         self.split_report = {
-            "mode": "episode_and_time_block_group_holdout",
+            "mode": "episode_time_component_holdout",
             "normal_block_intervals": int(
                 self.config.split_normal_block_intervals
             ),
