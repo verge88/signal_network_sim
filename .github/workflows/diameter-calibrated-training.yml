@@ -87,6 +87,7 @@ jobs:
         run: |
           python - <<'PY'
           import glob, json, math
+          import pandas as pd
           expected = 794.2608695652174
           manifests = sorted(glob.glob("artifacts/classical/seed_*/manifest_seed*.json"))
           assert len(manifests) == 10, manifests
@@ -111,6 +112,23 @@ jobs:
               assert m["permutation_null_passed"] is True, (
                   path, m["permutation_null_auc"]
               )
+              op = m["operating_point"]
+              assert op["threshold_reference"] == "validation_negative_labels"
+              assert op["test_labels_used_for_threshold"] is False
+
+              seed = int(m["seed"])
+              metrics = pd.read_csv(
+                  f"artifacts/classical/seed_{seed}/metrics_seed{seed}.csv"
+              )
+              calibrated = metrics[metrics["name"] != "Meta-Ensemble"]
+              assert calibrated["val_fpr_at_val_1pct_threshold"].notna().all()
+              assert (
+                  calibrated["val_fpr_at_val_1pct_threshold"] <= 0.010000000001
+              ).all()
+              assert calibrated["recall_at_val_1pct_fpr"].notna().all()
+              meta = metrics[metrics["name"] == "Meta-Ensemble"]
+              assert len(meta) == 1
+              assert meta["recall_at_val_1pct_fpr"].isna().all()
           print("validated manifests:", manifests)
           PY
 
@@ -163,6 +181,11 @@ jobs:
           assert m["meta_stacking"]["fit_partition"] == "validation"
           assert m["meta_stacking"]["test_labels_used_for_fit"] is False
           assert m["permutation_null_passed"] is True
+          assert m["operating_point"]["test_labels_used_for_threshold"] is False
+          assert (
+              m["operating_point"]["threshold_reference"]
+              == "validation_negative_labels"
+          )
           assert "Autoencoder" in m["models"]
           assert "VAE" in m["models"]
           assert abs(
