@@ -15,6 +15,7 @@ from diameter.run_seeds_diameter_calibrated import (  # noqa: E402
     DIAMETER_CALIBRATED,
     OPEN5GS_CALIBRATION,
 )
+from diameter.ms_multiseed_core import normalize_score01  # noqa: E402
 
 
 class DiameterCalibratedTrainingTests(unittest.TestCase):
@@ -107,6 +108,12 @@ class DiameterCalibratedTrainingTests(unittest.TestCase):
             .astype(str)
         )
         self.assertGreaterEqual(len(test_eps), 2)
+
+    def test_stacking_normalizer_sanitizes_nonfinite_scores(self):
+        out = normalize_score01([float("nan"), 1.0, 2.0, float("inf")])
+        self.assertEqual(len(out), 4)
+        self.assertTrue(pd.Series(out).map(lambda x: x == x).all())
+        self.assertTrue(((out >= 0.0) & (out <= 1.0)).all())
 
     def test_attack_episode_is_not_split_by_normal_time_block(self):
         cfg = TrainingConfig(seed=7, split_normal_block_intervals=10)
