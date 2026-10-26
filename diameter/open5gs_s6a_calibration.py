@@ -75,10 +75,20 @@ def load_trace(path: str | Path) -> pd.DataFrame:
         raise ValueError(f"trace is missing columns: {missing}")
 
     out = df.loc[:, TRACE_COLUMNS].copy()
-    for col in TRACE_COLUMNS:
-        if col == "is_request":
-            continue
+    numeric_cols = (
+        "t", "frame_len", "ip_len", "diameter_len", "cmd_code", "app_id"
+    )
+    for col in numeric_cols:
         out[col] = pd.to_numeric(out[col], errors="coerce")
+    # Wireshark exports Diameter transaction identifiers as hexadecimal
+    # strings (for example 0x6b25b581). They are opaque correlation keys,
+    # so preserve their exact textual representation instead of coercing to
+    # decimal numbers.
+    for col in ("hop_by_hop", "end_to_end"):
+        out[col] = out[col].where(out[col].notna(), None)
+        out[col] = out[col].map(
+            lambda v: str(v).strip().lower() if v is not None else None
+        )
     out["is_request"] = out["is_request"].map(_parse_bool)
     out = out.dropna(
         subset=[
