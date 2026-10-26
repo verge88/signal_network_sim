@@ -56,7 +56,7 @@ jobs:
             diameter/run_seeds_diameter_calibrated.py
 
   classical-multiseed:
-    name: Classical models, 3 calibrated seeds
+    name: Classical models, 10 calibrated seeds
     needs: validate
     runs-on: ubuntu-24.04
     timeout-minutes: 180
@@ -76,7 +76,7 @@ jobs:
       - name: Train classical models on regenerated calibrated datasets
         run: |
           python diameter/run_seeds_diameter_calibrated.py \
-            42 43 44 \
+            42 43 44 45 46 47 48 49 50 51 \
             --regen \
             --no-seq \
             --no-svm \
@@ -89,7 +89,7 @@ jobs:
           import glob, json, math
           expected = 794.2608695652174
           manifests = sorted(glob.glob("artifacts/classical/seed_*/manifest_seed*.json"))
-          assert len(manifests) == 3, manifests
+          assert len(manifests) == 10, manifests
           for path in manifests:
               m = json.load(open(path, encoding="utf-8"))
               got = m["sim_config_overrides"]["s6a_transaction_size_bytes"]
