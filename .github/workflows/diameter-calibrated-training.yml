@@ -98,6 +98,14 @@ jobs:
               assert split["mode"] == "episode_and_time_block_group_holdout"
               assert split["group_overlap"] is False
               assert len(split["episodes"]["test"]) >= 2
+              assert split["compromise_rows"]["train"] > 0, path
+              assert split["compromise_rows"]["test"] > 0, path
+              assert m["cascade_stage2"]["enabled"] is True, (
+                  path, m["cascade_stage2"]
+              )
+              assert set(m["cascade_stage2"]["classes"]) == {0, 1}, (
+                  path, m["cascade_stage2"]
+              )
               assert m["permutation_null_passed"] is True, (
                   path, m["permutation_null_auc"]
               )
@@ -146,6 +154,10 @@ jobs:
           assert len(paths) == 1, paths
           m = json.load(open(paths[0], encoding="utf-8"))
           assert m["split_report"]["group_overlap"] is False
+          assert m["split_report"]["compromise_rows"]["train"] > 0
+          assert m["split_report"]["compromise_rows"]["test"] > 0
+          assert m["cascade_stage2"]["enabled"] is True
+          assert set(m["cascade_stage2"]["classes"]) == {0, 1}
           assert m["permutation_null_passed"] is True
           assert "Autoencoder" in m["models"]
           assert "VAE" in m["models"]
