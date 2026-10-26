@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "diameter")]
 
 from diameter.diameter_training_calibrated import (  # noqa: E402
+    CascadeCompromiseDetector,
     DataPipeline,
     TrainingConfig,
 )
@@ -108,12 +109,47 @@ class DiameterCalibratedTrainingTests(unittest.TestCase):
             .astype(str)
         )
         self.assertGreaterEqual(len(test_eps), 2)
+        self.assertTrue(
+            (train["attack_type"].astype(str) == "node_compromise").any()
+        )
+        self.assertTrue(
+            (test["attack_type"].astype(str) == "node_compromise").any()
+        )
 
     def test_stacking_normalizer_sanitizes_nonfinite_scores(self):
         out = normalize_score01([float("nan"), 1.0, 2.0, float("inf")])
         self.assertEqual(len(out), 4)
         self.assertTrue(pd.Series(out).map(lambda x: x == x).all())
         self.assertTrue(((out >= 0.0) & (out <= 1.0)).all())
+
+
+    def test_cascade_stage2_degrades_to_stage1_on_one_class(self):
+        import numpy as np
+
+        cfg = TrainingConfig(
+            cascade_rf_trees=5,
+            cascade_gb_estimators=5,
+        )
+        model = CascadeCompromiseDetector(cfg, seed=123)
+        x_full = np.array([
+            [0.0, 0.0],
+            [0.1, 0.0],
+            [1.0, 1.0],
+            [1.1, 1.0],
+        ])
+        y = np.array([0, 0, 1, 1])
+        x_comp = x_full.copy()
+        y_comp = np.zeros(4, dtype=int)
+
+        model.fit(x_full, y, x_comp, y_comp)
+        self.assertFalse(model.stage2_enabled)
+        self.assertEqual(model.stage2_classes, [0])
+
+        p1 = model.predict_proba_stage1(x_full)
+        p2 = model.predict_proba_stage2(x_comp)
+        pc = model.predict_proba(x_full, x_comp)
+        self.assertTrue(np.allclose(p2, 0.0))
+        self.assertTrue(np.allclose(pc, p1))
 
     def test_attack_episode_is_not_split_by_normal_time_block(self):
         cfg = TrainingConfig(seed=7, split_normal_block_intervals=10)
