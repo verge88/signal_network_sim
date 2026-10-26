@@ -72,6 +72,7 @@ jobs:
             --no-cache \
             --seeds 42 43 44 \
             --metric episode_recall \
+            --multiseed-models rule_baseline isolation_forest random_forest hist_gb meta_ensemble cascade \
             --out-dir artifacts/classical
       - name: Publish classical summary
         if: always()
