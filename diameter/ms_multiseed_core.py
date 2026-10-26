@@ -133,6 +133,23 @@ def normalize_score01(scores):
     return np.clip((arr - p1) / scale, 0.0, 1.0)
 
 
+def normalize_score01_from_reference(reference, scores):
+    """Scale scores with quantiles fitted only on a reference partition."""
+    ref = np.asarray(reference, dtype=float).copy()
+    arr = np.asarray(scores, dtype=float).copy()
+    finite = np.isfinite(ref)
+    if not finite.any():
+        return np.zeros_like(arr, dtype=float)
+    fill = float(np.median(ref[finite]))
+    ref = np.nan_to_num(ref, nan=fill, posinf=fill, neginf=fill)
+    arr = np.nan_to_num(arr, nan=fill, posinf=fill, neginf=fill)
+    p1, p99 = np.percentile(ref, [1, 99])
+    scale = float(p99 - p1)
+    if not np.isfinite(scale) or scale <= 1e-12:
+        return np.zeros_like(arr, dtype=float)
+    return np.clip((arr - p1) / scale, 0.0, 1.0)
+
+
 def build_row(name, scores, y, attack_types, thr, spec, family):
     scores = np.nan_to_num(np.asarray(scores, float))
     y = np.asarray(y)
@@ -243,7 +260,7 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
 
     rows: List[Dict] = []
     model_scores: Dict[str, np.ndarray] = {}
-    base_train, base_test = {}, {}   # для мета-ансамбля
+    base_val, base_test = {}, {}   # leakage-safe meta stacking
 
     def record(name, s_test, thr, family="unsup",
                y=None, atypes=None, keep=True):
@@ -348,7 +365,7 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
     iso_v, iso_t = -iso.score_samples(X_val), -iso.score_samples(X_test)
     th, _ = mod.find_threshold(iso_v, y_val, pct)
     record("Isolation Forest", iso_t, th)
-    base_train["iso"] = -iso.score_samples(X_train); base_test["iso"] = iso_t
+    base_val["iso"] = iso_v; base_test["iso"] = iso_t
 
     # ── 2. One-Class SVM ──
     if include_svm:
@@ -357,7 +374,7 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
         svm_v, svm_t = -svm.score_samples(X_val), -svm.score_samples(X_test)
         th, _ = mod.find_threshold(svm_v, y_val, pct)
         record("One-Class SVM", svm_t, th)
-        base_train["svm"] = -svm.score_samples(X_train)
+        base_val["svm"] = svm_v
         base_test["svm"] = svm_t
 
     ae_hist, vae_hist = [], []
@@ -373,7 +390,7 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
         ae_t = ae_tr.reconstruction_error(X_test)
         th, _ = mod.find_threshold(ae_v, y_val, pct)
         record("Autoencoder", ae_t, th)
-        base_train["ae"] = ae_tr.reconstruction_error(X_train)
+        base_val["ae"] = ae_v
         base_test["ae"] = ae_t
         ae_hist = getattr(ae_tr, "train_losses", [])
 
@@ -387,7 +404,7 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
         vae_t = vae_tr.anomaly_score(X_test)
         th, _ = mod.find_threshold(vae_v, y_val, pct)
         record("VAE", vae_t, th)
-        base_train["vae"] = vae_tr.anomaly_score(X_train)
+        base_val["vae"] = vae_v
         base_test["vae"] = vae_t
         vae_hist = getattr(vae_tr, "train_losses", [])
 
@@ -438,7 +455,7 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
     rf.fit(X_train, y_train)
     rf_t = rf.predict_proba(X_test)[:, 1]
     record("Random Forest", rf_t, 0.5, family="oracle")
-    base_train["rf"] = rf.predict_proba(X_train)[:, 1]; base_test["rf"] = rf_t
+    base_val["rf"] = rf.predict_proba(X_val)[:, 1]; base_test["rf"] = rf_t
 
     gb = GradientBoostingClassifier(n_estimators=cfg.gb_estimators,
                                     learning_rate=cfg.gb_lr, max_depth=5,
@@ -446,7 +463,7 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
     gb.fit(X_train, y_train)
     gb_t = gb.predict_proba(X_test)[:, 1]
     record("Gradient Boosting", gb_t, 0.5, family="oracle")
-    base_train["gb"] = gb.predict_proba(X_train)[:, 1]; base_test["gb"] = gb_t
+    base_val["gb"] = gb.predict_proba(X_val)[:, 1]; base_test["gb"] = gb_t
 
     # ── 8. Каскадный детектор + его этапы ──
     casc = mod.CascadeCompromiseDetector(cfg, seed)
@@ -457,7 +474,7 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
            family="oracle")
     record("Cascade-Stage2", casc.predict_proba_stage2(Xte_c), 0.5,
            family="oracle")
-    base_train["casc"] = casc.predict_proba(X_train, Xtr_c)
+    base_val["casc"] = casc.predict_proba(X_val, Xva_c)
     base_test["casc"] = casc_t
 
     # ── 9. Специализированный ансамбль (медленно → по флагу) ──
@@ -470,18 +487,20 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
             record(f"Ens:{k}", s_t[k], th)
 
     # ── 10. Мета-ансамбль ──
-    keys = list(base_train.keys())
-    meta_tr = np.column_stack([
-        normalize_score01(base_train[k]) for k in keys
+    keys = list(base_val.keys())
+    meta_val = np.column_stack([
+        normalize_score01_from_reference(base_val[k], base_val[k])
+        for k in keys
     ])
     meta_te = np.column_stack([
-        normalize_score01(base_test[k]) for k in keys
+        normalize_score01_from_reference(base_val[k], base_test[k])
+        for k in keys
     ])
     meta = GradientBoostingClassifier(n_estimators=200, learning_rate=0.05,
                                       max_depth=3, random_state=seed)
-    meta.fit(meta_tr, y_train)
+    meta.fit(meta_val, y_val)
     record("Meta-Ensemble", meta.predict_proba(meta_te)[:, 1], 0.5,
-           family="oracle")
+           family="stacked")
 
     # ── 11. Аблации (для проверки значимости вклада признаков) ──
     ms = [c for c in pipe.feature_cols if c in mod.MS_FEATURES]
@@ -532,6 +551,11 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
         "permutation_null_passed": null_passed,
         "test_rows": int(len(test_df)),
         "test_anomalies": int(np.sum(y_test)),
+        "meta_stacking": {
+            "fit_partition": "validation",
+            "base_score_normalization_reference": "validation",
+            "test_labels_used_for_fit": False,
+        },
         "cascade_stage2": {
             "enabled": bool(getattr(casc, "stage2_enabled", True)),
             "classes": list(getattr(casc, "stage2_classes", [0, 1])),
