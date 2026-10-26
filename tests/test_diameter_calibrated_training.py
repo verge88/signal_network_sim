@@ -16,7 +16,10 @@ from diameter.run_seeds_diameter_calibrated import (  # noqa: E402
     DIAMETER_CALIBRATED,
     OPEN5GS_CALIBRATION,
 )
-from diameter.ms_multiseed_core import normalize_score01  # noqa: E402
+from diameter.ms_multiseed_core import (  # noqa: E402
+    normalize_score01,
+    normalize_score01_from_reference,
+)
 
 
 class DiameterCalibratedTrainingTests(unittest.TestCase):
@@ -150,6 +153,17 @@ class DiameterCalibratedTrainingTests(unittest.TestCase):
         pc = model.predict_proba(x_full, x_comp)
         self.assertTrue(np.allclose(p2, 0.0))
         self.assertTrue(np.allclose(pc, p1))
+
+
+    def test_reference_normalizer_uses_validation_quantiles(self):
+        import numpy as np
+
+        ref = np.array([0.0, 1.0, 2.0, 3.0])
+        test = np.array([0.0, 3.0, 30.0])
+        out = normalize_score01_from_reference(ref, test)
+        self.assertEqual(len(out), 3)
+        self.assertGreater(out[1], out[0])
+        self.assertEqual(out[2], 1.0)
 
     def test_attack_episode_is_not_split_by_normal_time_block(self):
         cfg = TrainingConfig(seed=7, split_normal_block_intervals=10)
