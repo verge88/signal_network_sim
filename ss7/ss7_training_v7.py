@@ -572,21 +572,37 @@ def _seq_model(mode: str):
 
 # ---- ансамбли ---------------------------------------------------------------
 
-def _group_holdout(g: np.ndarray, seed: int, frac_b: float = 0.4):
-    """Делит train на A (базовые модели) и B (мета-модель) по ГРУППАМ."""
+def _group_holdout(g: np.ndarray, y: np.ndarray, seed: int,
+                   frac_b: float = 0.4, max_tries: int = 128):
+    """Делит train на A/B по группам, сохраняя оба класса в обеих частях.
+
+    Группы не дробятся. Выбирается первый воспроизводимый split, в котором
+    supervised base learners на A и meta learner на B действительно обучаемы.
+    """
     uniq = np.unique(g)
+    if len(uniq) < 2:
+        raise ValueError("meta ensemble requires at least two train groups")
     rng = np.random.default_rng(seed)
-    perm = rng.permutation(uniq)
-    nb = max(1, int(round(frac_b * len(uniq))))
-    b = set(perm[:nb].tolist())
-    mask_b = np.array([x in b for x in g])
-    return ~mask_b, mask_b
+    nb = min(len(uniq) - 1, max(1, int(round(frac_b * len(uniq)))))
+    for _ in range(max_tries):
+        perm = rng.permutation(uniq)
+        bset = set(perm[:nb].tolist())
+        mask_b = np.array([x in bset for x in g], dtype=bool)
+        mask_a = ~mask_b
+        if (mask_a.sum() >= 200 and mask_b.sum() >= 100
+                and len(np.unique(y[mask_a])) == 2
+                and len(np.unique(y[mask_b])) == 2):
+            return mask_a, mask_b
+    raise ValueError(
+        "cannot construct leakage-free A/B group split with both classes; "
+        "increase simulation duration or number of attack episodes")
 
 
 def m_meta_ensemble(M: Matrices, cfg: TrainingConfig, seed: int):
     """Стэкинг без утечки: базовые на A, мета на B, оценка на val/test."""
-    a, b = _group_holdout(M.gtr, seed)
-    if a.sum() < 200 or b.sum() < 100 or len(np.unique(M.ytr[b])) < 2:
+    try:
+        a, b = _group_holdout(M.gtr, M.ytr, seed)
+    except ValueError:
         return m_random_forest(M, cfg, seed)
 
     MA = Matrices(cols=M.cols, Xtr=M.Xtr[a], Xva=M.Xtr[b], Xte=M.Xte,
@@ -888,7 +904,8 @@ def bootstrap_paired(res: pd.DataFrame, a: str, b: str, metric: str,
 
 def multiseed(cfg: TrainingConfig, seeds: Sequence[int],
               metric: str = "episode_recall",
-              comparisons: Sequence[Tuple[str, str]] = DEFAULT_COMPARISONS
+              comparisons: Sequence[Tuple[str, str]] = DEFAULT_COMPARISONS,
+              only: Optional[Sequence[str]] = None
               ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Каждый сид ПЕРЕГЕНЕРИРУЕТ сеть, трафик и эпизоды."""
     base = FEATURE_SETS[cfg.feature_set]
@@ -903,7 +920,7 @@ def multiseed(cfg: TrainingConfig, seeds: Sequence[int],
         cols = resolve_feature_columns(df, base)
         tr, va, te = blocked_split(df, sc, RngBook(sc.seed)["split"])
         M = prepare_matrices(tr, va, te, cols)
-        r = run_zoo(M, c, int(s))
+        r = run_zoo(M, c, int(s), only=only)
         r["seed"] = int(s)
         per_seed.append(r)
     res = pd.concat(per_seed, ignore_index=True)
@@ -984,6 +1001,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--op-prevalence", type=float, default=1e-4)
     ap.add_argument("--seeds", type=int, nargs="*", default=None)
     ap.add_argument("--metric", default="episode_recall")
+    ap.add_argument(
+        "--multiseed-models", nargs="*", default=None,
+        help="ограничить multiseed указанными именами моделей")
     ap.add_argument("--ablations", action="store_true")
     ap.add_argument("--lomfo", action="store_true")
     ap.add_argument("--curve", action="store_true")
@@ -1131,7 +1151,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     if a.seeds:
         print(f"\n[10] Мультисид с перегенерацией: {a.seeds}")
-        ms, agg, tests = multiseed(cfg, a.seeds, metric=a.metric)
+        ms, agg, tests = multiseed(
+            cfg, a.seeds, metric=a.metric, only=a.multiseed_models)
         print(agg.to_string(index=False))
         if not tests.empty:
             enough = (
