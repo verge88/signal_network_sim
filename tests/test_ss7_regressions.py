@@ -97,9 +97,9 @@ class RegressionTests(unittest.TestCase):
                 self.assertFalse(training.gate_null_test(training.TrainingConfig(), [], True)["passed"])
 
     def test_meta_group_holdout_preserves_both_classes(self):
-        groups = np.repeat(np.arange(12), 20)
+        groups = np.repeat(np.arange(20), 20)
         labels = np.zeros(len(groups), dtype=int)
-        labels[np.isin(groups, [1, 5, 9])] = 1
+        labels[np.isin(groups, [1, 5, 9, 13, 17])] = 1
         a, b = training._group_holdout(groups, labels, seed=42)
         self.assertTrue(a.any())
         self.assertTrue(b.any())
