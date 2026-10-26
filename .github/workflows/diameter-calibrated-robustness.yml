@@ -52,6 +52,7 @@ jobs:
         run: |
           python - <<'PY'
           import glob, json, math
+          import pandas as pd
           expected = 794.2608695652174
           manifests = sorted(glob.glob("artifacts/robustness10/seed_*/manifest_seed*.json"))
           assert len(manifests) == 10, manifests
@@ -74,6 +75,18 @@ jobs:
               assert m["permutation_null_passed"] is True, (
                   path, m["permutation_null_auc"]
               )
+              op = m["operating_point"]
+              assert op["threshold_reference"] == "validation_negative_labels"
+              assert op["test_labels_used_for_threshold"] is False
+              seed = int(m["seed"])
+              metrics = pd.read_csv(
+                  f"artifacts/robustness10/seed_{seed}/metrics_seed{seed}.csv"
+              )
+              calibrated = metrics[metrics["name"] != "Meta-Ensemble"]
+              assert calibrated["val_fpr_at_val_1pct_threshold"].notna().all()
+              assert (
+                  calibrated["val_fpr_at_val_1pct_threshold"] <= 0.010000000001
+              ).all()
               null_means.append(float(m["permutation_null_auc_mean"]))
           print("validated 10 manifests")
           print("permutation-null means:", null_means)
@@ -88,8 +101,11 @@ jobs:
           df = pd.read_csv(p)
           cols = [
               "name", "seed", "auc_pr", "f1", "fpr",
-              "compromise_recall", "recall_at_1pct_fpr",
-              "episode_recall", "false_incidents_per_day",
+              "compromise_recall", "recall_at_val_1pct_fpr",
+              "test_fpr_at_val_1pct_threshold",
+              "compromise_recall_at_val_1pct_fpr",
+              "episode_recall_at_val_1pct_fpr",
+              "false_incidents_per_day_at_val_1pct_threshold",
           ]
           keep = [
               "Gradient Boosting", "Cascade", "Cascade-Stage2",
@@ -101,8 +117,11 @@ jobs:
               df[df["name"].isin(keep)]
               .groupby("name")[
                   ["auc_pr", "f1", "fpr", "compromise_recall",
-                   "recall_at_1pct_fpr", "episode_recall",
-                   "false_incidents_per_day"]
+                   "recall_at_val_1pct_fpr",
+                   "test_fpr_at_val_1pct_threshold",
+                   "compromise_recall_at_val_1pct_fpr",
+                   "episode_recall_at_val_1pct_fpr",
+                   "false_incidents_per_day_at_val_1pct_threshold"]
               ]
               .agg(["mean", "std"])
               .to_string()
