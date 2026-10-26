@@ -1237,16 +1237,27 @@ class DiameterSimulator:
                 override = {}
                 attack_type = AttackType.NONE
                 event_type = NormalEventType.NONE
+                compromise_active = False
 
                 for a in active_attacks:
                     if nid in a.target_nodes:
                         override.update(
                             self.injector.get_attack_overrides(a))
                         attack_type = a.attack_type
-                        if attack_type == AttackType.NODE_COMPROMISE:
-                            if not node.is_compromised:
-                                node.is_compromised = True
-                                node.compromised_since = t
+                        if a.attack_type == AttackType.NODE_COMPROMISE:
+                            compromise_active = True
+
+                # AttackScenario end_interval is exclusive, so compromise state
+                # must follow the active window as well.  Without this reset the
+                # CU kept masking reports after the row label returned to normal,
+                # creating systematic false-negative labels.
+                if compromise_active:
+                    if not node.is_compromised:
+                        node.is_compromised = True
+                        node.compromised_since = t
+                else:
+                    node.is_compromised = False
+                    node.compromised_since = None
 
                 for e in active_events:
                     if nid in e.target_nodes:
