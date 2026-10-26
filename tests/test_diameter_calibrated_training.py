@@ -7,6 +7,12 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "diameter")]
 
+from diameter.diameter_sim_v1 import (  # noqa: E402
+    AttackScenario,
+    AttackType,
+    DiameterSimulator,
+    SimulationConfig,
+)
 from diameter.diameter_training_calibrated import (  # noqa: E402
     CascadeCompromiseDetector,
     DataPipeline,
@@ -85,6 +91,31 @@ class DiameterCalibratedTrainingTests(unittest.TestCase):
             ]["ULR"],
             1066.4,
         )
+
+
+    def test_node_compromise_state_ends_with_attack_window(self):
+        cfg = SimulationConfig(
+            duration_hours=(3 * 15.0) / 3600.0,
+            interval_s=15.0,
+            seed=123,
+        )
+        attack = AttackScenario(
+            AttackType.NODE_COMPROMISE,
+            [7],
+            1,
+            2,
+            intensity=5.0,
+        )
+        sim = DiameterSimulator(cfg, [attack], [])
+        sim.run()
+        df = sim.to_dataframe()
+        node = df[df["node_id"] == 7].sort_values("interval")
+        self.assertEqual(node["attack_type"].tolist(), [
+            "none", "node_compromise", "none"
+        ])
+        self.assertEqual(node["is_anomaly"].astype(int).tolist(), [0, 1, 0])
+        self.assertFalse(sim.topology.nodes[7].is_compromised)
+        self.assertIsNone(sim.topology.nodes[7].compromised_since)
 
     def test_grouped_split_keeps_groups_and_episodes_disjoint(self):
         cfg = TrainingConfig(
