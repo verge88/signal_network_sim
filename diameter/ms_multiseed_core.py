@@ -532,6 +532,13 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
         "permutation_null_passed": null_passed,
         "test_rows": int(len(test_df)),
         "test_anomalies": int(np.sum(y_test)),
+        "cascade_stage2": {
+            "enabled": bool(getattr(casc, "stage2_enabled", True)),
+            "classes": list(getattr(casc, "stage2_classes", [0, 1])),
+            "disabled_reason": getattr(
+                casc, "stage2_disabled_reason", None
+            ),
+        },
         "models": [str(x) for x in df_res["name"].tolist()],
     }
     with open(os.path.join(out, f"manifest_seed{seed}.json"),
