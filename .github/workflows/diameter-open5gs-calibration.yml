@@ -115,6 +115,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
+          # Open5GS UPF opens the configured TUN device during EPC test
+          # initialization. This is the same ogstun setup documented by
+          # Open5GS; the test traffic itself remains the official attach suite.
+          sudo modprobe tun || true
+          sudo ip tuntap add name ogstun mode tun
+          sudo ip addr add 10.45.0.1/16 dev ogstun
+          sudo ip -6 addr add 2001:db8:cafe::1/48 dev ogstun || true
+          sudo ip link set ogstun up
+          ip addr show ogstun | tee "$GITHUB_WORKSPACE/artifacts/open5gs/ogstun.txt"
+
           sudo tcpdump -i lo -s 0 -U \
             -w "$GITHUB_WORKSPACE/artifacts/open5gs/open5gs-epc.pcap" \
             '(tcp port 3868 or sctp port 3868)' \
