@@ -20,6 +20,7 @@ diameter_training_v1.py через import (сами файлы не изменя
 """
 
 import os
+import json
 import pickle
 import importlib
 import numpy as np
@@ -57,7 +58,8 @@ DEFAULT_COMPARISONS = [
 ]
 
 BASE_METRICS = ["auc_roc", "auc_pr", "f1", "fpr",
-                "compromise_recall", "recall_at_1pct_fpr"]
+                "compromise_recall", "recall_at_1pct_fpr",
+                "episode_recall", "false_alerts_per_day"]
 
 
 @dataclass
@@ -72,6 +74,8 @@ class ProtocolSpec:
     base_out: str = "seed_runs"
     comparisons: List[Tuple[str, str, str]] = \
         field(default_factory=lambda: list(DEFAULT_COMPARISONS))
+    sim_config_overrides: Dict = field(default_factory=dict)
+    calibration_provenance: Dict = field(default_factory=dict)
 
     @property
     def metrics(self) -> List[str]:
@@ -154,6 +158,7 @@ def regen_dataset(spec: ProtocolSpec, seed: int, out_csv: str) -> str:
 
     def patched(*args, **kwargs):
         kwargs["seed"] = seed
+        kwargs.update(spec.sim_config_overrides)
         return orig_cfg(*args, **kwargs)
 
     m.SimulationConfig = patched
@@ -164,6 +169,22 @@ def regen_dataset(spec: ProtocolSpec, seed: int, out_csv: str) -> str:
         m.SimulationConfig = orig_cfg
     os.makedirs(os.path.dirname(out_csv) or ".", exist_ok=True)
     df.to_csv(out_csv, index=False)
+    manifest = {
+        "protocol": spec.name,
+        "seed": int(seed),
+        "sim_config_overrides": spec.sim_config_overrides,
+        "calibration_provenance": spec.calibration_provenance,
+        "shape": [int(df.shape[0]), int(df.shape[1])],
+        "anomaly_rate": float(df["is_anomaly"].mean())
+            if "is_anomaly" in df.columns else None,
+        "attack_distribution": (
+            {str(k): int(v) for k, v in
+             df["attack_type"].value_counts().to_dict().items()}
+            if "attack_type" in df.columns else {}
+        ),
+    }
+    with open(out_csv + ".manifest.json", "w", encoding="utf-8") as fh:
+        json.dump(manifest, fh, ensure_ascii=False, indent=2)
     print(f"  [regen] сохранено: {out_csv}  shape={df.shape}")
     return out_csv
 
@@ -174,7 +195,8 @@ def regen_dataset(spec: ProtocolSpec, seed: int, out_csv: str) -> str:
 
 def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
                  out: Optional[str] = None, include_sequential: bool = True,
-                 include_ensemble: bool = False, include_svm: bool = True
+                 include_ensemble: bool = False, include_svm: bool = True,
+                 include_neural: bool = True
                  ) -> pd.DataFrame:
     mod = importlib.import_module(spec.train_module)
 
@@ -210,17 +232,95 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
 
     def record(name, s_test, thr, family="unsup",
                y=None, atypes=None, keep=True):
+        primary_rows = y is None and atypes is None and len(s_test) == len(test_df)
         y = y_test if y is None else y
         atypes = atk_test if atypes is None else atypes
         if keep:
             model_scores[name] = np.asarray(s_test, float)
         row = build_row(name, s_test, y, atypes, thr, spec, family)
+
+        if primary_rows and "attack_episode_id" in test_df.columns:
+            yp = (np.nan_to_num(np.asarray(s_test, float)) >= thr).astype(int)
+            epi = test_df["attack_episode_id"].astype(str).to_numpy()
+            attack_mask = np.asarray(y_test) == 1
+            episode_ids = sorted({
+                e for e in epi[attack_mask]
+                if e and e.lower() not in ("nan", "none")
+            })
+            detected = 0
+            for eid in episode_ids:
+                m = (epi == eid) & attack_mask
+                if np.any(yp[m] == 1):
+                    detected += 1
+            row["n_test_episodes"] = int(len(episode_ids))
+            row["n_detected_episodes"] = int(detected)
+            row["episode_recall"] = (
+                100.0 * detected / len(episode_ids)
+                if episode_ids else np.nan
+            )
+
+            interval_s = 15.0
+            if "time_s" in test_df.columns and "interval" in test_df.columns:
+                ti = (test_df[["interval", "time_s"]]
+                      .drop_duplicates().sort_values("interval"))
+                di = ti["interval"].diff().to_numpy(float)
+                dt = ti["time_s"].diff().to_numpy(float)
+                good = np.isfinite(di) & np.isfinite(dt) & (di > 0)
+                if np.any(good):
+                    ratios = dt[good] / di[good]
+                    ratios = ratios[(ratios > 0) & np.isfinite(ratios)]
+                    if len(ratios):
+                        interval_s = float(np.median(ratios))
+            test_days = (
+                test_df["interval"].nunique() * interval_s / 86400.0
+                if "interval" in test_df.columns else np.nan
+            )
+            row["false_alerts_per_day"] = (
+                float(row["fp"]) / test_days
+                if np.isfinite(test_days) and test_days > 0 else np.nan
+            )
+        else:
+            row["n_test_episodes"] = np.nan
+            row["n_detected_episodes"] = np.nan
+            row["episode_recall"] = np.nan
+            row["false_alerts_per_day"] = np.nan
+
         rows.append(row)
+        ep = row.get("episode_recall", np.nan)
+        ep_text = f"{ep:.1f}%" if np.isfinite(ep) else "—"
         print(f"  [{family:9s}] {name:22s} AUC-PR={row['auc_pr']:.3f} "
               f"F1={row['f1']:.3f} FPR={row['fpr']:.4f} "
               f"comp={row['compromise_recall']:.1f}% "
-              f"R@1%FPR={row['recall_at_1pct_fpr']:.1f}%")
+              f"R@1%FPR={row['recall_at_1pct_fpr']:.1f}% "
+              f"episode={ep_text}")
         return row
+
+    # Label-permutation null: a classifier trained on shuffled labels
+    # should not generalise to the untouched test labels. This is a sanity
+    # check for accidental label/row leakage, not a substitute for a full
+    # counterfactual simulator null.
+    null_aucs = []
+    rng_null = np.random.default_rng(seed + 900001)
+    for j in range(2):
+        y_perm = rng_null.permutation(y_train)
+        null_rf = RandomForestClassifier(
+            n_estimators=40,
+            random_state=seed + 1000 + j,
+            class_weight="balanced",
+            n_jobs=-1,
+        )
+        null_rf.fit(X_train, y_perm)
+        null_score = null_rf.predict_proba(X_test)[:, 1]
+        if len(np.unique(y_test)) > 1:
+            null_aucs.append(float(roc_auc_score(y_test, null_score)))
+    null_auc_mean = float(np.mean(null_aucs)) if null_aucs else np.nan
+    null_passed = bool(
+        np.isfinite(null_auc_mean) and 0.35 <= null_auc_mean <= 0.65
+    )
+    print(
+        f"  permutation-null AUCs={null_aucs}, "
+        f"mean={null_auc_mean:.4f}, passed={null_passed}"
+    )
 
     pct = cfg.threshold_percentile
     print(f"\n--- [{spec.name}] seed={seed}: обучение моделей "
@@ -245,32 +345,39 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
         base_train["svm"] = -svm.score_samples(X_train)
         base_test["svm"] = svm_t
 
-    # ── 3. Autoencoder ──
-    ae = mod.Autoencoder(n_feat, cfg.ae_hidden_dims, cfg.ae_latent_dim)
-    ae_tr = mod.AETrainer(ae, cfg.ae_lr, cfg.ae_epochs, cfg.ae_batch,
-                          patience=15)
-    ae_tr.fit(X_train_norm, X_val_norm)
-    ae_v = ae_tr.reconstruction_error(X_val)
-    ae_t = ae_tr.reconstruction_error(X_test)
-    th, _ = mod.find_threshold(ae_v, y_val, pct)
-    record("Autoencoder", ae_t, th)
-    base_train["ae"] = ae_tr.reconstruction_error(X_train)
-    base_test["ae"] = ae_t
+    ae_hist, vae_hist = [], []
 
-    # ── 4. VAE ──
-    vae = mod.VAE(n_feat, cfg.vae_hidden_dims, cfg.vae_latent_dim)
-    vae_tr = mod.VAETrainer(vae, cfg.vae_lr, cfg.vae_epochs, cfg.vae_batch,
-                            kl_weight=cfg.vae_kl_weight, patience=15)
-    vae_tr.fit(X_train_norm, X_val_norm)
-    vae_v = vae_tr.anomaly_score(X_val)
-    vae_t = vae_tr.anomaly_score(X_test)
-    th, _ = mod.find_threshold(vae_v, y_val, pct)
-    record("VAE", vae_t, th)
-    base_train["vae"] = vae_tr.anomaly_score(X_train)
-    base_test["vae"] = vae_t
+    # ── 3-4. Autoencoder / VAE ──
+    if include_neural:
+        ae = mod.Autoencoder(n_feat, cfg.ae_hidden_dims, cfg.ae_latent_dim)
+        ae_tr = mod.AETrainer(
+            ae, cfg.ae_lr, cfg.ae_epochs, cfg.ae_batch, patience=15
+        )
+        ae_tr.fit(X_train_norm, X_val_norm)
+        ae_v = ae_tr.reconstruction_error(X_val)
+        ae_t = ae_tr.reconstruction_error(X_test)
+        th, _ = mod.find_threshold(ae_v, y_val, pct)
+        record("Autoencoder", ae_t, th)
+        base_train["ae"] = ae_tr.reconstruction_error(X_train)
+        base_test["ae"] = ae_t
+        ae_hist = getattr(ae_tr, "train_losses", [])
+
+        vae = mod.VAE(n_feat, cfg.vae_hidden_dims, cfg.vae_latent_dim)
+        vae_tr = mod.VAETrainer(
+            vae, cfg.vae_lr, cfg.vae_epochs, cfg.vae_batch,
+            kl_weight=cfg.vae_kl_weight, patience=15
+        )
+        vae_tr.fit(X_train_norm, X_val_norm)
+        vae_v = vae_tr.anomaly_score(X_val)
+        vae_t = vae_tr.anomaly_score(X_test)
+        th, _ = mod.find_threshold(vae_v, y_val, pct)
+        record("VAE", vae_t, th)
+        base_train["vae"] = vae_tr.anomaly_score(X_train)
+        base_test["vae"] = vae_t
+        vae_hist = getattr(vae_tr, "train_losses", [])
 
     # ── 5. Последовательные модели (свои y: метка последнего шага) ──
-    if include_sequential:
+    if include_sequential and include_neural:
         seq_tr, _ = pipe.get_sequential_data(
             train_df[train_df[pipe.LABEL_COL] == 0], cfg.lstm_seq_len)
         if len(seq_tr) > 100:
@@ -387,14 +494,35 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
         model_scores=model_scores, y_test=y_test,
         attack_types=atk_test, feature_cols=pipe.feature_cols,
         rf_importances=rf.feature_importances_,
-        ae_train_hist=getattr(ae_tr, "train_losses", []),
-        vae_train_hist=getattr(vae_tr, "train_losses", []),
+        ae_train_hist=ae_hist,
+        vae_train_hist=vae_hist,
         cascade_s1=casc.predict_proba_stage1(X_test),
         cascade_s2=casc.predict_proba_stage2(Xte_c),
         cascade_comb=casc_t,
     )
     with open(os.path.join(out, f"artifacts_seed{seed}.pkl"), "wb") as f:
         pickle.dump(artifacts, f)
+
+    manifest = {
+        "protocol": spec.name,
+        "seed": int(seed),
+        "data_path": str(cfg.data_path),
+        "training_config": vars(cfg),
+        "sim_config_overrides": spec.sim_config_overrides,
+        "calibration_provenance": spec.calibration_provenance,
+        "feature_cols": list(pipe.feature_cols),
+        "split_report": getattr(pipe, "split_report", {}),
+        "permutation_null_auc": null_aucs,
+        "permutation_null_auc_mean": null_auc_mean,
+        "permutation_null_passed": null_passed,
+        "test_rows": int(len(test_df)),
+        "test_anomalies": int(np.sum(y_test)),
+        "models": [str(x) for x in df_res["name"].tolist()],
+    }
+    with open(os.path.join(out, f"manifest_seed{seed}.json"),
+              "w", encoding="utf-8") as fh:
+        json.dump(manifest, fh, ensure_ascii=False, indent=2, default=str)
+
     print(f"  сохранено: {out}/artifacts_seed{seed}.pkl")
     return df_res
 
@@ -466,7 +594,7 @@ def _fmt(mean, std, metric):
 
 def run_seeds(spec: ProtocolSpec, seeds: List[int], csv=None, out=None,
               regen=False, include_sequential=True, include_ensemble=False,
-              include_svm=True):
+              include_svm=True, include_neural=True):
     base = out or spec.base_out
     os.makedirs(base, exist_ok=True)
     frames = []
@@ -481,7 +609,8 @@ def run_seeds(spec: ProtocolSpec, seeds: List[int], csv=None, out=None,
         frames.append(run_one_seed(
             spec, sd, csv=data_csv, out=os.path.join(base, f"seed_{sd}"),
             include_sequential=include_sequential,
-            include_ensemble=include_ensemble, include_svm=include_svm))
+            include_ensemble=include_ensemble, include_svm=include_svm,
+            include_neural=include_neural))
 
     alld = pd.concat(frames, ignore_index=True)
     alld.to_csv(f"{base}/all_seed_metrics.csv", index=False)
@@ -551,8 +680,11 @@ def cli(spec: ProtocolSpec, argv=None):
                    help="включить специализированный ансамбль (медленно)")
     p.add_argument("--no-svm", action="store_true",
                    help="без One-Class SVM (ускоряет на больших выборках)")
+    p.add_argument("--no-neural", action="store_true",
+                   help="без Autoencoder/VAE и последовательных нейросетей")
     a = p.parse_args(argv)
     seeds = a.seeds or list(range(42, 52))
     run_seeds(spec, seeds, csv=a.csv, out=a.out, regen=a.regen,
               include_sequential=not a.no_seq,
-              include_ensemble=a.with_ensemble, include_svm=not a.no_svm)
+              include_ensemble=a.with_ensemble, include_svm=not a.no_svm,
+              include_neural=not a.no_neural)
