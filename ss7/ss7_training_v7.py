@@ -1002,6 +1002,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--seeds", type=int, nargs="*", default=None)
     ap.add_argument("--metric", default="episode_recall")
     ap.add_argument(
+        "--models", nargs="*", default=None,
+        help="ограничить основной одиночный запуск указанными моделями")
+    ap.add_argument(
         "--multiseed-models", nargs="*", default=None,
         help="ограничить multiseed указанными именами моделей")
     ap.add_argument("--ablations", action="store_true")
@@ -1099,7 +1102,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     M = prepare_matrices(tr, va, te, cols)
 
     print("\n[4] Зоопарк моделей (порог из val по бюджету тревог)")
-    res = run_zoo(M, cfg, cfg.seed)
+    res = run_zoo(M, cfg, cfg.seed, only=a.models)
     show = ["model", "family", "auc", "ap", "episode_recall",
             "median_ttd_intervals", "incident_precision",
             "false_incidents_per_day", "window_fpr",
