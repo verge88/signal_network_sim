@@ -1,9 +1,11 @@
 """Open5GS S6a software-in-the-loop calibration for Diameter simulator.
 
 The calibrated quantity is intentionally narrow and physically interpretable:
-IP bytes carried by one S6a Diameter transaction (request + answer).  The
-existing simulator's S6a counters represent transactions such as AIR and ULR,
-so this replaces the legacy fixed 500-byte placeholder only for S6a link load.
+Diameter protocol bytes carried by one S6a transaction (request + answer).
+The existing simulator's S6a counters represent transactions such as AIR and
+ULR, so this replaces the legacy fixed 500-byte placeholder only for S6a
+link-load accounting. TCP/IP framing is retained as capture evidence but is
+not fitted because a reassembled Diameter message may span multiple segments.
 
 Traffic-rate priors, command mix, attack priors, masking, topology capacities
 and non-S6a traffic are not fitted to the Open5GS integration-test workload.
@@ -130,7 +132,6 @@ def pair_transactions(frames: pd.DataFrame) -> pd.DataFrame:
             "request_diameter_bytes": req_d,
             "answer_diameter_bytes": rsp_d,
             "transaction_diameter_bytes": total_d,
-            "transport_ip_overhead_bytes": total_ip - total_d,
             "rtt_ms": float((rsp["t"] - req["t"]) * 1000.0),
         })
     tx = pd.DataFrame(rows)
@@ -178,7 +179,7 @@ def fit_profile(
     *,
     min_command_fit: int = 3,
 ) -> Tuple[Dict, pd.DataFrame, pd.DataFrame]:
-    overall = float(fit["transaction_ip_bytes"].mean())
+    overall = float(fit["transaction_diameter_bytes"].mean())
     if not np.isfinite(overall) or overall <= 0:
         raise ValueError("invalid fitted S6a transaction size")
 
@@ -186,28 +187,30 @@ def fit_profile(
     command_fit_rows = []
     for command, grp in fit.groupby("command"):
         n = int(len(grp))
-        mean_bytes = float(grp["transaction_ip_bytes"].mean())
+        mean_bytes = float(grp["transaction_diameter_bytes"].mean())
         command_fit_rows.append({
             "command": command,
             "fit_transactions": n,
-            "fit_mean_ip_bytes": mean_bytes,
-            "fit_median_ip_bytes": float(grp["transaction_ip_bytes"].median()),
+            "fit_mean_diameter_bytes": mean_bytes,
+            "fit_median_diameter_bytes": float(
+                grp["transaction_diameter_bytes"].median()
+            ),
             "fit_mean_rtt_ms": float(grp["rtt_ms"].mean()),
         })
         if n >= min_command_fit:
             command_sizes[str(command)] = mean_bytes
 
     pred = holdout.copy()
-    pred["predicted_transaction_ip_bytes"] = [
+    pred["predicted_transaction_diameter_bytes"] = [
         command_sizes.get(str(cmd), overall) for cmd in pred["command"]
     ]
     pred["abs_error_bytes"] = (
-        pred["predicted_transaction_ip_bytes"]
-        - pred["transaction_ip_bytes"]
+        pred["predicted_transaction_diameter_bytes"]
+        - pred["transaction_diameter_bytes"]
     ).abs()
     pred["relative_error"] = (
         pred["abs_error_bytes"]
-        / pred["transaction_ip_bytes"].clip(lower=1.0)
+        / pred["transaction_diameter_bytes"].clip(lower=1.0)
     )
 
     per_command = []
@@ -215,11 +218,11 @@ def fit_profile(
         per_command.append({
             "command": command,
             "holdout_transactions": int(len(grp)),
-            "holdout_mean_ip_bytes": float(
-                grp["transaction_ip_bytes"].mean()
+            "holdout_mean_diameter_bytes": float(
+                grp["transaction_diameter_bytes"].mean()
             ),
-            "predicted_ip_bytes": float(
-                grp["predicted_transaction_ip_bytes"].iloc[0]
+            "predicted_diameter_bytes": float(
+                grp["predicted_transaction_diameter_bytes"].iloc[0]
             ),
             "mae_bytes": float(grp["abs_error_bytes"].mean()),
             "median_relative_error": float(
@@ -236,8 +239,8 @@ def fit_profile(
 
     fit_rtt = _quantiles(fit["rtt_ms"])
     holdout_rtt = _quantiles(holdout["rtt_ms"])
-    fit_wire = _quantiles(fit["transaction_ip_bytes"])
-    holdout_wire = _quantiles(holdout["transaction_ip_bytes"])
+    fit_size = _quantiles(fit["transaction_diameter_bytes"])
+    holdout_size = _quantiles(holdout["transaction_diameter_bytes"])
 
     profile = {
         "schema": SCHEMA,
@@ -247,13 +250,10 @@ def fit_profile(
         "s6a_command_transaction_size_bytes": command_sizes,
         "fit_transactions": int(len(fit)),
         "holdout_transactions": int(len(holdout)),
-        "fit_wire_bytes_quantiles": fit_wire,
-        "holdout_wire_bytes_quantiles": holdout_wire,
+        "fit_diameter_bytes_quantiles": fit_size,
+        "holdout_diameter_bytes_quantiles": holdout_size,
         "fit_rtt_ms_quantiles": fit_rtt,
         "holdout_rtt_ms_quantiles": holdout_rtt,
-        "mean_transport_ip_overhead_bytes": float(
-            fit["transport_ip_overhead_bytes"].mean()
-        ),
         "holdout_mae_bytes": float(pred["abs_error_bytes"].mean()),
         "holdout_median_relative_error": float(
             pred["relative_error"].median()
@@ -277,7 +277,10 @@ def fit_profile(
         "diagnostic_only": [
             "S6a request-answer RTT is measured but is not used to overwrite "
             "link propagation delay because it includes MME/HSS processing "
-            "and database time."
+            "and database time.",
+            "Captured IP frame lengths are retained as evidence but are not "
+            "used to infer per-transaction transport overhead because Diameter "
+            "messages may be reassembled from multiple TCP segments."
         ],
     }
     return (
@@ -327,7 +330,7 @@ def run_calibration(
             "train_fraction": float(train_fraction),
             "pair_key": "command-code + hop-by-hop-id + end-to-end-id",
             "calibrated_quantity": (
-                "request + answer IPv4 bytes per modeled S6a transaction"
+                "request + answer Diameter protocol bytes per modeled S6a transaction"
             ),
         },
         "fit": fit,
@@ -355,12 +358,11 @@ def run_calibration(
 - Complete S6a transactions: {len(tx)}
 - Fit transactions: {len(fit_tx)}
 - Holdout transactions: {len(hold_tx)}
-- Fitted mean S6a wire bytes / transaction: {fit['s6a_transaction_size_bytes']:.3f}
-- Fitted mean IP transport overhead / transaction: {fit['mean_transport_ip_overhead_bytes']:.3f} bytes
+- Fitted mean S6a Diameter bytes / transaction: {fit['s6a_transaction_size_bytes']:.3f}
 - Holdout MAE: {fit['holdout_mae_bytes']:.3f} bytes
 - Holdout median relative error: {fit['holdout_median_relative_error']:.6f}
 - Holdout p90 relative error: {fit['holdout_p90_relative_error']:.6f}
-- Representative MME link-load multiplier vs legacy 500 B placeholder: {fit['representative_mme_wire_load_multiplier_vs_legacy_500B']:.3f}x
+- Representative MME Diameter-load multiplier vs legacy 500 B placeholder: {fit['representative_mme_wire_load_multiplier_vs_legacy_500B']:.3f}x
 - Calibrated commands: {', '.join(sorted(fit['s6a_command_transaction_size_bytes'])) or 'overall fallback only'}
 
 **Claim boundary:** {result['claim_boundary']}
@@ -371,7 +373,7 @@ def run_calibration(
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
-        description="Calibrate Diameter S6a transaction wire sizes from Open5GS"
+        description="Calibrate Diameter S6a transaction sizes from Open5GS"
     )
     ap.add_argument("--trace", required=True)
     ap.add_argument("--out", default="diameter_calibration_open5gs")
