@@ -59,7 +59,7 @@ DEFAULT_COMPARISONS = [
 
 BASE_METRICS = ["auc_roc", "auc_pr", "f1", "fpr",
                 "compromise_recall", "recall_at_1pct_fpr",
-                "episode_recall", "false_alerts_per_day"]
+                "episode_recall", "false_incidents_per_day"]
 
 
 @dataclass
@@ -148,6 +148,34 @@ def normalize_score01_from_reference(reference, scores):
     if not np.isfinite(scale) or scale <= 1e-12:
         return np.zeros_like(arr, dtype=float)
     return np.clip((arr - p1) / scale, 0.0, 1.0)
+
+
+def count_false_incidents(test_df, predictions, labels):
+    """Count contiguous false-positive runs per node as incidents."""
+    yp = np.asarray(predictions, dtype=int)
+    y = np.asarray(labels, dtype=int)
+    if len(test_df) != len(yp) or len(yp) != len(y):
+        raise ValueError("test_df, predictions and labels must have equal length")
+    if "node_id" not in test_df.columns or "interval" not in test_df.columns:
+        return int(np.sum((yp == 1) & (y == 0)))
+
+    tmp = test_df[["node_id", "interval"]].copy()
+    tmp["_fp"] = ((yp == 1) & (y == 0)).astype(int)
+    incidents = 0
+    for _, part in tmp.sort_values(["node_id", "interval"]).groupby("node_id"):
+        prev_interval = None
+        prev_fp = 0
+        for row in part.itertuples(index=False):
+            cur_interval = int(row.interval)
+            cur_fp = int(row._fp)
+            contiguous = (
+                prev_interval is not None and cur_interval == prev_interval + 1
+            )
+            if cur_fp and (not prev_fp or not contiguous):
+                incidents += 1
+            prev_interval = cur_interval
+            prev_fp = cur_fp
+    return int(incidents)
 
 
 def build_row(name, scores, y, attack_types, thr, spec, family):
@@ -307,7 +335,13 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
                 test_df["interval"].nunique() * interval_s / 86400.0
                 if "interval" in test_df.columns else np.nan
             )
-            row["false_alerts_per_day"] = (
+            false_incidents = count_false_incidents(test_df, yp, y_test)
+            row["false_incidents"] = int(false_incidents)
+            row["false_incidents_per_day"] = (
+                float(false_incidents) / test_days
+                if np.isfinite(test_days) and test_days > 0 else np.nan
+            )
+            row["false_positive_windows_per_day"] = (
                 float(row["fp"]) / test_days
                 if np.isfinite(test_days) and test_days > 0 else np.nan
             )
@@ -315,7 +349,9 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
             row["n_test_episodes"] = np.nan
             row["n_detected_episodes"] = np.nan
             row["episode_recall"] = np.nan
-            row["false_alerts_per_day"] = np.nan
+            row["false_incidents"] = np.nan
+            row["false_incidents_per_day"] = np.nan
+            row["false_positive_windows_per_day"] = np.nan
 
         rows.append(row)
         ep = row.get("episode_recall", np.nan)
