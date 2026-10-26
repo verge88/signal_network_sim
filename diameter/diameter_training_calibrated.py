@@ -30,6 +30,8 @@ class TrainingConfig(base.TrainingConfig):
     split_max_tries: int = 256
     split_min_test_episodes: int = 2
     split_min_test_attack_types: int = 2
+    split_require_compromise_train: bool = True
+    split_require_compromise_test: bool = True
 
 
 class DataPipeline(base.DataPipeline):
@@ -97,6 +99,14 @@ class DataPipeline(base.DataPipeline):
         at = test.loc[test["is_anomaly"] == 1, "attack_type"].astype(str)
         if at.nunique() < int(cfg.split_min_test_attack_types):
             return False
+
+        compromise = "node_compromise"
+        if bool(cfg.split_require_compromise_train):
+            if not (train["attack_type"].astype(str) == compromise).any():
+                return False
+        if bool(cfg.split_require_compromise_test):
+            if not (test["attack_type"].astype(str) == compromise).any():
+                return False
         return True
 
     def _grouped_split(self, df: pd.DataFrame):
@@ -199,6 +209,20 @@ class DataPipeline(base.DataPipeline):
                 test.loc[test[self.LABEL_COL] == 1, self.ATTACK_COL]
                 .astype(str).unique().tolist()
             ),
+            "compromise_rows": {
+                "train": int(
+                    (train[self.ATTACK_COL].astype(str)
+                     == "node_compromise").sum()
+                ),
+                "val": int(
+                    (val[self.ATTACK_COL].astype(str)
+                     == "node_compromise").sum()
+                ),
+                "test": int(
+                    (test[self.ATTACK_COL].astype(str)
+                     == "node_compromise").sum()
+                ),
+            },
         }
 
         print(f"Observable features: {len(self.feature_cols)}")
@@ -217,3 +241,55 @@ class DataPipeline(base.DataPipeline):
         )
         print(f"Group overlap: {self.split_report['group_overlap']}\n")
         return train, val, test
+
+
+class CascadeCompromiseDetector(base.CascadeCompromiseDetector):
+    """Cascade with an explicit stage-2 availability contract.
+
+    The grouped scientific split is designed to retain compromise examples in
+    training and test. This fallback keeps a rare/degenerate split from
+    crashing the whole experiment: if stage 2 sees one class, the calibrated
+    cascade degrades to stage 1 and reports the condition in provenance.
+    """
+
+    def __init__(self, config, seed=42):
+        super().__init__(config, seed)
+        self.stage2_enabled = True
+        self.stage2_classes = []
+        self.stage2_disabled_reason = None
+
+    def fit(self, X_full, y, X_comp, y_comp):
+        print("  Cascade Stage 1: General RF...")
+        self.stage1_rf.fit(X_full, y)
+
+        classes = np.unique(np.asarray(y_comp, dtype=int))
+        self.stage2_classes = [int(x) for x in classes.tolist()]
+        if len(classes) < 2:
+            self.stage2_enabled = False
+            self.stage2_disabled_reason = (
+                "compromise stage-2 training target contains fewer than "
+                "two classes"
+            )
+            print(
+                "  Cascade Stage 2: disabled — "
+                f"{self.stage2_disabled_reason}; classes={self.stage2_classes}"
+            )
+            return self
+
+        print("  Cascade Stage 2: Compromise-specific GB + RF...")
+        self.stage2_gb.fit(X_comp, y_comp)
+        self.stage2_rf.fit(X_comp, y_comp)
+        self.stage2_enabled = True
+        self.stage2_disabled_reason = None
+        return self
+
+    def predict_proba_stage2(self, X):
+        if not self.stage2_enabled:
+            return np.zeros(len(X), dtype=float)
+        return super().predict_proba_stage2(X)
+
+    def predict_proba(self, X_full, X_comp):
+        p1 = self.predict_proba_stage1(X_full)
+        if not self.stage2_enabled:
+            return p1
+        return np.maximum(p1, self.predict_proba_stage2(X_comp))
