@@ -56,8 +56,8 @@ class Open5GSS6aCalibrationTests(unittest.TestCase):
                     "cmd_code": code,
                     "is_request": 0,
                     "app_id": 16777251,
-                    "hop_by_hop": hop,
-                    "end_to_end": end,
+                    "hop_by_hop": hex(hop),
+                    "end_to_end": hex(end),
                 })
                 seq += 1
                 t += 0.020
