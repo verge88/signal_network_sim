@@ -26,6 +26,7 @@ from diameter.ms_multiseed_core import (  # noqa: E402
     count_false_incidents,
     normalize_score01,
     normalize_score01_from_reference,
+    threshold_from_reference_fpr,
 )
 
 
@@ -196,6 +197,41 @@ class DiameterCalibratedTrainingTests(unittest.TestCase):
         self.assertEqual(len(out), 3)
         self.assertGreater(out[1], out[0])
         self.assertEqual(out[2], 1.0)
+
+
+    def test_validation_fpr_threshold_is_reference_only(self):
+        import numpy as np
+
+        # 200 validation negatives -> at most two false positives at 1% FPR.
+        val_scores = np.linspace(0.0, 1.0, 200)
+        val_y = np.zeros(200, dtype=int)
+        thr1, fpr1 = threshold_from_reference_fpr(
+            val_scores, val_y, target_fpr=0.01
+        )
+
+        # A radically different test distribution must not affect calibration.
+        _test_scores = np.linspace(10.0, 100.0, 500)
+        thr2, fpr2 = threshold_from_reference_fpr(
+            val_scores, val_y, target_fpr=0.01
+        )
+        self.assertEqual(thr1, thr2)
+        self.assertEqual(fpr1, fpr2)
+        self.assertLessEqual(fpr1, 0.01 + 1e-12)
+
+
+    def test_validation_fpr_threshold_handles_ties_conservatively(self):
+        import numpy as np
+
+        # Twenty identical high scores would produce 10% FPR if the tied
+        # cutoff were accepted directly. The calibrated threshold must move
+        # above the tie to keep empirical validation FPR <= 1%.
+        val_scores = np.array([1.0] * 20 + [0.0] * 180)
+        val_y = np.zeros(200, dtype=int)
+        thr, fpr = threshold_from_reference_fpr(
+            val_scores, val_y, target_fpr=0.01
+        )
+        self.assertGreater(thr, 1.0)
+        self.assertEqual(fpr, 0.0)
 
 
     def test_false_incidents_group_contiguous_fp_windows(self):
