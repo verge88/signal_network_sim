@@ -165,9 +165,11 @@ def count_false_incidents(test_df, predictions, labels):
     for _, part in tmp.sort_values(["node_id", "interval"]).groupby("node_id"):
         prev_interval = None
         prev_fp = 0
-        for row in part.itertuples(index=False):
-            cur_interval = int(row.interval)
-            cur_fp = int(row._fp)
+        intervals = part["interval"].to_numpy()
+        fps = part["_fp"].to_numpy()
+        for cur_interval, cur_fp in zip(intervals, fps):
+            cur_interval = int(cur_interval)
+            cur_fp = int(cur_fp)
             contiguous = (
                 prev_interval is not None and cur_interval == prev_interval + 1
             )
