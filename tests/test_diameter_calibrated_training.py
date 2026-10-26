@@ -17,6 +17,7 @@ from diameter.run_seeds_diameter_calibrated import (  # noqa: E402
     OPEN5GS_CALIBRATION,
 )
 from diameter.ms_multiseed_core import (  # noqa: E402
+    count_false_incidents,
     normalize_score01,
     normalize_score01_from_reference,
 )
@@ -164,6 +165,20 @@ class DiameterCalibratedTrainingTests(unittest.TestCase):
         self.assertEqual(len(out), 3)
         self.assertGreater(out[1], out[0])
         self.assertEqual(out[2], 1.0)
+
+
+    def test_false_incidents_group_contiguous_fp_windows(self):
+        import numpy as np
+
+        df = pd.DataFrame({
+            "node_id": [7, 7, 7, 7, 8, 8],
+            "interval": [10, 11, 13, 14, 10, 11],
+        })
+        y = np.zeros(len(df), dtype=int)
+        yp = np.array([1, 1, 1, 0, 1, 0])
+        # node 7: intervals 10-11 = one incident; interval 13 = another.
+        # node 8: interval 10 = one incident.
+        self.assertEqual(count_false_incidents(df, yp, y), 3)
 
     def test_attack_episode_is_not_split_by_normal_time_block(self):
         cfg = TrainingConfig(seed=7, split_normal_block_intervals=10)
