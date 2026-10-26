@@ -1,0 +1,214 @@
+name: Diameter Open5GS S6a calibration
+
+on:
+  workflow_dispatch:
+    inputs:
+      open5gs_ref:
+        description: "Pinned Open5GS commit"
+        required: false
+        default: "f8aa307cdac2f1fd53e32fa96a1730d93bf8dc6d"
+      train_fraction:
+        description: "Chronological calibration fraction"
+        required: false
+        default: "0.60"
+  pull_request:
+    paths:
+      - ".github/workflows/diameter-open5gs-calibration.yml"
+      - "diameter/diameter_sim_v1.py"
+      - "diameter/open5gs_s6a_calibration.py"
+      - "diameter/README_OPEN5GS_CALIBRATION.md"
+      - "tests/test_diameter_open5gs_calibration.py"
+      - "tests/test_stage1_scientific_contract.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diameter-open5gs-calibration-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  OPEN5GS_REF: ${{ inputs.open5gs_ref || 'f8aa307cdac2f1fd53e32fa96a1730d93bf8dc6d' }}
+  TRAIN_FRACTION: ${{ inputs.train_fraction || '0.60' }}
+
+jobs:
+  unit:
+    name: Diameter calibration tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas networkx scikit-learn
+
+      - name: Run scientific-contract and calibration tests
+        run: |
+          python -m unittest \
+            tests.test_stage1_scientific_contract \
+            tests.test_diameter_open5gs_calibration \
+            -v
+
+  open5gs-calibration:
+    name: Open5GS EPC S6a software-in-the-loop calibration
+    needs: unit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Open5GS build and analysis dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential flex bison git cmake meson ninja-build pkg-config \
+            libsctp-dev libc-ares-dev libgnutls28-dev libgcrypt20-dev \
+            libssl-dev libmongoc-dev libbson-dev libyaml-dev libnghttp2-dev \
+            libmicrohttpd-dev libcurl4-gnutls-dev libtins-dev libtalloc-dev \
+            libidn-dev tcpdump tshark netcat-openbsd
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas networkx scikit-learn
+
+      - name: Start MongoDB for Open5GS EPC tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull mongo:8.0
+          docker run -d --name open5gs-mongo -p 27017:27017 mongo:8.0 --bind_ip_all
+          for i in {1..60}; do
+            if nc -z 127.0.0.1 27017; then
+              echo "MongoDB is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs open5gs-mongo
+          exit 1
+
+      - name: Checkout and build pinned Open5GS
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --filter=blob:none https://github.com/open5gs/open5gs.git /tmp/open5gs
+          git -C /tmp/open5gs checkout "$OPEN5GS_REF"
+          git -C /tmp/open5gs rev-parse HEAD
+          cd /tmp/open5gs
+          meson setup build --prefix=/tmp/open5gs/install
+          ninja -C build
+          mkdir -p "$GITHUB_WORKSPACE/artifacts/open5gs" "$GITHUB_WORKSPACE/artifacts/calibration"
+
+      - name: Run official EPC attach tests under packet capture
+        working-directory: /tmp/open5gs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Open5GS UPF opens the configured TUN device during EPC test
+          # initialization. This is the same ogstun setup documented by
+          # Open5GS; the test traffic itself remains the official attach suite.
+          sudo modprobe tun || true
+          sudo ip tuntap add name ogstun mode tun
+          sudo ip addr add 10.45.0.1/16 dev ogstun
+          sudo ip -6 addr add 2001:db8:cafe::1/48 dev ogstun || true
+          sudo ip link set ogstun up
+          ip addr show ogstun | tee "$GITHUB_WORKSPACE/artifacts/open5gs/ogstun.txt"
+
+          sudo tcpdump -i lo -s 0 -U \
+            -w "$GITHUB_WORKSPACE/artifacts/open5gs/open5gs-epc.pcap" \
+            '(tcp port 3868 or sctp port 3868)' \
+            > "$GITHUB_WORKSPACE/artifacts/open5gs/tcpdump.log" 2>&1 &
+          TCPDUMP_PID=$!
+          cleanup() {
+            sudo kill -INT "$TCPDUMP_PID" 2>/dev/null || true
+            wait "$TCPDUMP_PID" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          set +e
+          ./build/tests/attach/attach 2>&1 | tee "$GITHUB_WORKSPACE/artifacts/open5gs/attach-test.log"
+          TEST_RC=${PIPESTATUS[0]}
+          set -e
+
+          cleanup
+          trap - EXIT
+          test "$TEST_RC" -eq 0
+          test -s "$GITHUB_WORKSPACE/artifacts/open5gs/open5gs-epc.pcap"
+
+      - name: Extract S6a Diameter frames
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            printf '%s\n' 't,frame_len,ip_len,diameter_len,cmd_code,is_request,app_id,hop_by_hop,end_to_end'
+            tshark -r artifacts/open5gs/open5gs-epc.pcap \
+              -Y 'diameter.applicationId == 16777251' \
+              -T fields \
+              -e frame.time_epoch \
+              -e frame.len \
+              -e ip.len \
+              -e diameter.length \
+              -e diameter.cmd.code \
+              -e diameter.flags.request \
+              -e diameter.applicationId \
+              -e diameter.hopbyhopid \
+              -e diameter.endtoendid \
+              -E header=n -E separator=, -E quote=d -E occurrence=f
+          } > artifacts/open5gs/s6a-frames.csv
+
+          ROWS=$(( $(wc -l < artifacts/open5gs/s6a-frames.csv) - 1 ))
+          echo "S6a Diameter frames: $ROWS"
+          test "$ROWS" -ge 20
+
+          tshark -r artifacts/open5gs/open5gs-epc.pcap \
+            -Y 'diameter.applicationId == 16777251' \
+            -q -z io,phs \
+            > artifacts/open5gs/tshark-protocol-hierarchy.txt
+
+      - name: Fit S6a transaction sizes and validate holdout
+        run: |
+          python diameter/open5gs_s6a_calibration.py \
+            --trace artifacts/open5gs/s6a-frames.csv \
+            --out artifacts/calibration \
+            --train-fraction "$TRAIN_FRACTION" \
+            --min-command-fit 3
+          cat artifacts/calibration/summary.md
+          cat artifacts/calibration/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record provenance
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "signal_network_sim_commit=$(git rev-parse HEAD)"
+            echo "open5gs_commit=$OPEN5GS_REF"
+            echo "open5gs_actual_commit=$(git -C /tmp/open5gs rev-parse HEAD 2>/dev/null || true)"
+            echo "mongo_image=$(docker inspect mongo:8.0 --format='{{index .RepoDigests 0}}' 2>/dev/null || true)"
+            echo "tshark_version=$(tshark --version | head -1 2>/dev/null || true)"
+            echo "runner_image=${ImageOS:-unknown}"
+            echo "generated_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > artifacts/provenance.txt
+
+      - name: Upload Diameter calibration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diameter-open5gs-calibration-${{ github.run_id }}
+          path: |
+            artifacts/calibration/
+            artifacts/open5gs/
+            artifacts/provenance.txt
+          if-no-files-found: warn
+          retention-days: 30

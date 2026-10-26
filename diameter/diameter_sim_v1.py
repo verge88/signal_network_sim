@@ -311,7 +311,15 @@ class SimulationConfig:
     # Traffic parameters
     ar_phi: float = 0.85               # Same AR(1) autocorrelation
     ar_sigma: float = 0.18
-    avg_message_size_bytes: int = 500  # Diameter msg avg (vs 100 for SS7)
+    avg_message_size_bytes: int = 500  # legacy fallback for non-S6a traffic
+    # Optional software-in-the-loop calibration from real S6a transactions.
+    # S6a counters in this simulator represent transactions (AIR, ULR, ...),
+    # so the calibrated quantity is request+answer Diameter protocol bytes
+    # per transaction. TCP/IP framing remains outside this legacy load model.
+    s6a_transaction_size_bytes: Optional[float] = None
+    s6a_command_transaction_size_bytes: Dict[str, float] = field(
+        default_factory=dict
+    )
     seed: int = 42
     cu_config: ControlUnitConfig = field(default_factory=ControlUnitConfig)
 
@@ -736,9 +744,47 @@ class DiameterTrafficGenerator:
         path = self.topo.get_path(node.node_id, target)
         if len(path) < 2:
             return
-        load_mbps = (traffic["total_messages"] *
-                     self.config.avg_message_size_bytes * 8) / (
-                         self.config.interval_s * 1_000_000.0)
+        # Before calibration the legacy model used one fixed 500-byte
+        # value for every Diameter transaction.  When an independently
+        # measured S6a profile is present, only the S6a part is replaced by
+        # request+answer Diameter bytes measured on Open5GS; traffic counts and all
+        # non-S6a priors remain unchanged.
+        default_bytes = float(self.config.avg_message_size_bytes)
+        cmd_sizes = {
+            str(k).upper(): float(v)
+            for k, v in self.config.s6a_command_transaction_size_bytes.items()
+            if np.isfinite(float(v)) and float(v) > 0
+        }
+        s6a_default = self.config.s6a_transaction_size_bytes
+        if s6a_default is not None:
+            s6a_default = float(s6a_default)
+            if not np.isfinite(s6a_default) or s6a_default <= 0:
+                raise ValueError(
+                    "s6a_transaction_size_bytes must be finite and positive"
+                )
+
+        if s6a_default is None and not cmd_sizes:
+            wire_bytes = float(traffic["total_messages"]) * default_bytes
+        else:
+            fallback = s6a_default if s6a_default is not None else default_bytes
+            s6a_bytes = 0.0
+            accounted_s6a = 0
+            for cmd in S6A_COMMANDS:
+                count = int(traffic.get(f"s6a_{cmd.lower()}_count", 0))
+                if count <= 0:
+                    continue
+                accounted_s6a += count
+                s6a_bytes += count * cmd_sizes.get(cmd, fallback)
+            # Guard against rounding differences in subtype allocation.
+            missing_s6a = max(0, int(traffic.get("s6a_count", 0)) - accounted_s6a)
+            s6a_bytes += missing_s6a * fallback
+            non_s6a = max(
+                0, int(traffic["total_messages"]) - int(traffic.get("s6a_count", 0))
+            )
+            wire_bytes = s6a_bytes + non_s6a * default_bytes
+
+        load_mbps = (wire_bytes * 8.0) / (
+            self.config.interval_s * 1_000_000.0)
         for i in range(len(path) - 1):
             link = self.topo.get_link(path[i], path[i + 1])
             if link:
