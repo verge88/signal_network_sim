@@ -1265,11 +1265,22 @@ def make_episodes(sim: Ss7Sim, cfg: SimConfig, rng: np.random.Generator,
 def build_dataset(cfg: SimConfig, *, episodes_kw: Optional[dict] = None,
                   topo: Optional[Topology] = None,
                   size_capacities: bool = True,
-                  sim_template: Optional[Ss7Sim] = None
+                  sim_template: Optional[Ss7Sim] = None,
+                  transport_overhead_bytes: float = 0.0
                   ) -> Tuple[pd.DataFrame, Ss7Sim, List[Episode]]:
     book = RngBook(cfg.seed)
     sim = Ss7Sim(cfg, book, topo=topo, size_capacities=size_capacities,
                  template=sim_template)
+    overhead = float(transport_overhead_bytes)
+    if overhead < 0 or not np.isfinite(overhead):
+        raise ValueError("transport_overhead_bytes must be finite and non-negative")
+    if overhead > 0.0:
+        # Capacity sizing above intentionally uses the canonical pre-calibration
+        # traffic model.  The independently measured SIGTRAN overhead then
+        # changes only actual wire load / queueing, not traffic-rate priors or
+        # the synthetic physical link provisioning assumptions.
+        sim.transport_overhead_bytes = overhead
+        sim.mean_msg_bits = sim._mean_wire_message_bits()
     eps = make_episodes(sim, cfg, book["episode"], **(episodes_kw or {}))
     ep_id = {id(e): i for i, e in enumerate(eps)}
     rows = []
@@ -1413,24 +1424,29 @@ def _null_test_one(pos: pd.DataFrame, neg: pd.DataFrame, cols: List[str],
     return rep
 
 
-def _null_worlds(cfg: SimConfig, topo: Optional[Topology]):
+def _null_worlds(cfg: SimConfig, topo: Optional[Topology],
+                 transport_overhead_bytes: float = 0.0):
     """Build matched worlds with and without zero-intensity episodes."""
     c0 = SimConfig(**{**cfg.__dict__, "seed": cfg.seed + 100_003})
     base = dict(n_normal=0, n_ext=0)
     df_a, sim_a, _ = build_dataset(
         c0, topo=topo, size_capacities=(topo is None),
+        transport_overhead_bytes=transport_overhead_bytes,
         episodes_kw=dict(n_compromise=10, force_hidden=0.0, **base))
     df_b, _, _ = build_dataset(
         c0, topo=sim_a.topo, size_capacities=False,
         sim_template=sim_a,
+        transport_overhead_bytes=transport_overhead_bytes,
         episodes_kw=dict(n_compromise=0, **base))
     return df_a, df_b, sim_a
 
 
 def _counterfactual_null(cfg: SimConfig, feature_cols: Sequence[str],
-                         topo: Optional[Topology], log=print, *, worlds=None) -> Dict:
+                         topo: Optional[Topology], log=print, *, worlds=None,
+                         transport_overhead_bytes: float = 0.0) -> Dict:
     """Сравнивает все признаки h=0 с тем же миром без compromise-эпизодов."""
-    df_a, df_b, _ = worlds if worlds is not None else _null_worlds(cfg, topo)
+    df_a, df_b, _ = (worlds if worlds is not None else
+                     _null_worlds(cfg, topo, transport_overhead_bytes))
 
     cols = [c for c in feature_cols
             if c in df_a.columns and c in df_b.columns]
@@ -1478,11 +1494,13 @@ def _counterfactual_null(cfg: SimConfig, feature_cols: Sequence[str],
 def null_test(cfg: SimConfig, feature_cols: Sequence[str], *,
               topo: Optional[Topology] = None, auc_tol: float = 0.06,
               delta: float = 0.30, n_boot: int = 200, min_pos: int = 50,
-              log=print) -> Dict:
+              log=print, transport_overhead_bytes: float = 0.0) -> Dict:
     """Сравнивает h=0 с честным миром на тех же узлах и временах."""
     assert_mask_is_identity_at_zero(np.random.default_rng(cfg.seed))
-    worlds = _null_worlds(cfg, topo)
-    cf = _counterfactual_null(cfg, feature_cols, topo, log=log, worlds=worlds)
+    worlds = _null_worlds(cfg, topo, transport_overhead_bytes)
+    cf = _counterfactual_null(
+        cfg, feature_cols, topo, log=log, worlds=worlds,
+        transport_overhead_bytes=transport_overhead_bytes)
     df, control, sim = worlds
     control = control.set_index(["nid", "t"])
     cols0 = [c for c in feature_cols if c in df.columns]
