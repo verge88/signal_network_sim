@@ -24,6 +24,8 @@ from diameter.run_seeds_diameter_calibrated import (  # noqa: E402
 )
 from diameter.ms_multiseed_core import (  # noqa: E402
     count_false_incidents,
+    debounce_consecutive,
+    episode_alarm_stats,
     normalize_score01,
     normalize_score01_from_reference,
     threshold_from_reference_fpr,
@@ -232,6 +234,51 @@ class DiameterCalibratedTrainingTests(unittest.TestCase):
         )
         self.assertGreater(thr, 1.0)
         self.assertEqual(fpr, 0.0)
+
+
+    def test_debounce_two_consecutive_resets_on_gaps_and_keeps_row_order(self):
+        import numpy as np
+
+        # Intentionally unsorted input: output must align to original rows.
+        df = pd.DataFrame({
+            "node_id": [7, 8, 7, 7, 8, 7],
+            "interval": [11, 20, 10, 13, 21, 12],
+        })
+        yp = np.ones(len(df), dtype=int)
+        out = debounce_consecutive(df, yp, required=2)
+
+        # node 7 sorted intervals 10,11,12,13 -> alarms from 11 onward.
+        # node 8 sorted intervals 20,21 -> alarm only at 21.
+        self.assertEqual(out.tolist(), [1, 0, 0, 1, 1, 1])
+
+        # A time gap must reset the positive run.
+        gap_df = pd.DataFrame({
+            "node_id": [7, 7, 7],
+            "interval": [30, 31, 33],
+        })
+        gap_out = debounce_consecutive(
+            gap_df, np.ones(3, dtype=int), required=2
+        )
+        self.assertEqual(gap_out.tolist(), [0, 1, 0])
+
+
+    def test_episode_alarm_stats_reports_detected_episode_delay(self):
+        import numpy as np
+
+        df = pd.DataFrame({
+            "node_id": [7, 7, 7, 8, 8],
+            "interval": [10, 11, 12, 20, 21],
+            "attack_episode_id": ["E1", "E1", "E1", "E2", "E2"],
+        })
+        y = np.ones(5, dtype=int)
+        alarms = np.array([0, 1, 1, 0, 0])
+        recall, delay, detected, total = episode_alarm_stats(
+            df, alarms, y, interval_s=15.0
+        )
+        self.assertEqual(recall, 50.0)
+        self.assertEqual(delay, 15.0)
+        self.assertEqual(detected, 1)
+        self.assertEqual(total, 2)
 
 
     def test_false_incidents_group_contiguous_fp_windows(self):
