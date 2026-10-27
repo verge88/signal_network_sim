@@ -6,8 +6,10 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-from experiments.jss7_kie.evidence import detect, evaluate, sign, transaction_ids, verify
+from experiments.jss7_kie.evidence import detect, detect_interval, evaluate, sign, transaction_ids, verify
 from experiments.jss7_kie.run_lab import observe, poll_report, stop, wait_capture
+from experiments.jss7_kie.periodic import (
+    audit_final, check_report, evaluate_windows, observation_bounds, first_frames, wait_marker)
 
 
 class EvidenceTests(unittest.TestCase):
@@ -20,6 +22,76 @@ class EvidenceTests(unittest.TestCase):
         payload = verify(sign(self.payload, self.key), self.key, 'run-1', 'n' * 32)
         self.assertEqual(detect(30, payload)['residual'], 10)
         self.assertTrue(detect(30, payload)['alarm'])
+
+    def test_live_interval_accepts_inflight_requests(self):
+        # An exact equality check against either endpoint would be a false alarm.
+        self.assertFalse(detect_interval(19, 21, self.payload)['alarm'])
+        for reported in (19, 21):
+            self.payload['received_dialogs'] = reported
+            self.assertEqual(detect_interval(19, 21, self.payload)['status'], 'consistent')
+
+    def test_live_interval_detects_under_and_over_reporting(self):
+        self.assertEqual(detect_interval(28, 30, self.payload)['residual'], 8)
+        self.assertEqual(detect_interval(10, 12, self.payload)['residual'], -8)
+        for lower, upper in [(2, 1), (-1, 1), (True, 1)]:
+            with self.subTest(lower=lower), self.assertRaises(ValueError):
+                detect_interval(lower, upper, self.payload)
+
+    def test_live_report_binds_nonce_and_sequence(self):
+        self.payload['sequence'] = 3
+        report = sign(self.payload, self.key)
+        self.assertEqual(check_report(report, self.key, 'run-1', 'n'*32, 3, 19, 21)['status'], 'consistent')
+        for nonce, sequence in [('fresh', 3), ('n'*32, 4)]:
+            self.assertEqual(check_report(report, self.key, 'run-1', nonce, sequence, 19, 21)['status'], 'invalid_report')
+
+    def test_capture_order_survives_clock_jumps_and_retransmissions(self):
+        self.assertEqual(first_frames('1\t10.2\t01,02\n2\t8.1\t01\n'),
+                         {'01': 1, '02': 1})
+
+    def test_live_bounds_account_for_open_dialogs_and_boundary_times(self):
+        trace = {'begin': {'a': 10, 'b': 20, 'c': 25}, 'end': {'a': 19, 'b': 24}}
+        self.assertEqual(observation_bounds(trace, 20, 26), (1, 3))
+        # End exactly on poll boundary is conservatively excluded.
+        self.assertEqual(observation_bounds(trace, 19, 21), (0, 2))
+        with self.assertRaises(ValueError):
+            observation_bounds(trace, 26, 25)
+
+    def test_stp_live_bounds_do_not_sum_duplicate_legs(self):
+        trace = {'client_begin': {'a': 1, 'b': 2}, 'server_begin': {'a': 2},
+                 'server_end': {'a': 3}, 'client_end': {'a': 4}}
+        self.assertEqual(observation_bounds(trace, 5, 6), (1, 2))
+
+    def test_missing_report_is_not_counted_as_a_correct_benign_decision(self):
+        result = evaluate_windows([{'status': 'unavailable'}, {'status': 'mismatch'}], ['honest', 'conceal'])
+        self.assertEqual(result['status'], 'failed')
+        self.assertEqual(result['metrics']['tn'], 0)
+        self.assertEqual(result['metrics']['report_faults_detected'], 0)
+
+    def test_recovery_is_evaluated_after_report_faults(self):
+        result = evaluate_windows([{'status': 'invalid_report'}, {'status': 'consistent'}], ['replay', 'honest'])
+        self.assertEqual(result['status'], 'passed')
+        result = evaluate_windows([{'status': 'invalid_report'}, {'status': 'invalid_report'}], ['replay', 'honest'])
+        self.assertEqual(result['status'], 'failed')
+
+    def test_marker_must_be_seen_before_trusting_live_capture(self):
+        capture = Mock()
+        capture.poll.return_value = None
+        with patch('experiments.jss7_kie.periodic.command', side_effect=['', '8\t61:62\n']), \
+             patch('experiments.jss7_kie.periodic.time.sleep'):
+            wait_marker(Path('capture'), capture, b'ab')
+        capture.poll.return_value = 1
+        with self.assertRaises(RuntimeError):
+            wait_marker(Path('capture'), capture, b'ab')
+
+    def test_final_audit_rejects_incomplete_live_snapshot(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            (directory / 'periodic').mkdir()
+            with patch('experiments.jss7_kie.periodic.extract_trace', return_value={
+                    'begin': {'a': 1, 'b': 2}, 'end': {'a': 3}}):
+                with self.assertRaises(ValueError):
+                    audit_final(directory, 'direct', [{'request_frame': 4, 'response_frame': 5,
+                                                       'observed_lower': 0, 'observed_upper': 1}])
 
     def test_honest_surge_is_not_an_alarm(self):
         self.payload['received_dialogs'] = 40

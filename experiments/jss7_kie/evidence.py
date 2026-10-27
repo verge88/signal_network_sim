@@ -59,6 +59,26 @@ def detect(observed_dialogs: int, payload: dict) -> dict:
             "residual": residual, "alarm": residual != 0}
 
 
+def detect_interval(completed_before: int, begun_after: int, payload: dict) -> dict:
+    """Bound a live cumulative snapshot using causal protocol ordering.
+
+    A response precedes the poll only after the receiver counted that request.
+    Every counted request must have a captured Begin before the poll returns.
+    Observer UDP markers bracket the poll in one-host capture order; timestamps
+    claimed by the node and wall-clock corrections do not define the bounds.
+    """
+    if (type(completed_before) is not int or type(begun_after) is not int
+            or not 0 <= completed_before <= begun_after):
+        raise ValueError("invalid observation interval")
+    reported = payload["received_dialogs"]
+    if type(reported) is not int or reported < 0:
+        raise ValueError("invalid dialog counter")
+    residual = max(completed_before - reported, 0) + min(begun_after - reported, 0)
+    return {"observed_lower": completed_before, "observed_upper": begun_after,
+            "reported_dialogs": reported, "residual": residual,
+            "alarm": residual != 0, "status": "mismatch" if residual else "consistent"}
+
+
 def evaluate(rows: list[dict]) -> dict:
     if not rows or not any(r["label"] == 0 for r in rows) or not any(r["label"] == 1 for r in rows):
         raise ValueError("both benign and concealment runs are required")

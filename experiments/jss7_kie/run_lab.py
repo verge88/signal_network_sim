@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import secrets
 import shutil
 import signal
@@ -79,7 +80,7 @@ def wait_stp(proc, timeout=15):
     raise TimeoutError("OsmoSTP did not start listening")
 
 
-def observe(pcap: Path, out: Path, topology="direct"):
+def capture_views(topology):
     views = (("begin", "sctp.dstport == 3434 && tcap.begin_element", "tcap.otid"),
              ("end", "sctp.srcport == 3434 && tcap.end_element", "tcap.dtid"))
     if topology == "osmostp":
@@ -92,8 +93,12 @@ def observe(pcap: Path, out: Path, topology="direct"):
             ("client_end", f"sctp.srcport == 2905 && sctp.dstport == 2345 && {response}", "tcap.dtid"))
     elif topology != "direct":
         raise ValueError("unknown topology")
+    return views
+
+
+def observe(pcap: Path, out: Path, topology="direct"):
     evidence = {}
-    for name, filt, field in views:
+    for name, filt, field in capture_views(topology):
         text = command(["tshark", "-r", str(pcap), "-Y", filt, "-T", "fields",
                         "-e", field, "-E", "occurrence=a", "-E", "aggregator=,"])
         (out / f"{name}_ids.txt").write_text(text)
@@ -123,7 +128,7 @@ def wait_capture(pcap, directory, expected, capture, timeout=10, topology="direc
     raise TimeoutError("capture did not contain all completed dialogs before deadline")
 
 
-def run_scenario(out, name, count, cap, label, key_path, key, repetition, topology="direct"):
+def run_scenario(out, name, count, cap, label, key_path, key, repetition, topology="direct", periodic=False):
     directory = out / f"{repetition:02d}_{name}"
     directory.mkdir()  # Refuse stale evidence.
     events = directory / "node_events.txt"
@@ -149,18 +154,36 @@ def run_scenario(out, name, count, cap, label, key_path, key, repetition, topolo
         prefix = [] if os.geteuid() == 0 else ["sudo", "-n"]
         capture = start(prefix + ["tcpdump", "--immediate-mode", "-i", "lo", "-nn", "-s", "0", "-U",
                                   "-w", str(directory / "traffic.pcap"),
-                                  "sctp and (port 2345 or port 3434 or port 2905)"],
+                                  "(sctp and (port 2345 or port 3434 or port 2905)) or (udp dst port 18081)"],
                         directory / "capture.log", directory)
         wait_text(directory / "capture.log", "listening on", capture)
         agent_args = [sys.executable, "-m", "experiments.jss7_kie.reporter",
                       "--events", str(events), "--key", str(key_path), "--run-id", run_id]
         if cap is not None:
             agent_args += ["--cap", str(cap)]
+        if periodic:
+            from .periodic import FAULT_SCHEDULE, audit_final, monitor
+            fault_file = directory / "fault_schedule.json"
+            fault_file.write_text(json.dumps(FAULT_SCHEDULE))
+            agent_args += ["--faults", str(fault_file)]
         reporter = start(agent_args, directory / "reporter.log", ROOT)
-        client = start(["java", "-cp", cp, "lab.StackPeer", "client", str(count), topology],
+        poll_report(f"http://127.0.0.1:18080/kie?nonce={secrets.token_hex(16)}")
+        client_args = ["java", "-cp", cp, "lab.StackPeer", "client", str(count), topology]
+        if periodic:
+            client_args += ["80", str(directory / "stop_traffic")]
+        client = start(client_args,
                        directory / "client.log", directory)
+        if periodic:
+            wait_text(directory / "client.log", "TRAFFIC_READY", client, timeout=60)
+            windows = monitor(directory, topology, capture, client, key, run_id)
+            (directory / "stop_traffic").touch()
         if client.wait(timeout=120) != 0:
             raise RuntimeError(f"jSS7 client failed: {directory / 'client.log'}")
+        if periodic:
+            completed = re.findall(r"^COMPLETED=(\d+)$", (directory / "client.log").read_text(), re.M)
+            if len(completed) != 1 or not 0 < int(completed[0]) < count:
+                raise RuntimeError("stream did not stop cleanly after live polling")
+            count = int(completed[0])
         if f"COMPLETED={count}" not in (directory / "client.log").read_text():
             raise RuntimeError("missing completed MAP response evidence")
         wait_capture(directory / "traffic.pcap", directory, count, capture, topology=topology)
@@ -183,6 +206,8 @@ def run_scenario(out, name, count, cap, label, key_path, key, repetition, topolo
         row = dict(scenario=name, repetition=repetition, label=label, topology=topology,
                    transit_verified=topology == "osmostp",
                    kie_mac_verified=True, **decision)
+        if periodic:
+            row["periodic"] = audit_final(directory, topology, windows)
         (directory / "result.json").write_text(json.dumps(row, indent=2))
         return row
     finally:
@@ -200,6 +225,7 @@ def main():
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--repetitions", type=int, default=1)
     ap.add_argument("--topology", choices=("direct", "osmostp"), default="direct")
+    ap.add_argument("--suite", choices=("smoke", "periodic"), default="smoke")
     a = ap.parse_args()
     if platform.system() != "Linux":
         ap.error("real SCTP experiment requires Linux")
@@ -222,6 +248,7 @@ def main():
         provenance = {"git_commit": command(git + ["rev-parse", "HEAD"], cwd=ROOT).strip(),
                       "git_status": command(git + ["status", "--porcelain"], cwd=ROOT),
                       "platform": platform.platform(), "python": sys.version, "topology": a.topology,
+                      "suite": a.suite,
                       "jss7_version": "8.0.0-179",
                       "tshark": command(["tshark", "--version"]).splitlines()[0],
                       "java": subprocess.run(["java", "-version"], capture_output=True, text=True, check=True).stderr,
@@ -243,12 +270,19 @@ def main():
             key_path.write_bytes(key)
             key_path.chmod(0o600)
             for rep in range(a.repetitions):
-                for args in SCENARIOS:
-                    rows.append(run_scenario(out, *args, key_path, key, rep, a.topology))
-        metrics = evaluate(rows)
-        summary = {"status": "passed" if metrics["fp"] == 0 and metrics["fn"] == 0 else "failed",
-                   "metrics": metrics, "runs": rows, "topology": a.topology,
-                   "claim_boundary": "Drained-window KIE consistency on real MAP peers; no ML or operator-traffic validation."}
+                scenarios = SCENARIOS if a.suite == "smoke" else (("live_fault_recovery", 1000, None, 0),)
+                for args in scenarios:
+                    rows.append(run_scenario(out, *args, key_path, key, rep, a.topology, a.suite == "periodic"))
+        if a.suite == "smoke":
+            metrics = evaluate(rows)
+            passed = metrics["fp"] == 0 and metrics["fn"] == 0
+        else:
+            metrics = {name: sum(row["periodic"]["metrics"][name] for row in rows)
+                       for name in rows[0]["periodic"]["metrics"]}
+            passed = all(row["periodic"]["status"] == "passed" and not row["alarm"] for row in rows)
+        summary = {"status": "passed" if passed else "failed",
+                   "metrics": metrics, "runs": rows, "topology": a.topology, "suite": a.suite,
+                   "claim_boundary": "Controlled KIE consistency on real MAP peers; no ML or operator-traffic validation."}
         (out / "summary.json").write_text(json.dumps(summary, indent=2))
         print(json.dumps(summary, indent=2))
         if summary["status"] != "passed":

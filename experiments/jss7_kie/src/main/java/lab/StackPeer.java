@@ -103,7 +103,7 @@ public final class StackPeer {
         @Override public synchronized void onProcessUnstructuredSSResponse(ProcessUnstructuredSSResponse response) {
             if (seen.add(response.getMAPDialog().getLocalDialogId())) completed.incrementAndGet();
         }
-        void run(int count, boolean stp) throws Exception {
+        void run(int count, boolean stp, int pacingMs, Path stopFile) throws Exception {
             CLIENT_IP = SERVER_IP = "127.0.0.1";
             CLIENT_PORT = 2345; SERVER_PORT = 3434;
             DELIVERY_TRANSFER_MESSAGE_THREAD_COUNT = 1;
@@ -127,21 +127,24 @@ public final class StackPeer {
             waitActive(management);
             Method send = Client.class.getDeclaredMethod("initiateUSSD");
             send.setAccessible(true);
+            System.out.println("TRAFFIC_READY");
             for (int i = 1; i <= count; i++) {
+                if (stopFile != null && Files.exists(stopFile)) break;
                 send.invoke(this);
                 long deadline = System.nanoTime() + 10_000_000_000L;
                 while (completed.get() < i) {
                     if (System.nanoTime() > deadline) throw new IllegalStateException("MAP response timeout at " + i);
                     Thread.sleep(10);
                 }
+                if (pacingMs > 0) Thread.sleep(pacingMs);
             }
             System.out.println("COMPLETED=" + completed.get());
         }
     }
     public static void main(String[] args) {
         try {
-            if (args.length != 3 || !("direct".equals(args[2]) || "osmostp".equals(args[2])))
-                throw new IllegalArgumentException("server EVENT_FILE direct|osmostp | client COUNT direct|osmostp");
+            if ((args.length != 3 && args.length != 5) || !("direct".equals(args[2]) || "osmostp".equals(args[2])))
+                throw new IllegalArgumentException("server EVENT_FILE TOPOLOGY | client COUNT TOPOLOGY [PACING_MS STOP_FILE]");
             boolean stp = "osmostp".equals(args[2]);
             if ("server".equals(args[0])) {
                 Receiver server = new Receiver(Paths.get(args[1]));
@@ -151,7 +154,9 @@ public final class StackPeer {
             } else if ("client".equals(args[0])) {
                 int count = Integer.parseInt(args[1]);
                 if (count < 1 || count > 1000) throw new IllegalArgumentException("COUNT must be 1..1000");
-                new Sender().run(count, stp);
+                int pacing = args.length == 5 ? Integer.parseInt(args[3]) : 0;
+                if (pacing < 0 || pacing > 1000) throw new IllegalArgumentException("invalid pacing");
+                new Sender().run(count, stp, pacing, args.length == 5 ? Paths.get(args[4]) : null);
                 System.exit(0);
             } else throw new IllegalArgumentException("unknown role");
         } catch (Exception e) { e.printStackTrace(); System.exit(2); }
