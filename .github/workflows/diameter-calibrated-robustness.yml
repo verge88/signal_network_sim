@@ -78,6 +78,9 @@ jobs:
               op = m["operating_point"]
               assert op["threshold_reference"] == "validation_negative_labels"
               assert op["test_labels_used_for_threshold"] is False
+              alarm = op["alarm_policy"]
+              assert alarm["required_consecutive_windows"] == 2
+              assert alarm["selected_using_test"] is False
               seed = int(m["seed"])
               metrics = pd.read_csv(
                   f"artifacts/robustness10/seed_{seed}/metrics_seed{seed}.csv"
@@ -106,6 +109,11 @@ jobs:
               "compromise_recall_at_val_1pct_fpr",
               "episode_recall_at_val_1pct_fpr",
               "false_incidents_per_day_at_val_1pct_threshold",
+              "debounce2_test_fpr_at_val_1pct_threshold",
+              "debounce2_compromise_recall_at_val_1pct_fpr",
+              "debounce2_episode_recall_at_val_1pct_fpr",
+              "debounce2_false_incidents_per_day_at_val_1pct_threshold",
+              "debounce2_median_detection_delay_s_at_val_1pct_fpr",
           ]
           keep = [
               "Gradient Boosting", "Cascade", "Cascade-Stage2",
@@ -121,7 +129,12 @@ jobs:
                    "test_fpr_at_val_1pct_threshold",
                    "compromise_recall_at_val_1pct_fpr",
                    "episode_recall_at_val_1pct_fpr",
-                   "false_incidents_per_day_at_val_1pct_threshold"]
+                   "false_incidents_per_day_at_val_1pct_threshold",
+                   "debounce2_test_fpr_at_val_1pct_threshold",
+                   "debounce2_compromise_recall_at_val_1pct_fpr",
+                   "debounce2_episode_recall_at_val_1pct_fpr",
+                   "debounce2_false_incidents_per_day_at_val_1pct_threshold",
+                   "debounce2_median_detection_delay_s_at_val_1pct_fpr"]
               ]
               .agg(["mean", "std"])
               .to_string()
