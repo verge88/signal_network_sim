@@ -225,9 +225,11 @@ def debounce_consecutive(df, predictions, required=2):
     ).groupby("node_id", sort=False):
         run = 0
         prev_interval = None
-        for row in part.itertuples(index=False):
-            cur_interval = int(row.interval)
-            pred = int(row._pred)
+        for cur_interval, pred, row_pos in part[
+            ["interval", "_pred", "_row_pos"]
+        ].itertuples(index=False, name=None):
+            cur_interval = int(cur_interval)
+            pred = int(pred)
             contiguous = (
                 prev_interval is not None
                 and cur_interval == prev_interval + 1
@@ -235,7 +237,7 @@ def debounce_consecutive(df, predictions, required=2):
             if not contiguous:
                 run = 0
             run = run + 1 if pred else 0
-            out[int(row._row_pos)] = 1 if run >= required else 0
+            out[int(row_pos)] = 1 if run >= required else 0
             prev_interval = cur_interval
     return out
 
