@@ -115,6 +115,9 @@ jobs:
               op = m["operating_point"]
               assert op["threshold_reference"] == "validation_negative_labels"
               assert op["test_labels_used_for_threshold"] is False
+              alarm = op["alarm_policy"]
+              assert alarm["required_consecutive_windows"] == 2
+              assert alarm["selected_using_test"] is False
 
               seed = int(m["seed"])
               metrics = pd.read_csv(
@@ -126,6 +129,24 @@ jobs:
                   calibrated["val_fpr_at_val_1pct_threshold"] <= 0.010000000001
               ).all()
               assert calibrated["recall_at_val_1pct_fpr"].notna().all()
+              assert (
+                  calibrated[
+                      "debounce2_false_incidents_per_day_at_val_1pct_threshold"
+                  ].notna().all()
+              )
+              assert (
+                  calibrated[
+                      "debounce2_episode_recall_at_val_1pct_fpr"
+                  ].notna().all()
+              )
+              assert (
+                  calibrated[
+                      "debounce2_false_incidents_per_day_at_val_1pct_threshold"
+                  ]
+                  <= calibrated[
+                      "false_incidents_per_day_at_val_1pct_threshold"
+                  ] + 1e-12
+              ).all()
               meta = metrics[metrics["name"] == "Meta-Ensemble"]
               assert len(meta) == 1
               assert meta["recall_at_val_1pct_fpr"].isna().all()
@@ -185,6 +206,14 @@ jobs:
           assert (
               m["operating_point"]["threshold_reference"]
               == "validation_negative_labels"
+          )
+          assert (
+              m["operating_point"]["alarm_policy"]["required_consecutive_windows"]
+              == 2
+          )
+          assert (
+              m["operating_point"]["alarm_policy"]["selected_using_test"]
+              is False
           )
           assert "Autoencoder" in m["models"]
           assert "VAE" in m["models"]
