@@ -72,6 +72,33 @@ class EvidenceTests(unittest.TestCase):
                 'experiments.jss7_kie.run_lab.command', side_effect=['01,02\n01\n', '02\n01\n']):
             self.assertEqual(observe(Path(tmp)/'capture.pcap', Path(tmp)), 2)
 
+    def test_stp_observer_requires_both_legs_and_both_directions(self):
+        # A complete direct exchange cannot stand in for actual STP transit.
+        with tempfile.TemporaryDirectory() as tmp:
+            for missing in range(4):
+                values = ['01\n02\n'] * 4
+                values[missing] = '01\n'
+                with self.subTest(missing=missing), patch(
+                        'experiments.jss7_kie.run_lab.command', side_effect=values):
+                    with self.assertRaises(ValueError):
+                        observe(Path(tmp)/'capture.pcap', Path(tmp), 'osmostp')
+
+    def test_stp_observer_deduplicates_transit_without_doubling_count(self):
+        with tempfile.TemporaryDirectory() as tmp, patch(
+                'experiments.jss7_kie.run_lab.command',
+                side_effect=['01\n02\n01\n', '02,01\n', '01\n02\n', '02\n01\n']) as extract:
+            self.assertEqual(observe(Path(tmp)/'capture.pcap', Path(tmp), 'osmostp'), 2)
+            filters = [call.args[0][4] for call in extract.call_args_list]
+            self.assertIn('sctp.srcport == 2345 && sctp.dstport == 2905', filters[0])
+            self.assertIn('sctp.srcport == 2905 && sctp.dstport == 3434', filters[1])
+            self.assertIn('m3ua.protocol_data_opc == 2 && m3ua.protocol_data_dpc == 1', filters[2])
+
+    def test_stp_observer_rejects_wrong_return_dialog_ids(self):
+        with tempfile.TemporaryDirectory() as tmp, patch(
+                'experiments.jss7_kie.run_lab.command', side_effect=['01\n', '01\n', '02\n', '02\n']):
+            with self.assertRaises(ValueError):
+                observe(Path(tmp)/'capture.pcap', Path(tmp), 'osmostp')
+
     def test_capture_drain_retries_partial_evidence(self):
         capture = Mock()
         capture.poll.return_value = None

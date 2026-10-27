@@ -22,8 +22,13 @@ concurrency:
 
 jobs:
   protocol-lab:
+    name: MAP and KIE (${{ matrix.topology }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        topology: [direct, osmostp]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -49,12 +54,19 @@ jobs:
           with socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_SCTP):
               print('SCTP socket available')
           PY
+      - name: Install OsmoSTP router
+        if: matrix.topology == 'osmostp'
+        run: |
+          sudo apt-get install -y --no-install-recommends osmo-stp=1.6.0+dfsg1-3.1build2
+          # Stop the package's default daemon on this disposable runner.
+          # The lab starts and owns one router with its static configuration.
+          sudo systemctl stop osmo-stp.service
       - name: Build pinned jSS7 adapter
         run: |
           mvn -B -ntp -f experiments/jss7_kie/pom.xml package
       - name: Run real protocol exchange and KIE verification
         run: |
-          python -m experiments.jss7_kie.run_lab --out runs/jss7-kie --repetitions 2
+          python -m experiments.jss7_kie.run_lab --out runs/jss7-kie --repetitions 2 --topology ${{ matrix.topology }}
       - name: Publish summary
         if: always()
         run: |
@@ -68,13 +80,13 @@ jobs:
               print('```json\n' + json.dumps(s, indent=2) + '\n```')
           else:
               print('No experiment result: setup/build failed or execution was interrupted.')
-          print('This checks direct MAP peers and side-channel KIE consistency, not operational detection accuracy.')
+          print('This checks real MAP peers and side-channel KIE consistency, not operational detection accuracy.')
           PY
       - name: Retain evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: jss7-kie-${{ github.run_id }}-${{ github.run_attempt }}
+          name: jss7-kie-${{ matrix.topology }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: runs/jss7-kie/
           if-no-files-found: warn
           retention-days: 30
