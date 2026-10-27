@@ -1,0 +1,232 @@
+name: Diameter calibrated model training
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/diameter-calibrated-training.yml"
+      - "diameter/diameter_sim_v1.py"
+      - "diameter/diameter_training_v1.py"
+      - "diameter/diameter_training_calibrated.py"
+      - "diameter/ms_multiseed_core.py"
+      - "diameter/run_seeds_diameter_calibrated.py"
+      - "tests/test_diameter_calibrated_training.py"
+      - "tests/test_stage1_scientific_contract.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diameter-calibrated-training-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  validate:
+    name: Scientific and regression checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas scipy scikit-learn networkx matplotlib
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Run tests
+        run: |
+          python -m unittest \
+            tests.test_stage1_scientific_contract \
+            tests.test_diameter_open5gs_calibration \
+            tests.test_diameter_calibrated_training \
+            -v
+
+      - name: Compile calibrated training entry points
+        run: |
+          python -m py_compile \
+            diameter/diameter_training_calibrated.py \
+            diameter/ms_multiseed_core.py \
+            diameter/run_seeds_diameter_calibrated.py
+
+  classical-multiseed:
+    name: Classical models, 10 calibrated seeds
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas scipy scikit-learn networkx matplotlib
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Train classical models on regenerated calibrated datasets
+        run: |
+          python diameter/run_seeds_diameter_calibrated.py \
+            42 43 44 45 46 47 48 49 50 51 \
+            --regen \
+            --no-seq \
+            --no-svm \
+            --no-neural \
+            --out artifacts/classical
+
+      - name: Verify calibration, split and null diagnostics
+        run: |
+          python - <<'PY'
+          import glob, json, math
+          import pandas as pd
+          expected = 794.2608695652174
+          manifests = sorted(glob.glob("artifacts/classical/seed_*/manifest_seed*.json"))
+          assert len(manifests) == 10, manifests
+          for path in manifests:
+              m = json.load(open(path, encoding="utf-8"))
+              got = m["sim_config_overrides"]["s6a_transaction_size_bytes"]
+              assert abs(got - expected) < 1e-9, (path, got)
+              split = m["split_report"]
+              assert split["mode"] == "episode_time_component_holdout"
+              assert split["group_overlap"] is False
+              assert len(split["episodes"]["test"]) >= 2
+              assert split["compromise_rows"]["train"] > 0, path
+              assert split["compromise_rows"]["test"] > 0, path
+              assert m["cascade_stage2"]["enabled"] is True, (
+                  path, m["cascade_stage2"]
+              )
+              assert m["meta_stacking"]["fit_partition"] == "validation"
+              assert m["meta_stacking"]["test_labels_used_for_fit"] is False
+              assert set(m["cascade_stage2"]["classes"]) == {0, 1}, (
+                  path, m["cascade_stage2"]
+              )
+              assert m["permutation_null_passed"] is True, (
+                  path, m["permutation_null_auc"]
+              )
+              op = m["operating_point"]
+              assert op["threshold_reference"] == "validation_negative_labels"
+              assert op["test_labels_used_for_threshold"] is False
+              alarm = op["alarm_policy"]
+              assert alarm["required_consecutive_windows"] == 2
+              assert alarm["selected_using_test"] is False
+
+              seed = int(m["seed"])
+              metrics = pd.read_csv(
+                  f"artifacts/classical/seed_{seed}/metrics_seed{seed}.csv"
+              )
+              calibrated = metrics[metrics["name"] != "Meta-Ensemble"]
+              assert calibrated["val_fpr_at_val_1pct_threshold"].notna().all()
+              assert (
+                  calibrated["val_fpr_at_val_1pct_threshold"] <= 0.010000000001
+              ).all()
+              assert calibrated["recall_at_val_1pct_fpr"].notna().all()
+              assert (
+                  calibrated[
+                      "debounce2_false_incidents_per_day_at_val_1pct_threshold"
+                  ].notna().all()
+              )
+              assert (
+                  calibrated[
+                      "debounce2_episode_recall_at_val_1pct_fpr"
+                  ].notna().all()
+              )
+              assert (
+                  calibrated[
+                      "debounce2_false_incidents_per_day_at_val_1pct_threshold"
+                  ]
+                  <= calibrated[
+                      "false_incidents_per_day_at_val_1pct_threshold"
+                  ] + 1e-12
+              ).all()
+              meta = metrics[metrics["name"] == "Meta-Ensemble"]
+              assert len(meta) == 1
+              assert meta["recall_at_val_1pct_fpr"].isna().all()
+          print("validated manifests:", manifests)
+          PY
+
+      - name: Upload classical training artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: diameter-calibrated-classical-${{ github.run_id }}
+          path: artifacts/classical/
+          retention-days: 30
+
+  full-seed42:
+    name: Full zoo with AE and VAE, seed 42
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas scipy scikit-learn networkx matplotlib
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Train full non-sequential zoo on calibrated seed 42
+        run: |
+          python diameter/run_seeds_diameter_calibrated.py \
+            42 \
+            --regen \
+            --no-seq \
+            --no-svm \
+            --out artifacts/full_seed42
+
+      - name: Verify seed-42 scientific manifest
+        run: |
+          python - <<'PY'
+          import glob, json
+          paths = glob.glob("artifacts/full_seed42/seed_42/manifest_seed42.json")
+          assert len(paths) == 1, paths
+          m = json.load(open(paths[0], encoding="utf-8"))
+          assert m["split_report"]["group_overlap"] is False
+          assert m["split_report"]["compromise_rows"]["train"] > 0
+          assert m["split_report"]["compromise_rows"]["test"] > 0
+          assert m["cascade_stage2"]["enabled"] is True
+          assert set(m["cascade_stage2"]["classes"]) == {0, 1}
+          assert m["meta_stacking"]["fit_partition"] == "validation"
+          assert m["meta_stacking"]["test_labels_used_for_fit"] is False
+          assert m["permutation_null_passed"] is True
+          assert m["operating_point"]["test_labels_used_for_threshold"] is False
+          assert (
+              m["operating_point"]["threshold_reference"]
+              == "validation_negative_labels"
+          )
+          assert (
+              m["operating_point"]["alarm_policy"]["required_consecutive_windows"]
+              == 2
+          )
+          assert (
+              m["operating_point"]["alarm_policy"]["selected_using_test"]
+              is False
+          )
+          assert "Autoencoder" in m["models"]
+          assert "VAE" in m["models"]
+          assert abs(
+              m["sim_config_overrides"]["s6a_transaction_size_bytes"]
+              - 794.2608695652174
+          ) < 1e-9
+          print(json.dumps(m["split_report"], indent=2))
+          PY
+
+      - name: Upload full-zoo training artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: diameter-calibrated-full-seed42-${{ github.run_id }}
+          path: artifacts/full_seed42/
+          retention-days: 30

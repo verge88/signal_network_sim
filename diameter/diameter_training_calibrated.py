@@ -1,0 +1,327 @@
+"""Scientific training adapter for the Open5GS-calibrated Diameter simulator.
+
+This module reuses the v1 model zoo but replaces the row-random split with a
+grouped holdout. Attack episodes stay intact and are unioned with every
+contiguous normal-time block they touch, so contemporaneous zone/temporal
+neighbours cannot land in another train/validation/test partition.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Tuple
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import GroupShuffleSplit
+from sklearn.preprocessing import LabelEncoder
+
+import diameter_training_v1 as base
+
+# Re-export the existing model/trainer API expected by ms_multiseed_core.
+from diameter_training_v1 import *  # noqa: F401,F403,E402
+
+
+NORMAL_ATTACK_VALUES = {"none", "normal", "", "nan", "None"}
+
+
+@dataclass
+class TrainingConfig(base.TrainingConfig):
+    split_normal_block_intervals: int = 120  # 30 min at 15 s intervals
+    split_max_tries: int = 256
+    split_min_test_episodes: int = 2
+    split_min_test_attack_types: int = 2
+    split_require_compromise_train: bool = True
+    split_require_compromise_test: bool = True
+
+
+class DataPipeline(base.DataPipeline):
+    """Diameter feature pipeline with episode/time-block-disjoint splits."""
+
+    def __init__(self, config: TrainingConfig):
+        super().__init__(config)
+        self.split_report = {}
+
+    @staticmethod
+    def _is_attack(series: pd.Series) -> pd.Series:
+        s = series.astype(str)
+        return ~s.isin(NORMAL_ATTACK_VALUES)
+
+    def _annotate_groups(self, df: pd.DataFrame) -> pd.DataFrame:
+        if "interval" not in df.columns or "node_id" not in df.columns:
+            raise ValueError("grouped split requires interval and node_id columns")
+
+        out = df.copy()
+        out["_row_order"] = np.arange(len(out))
+        out["attack_episode_id"] = ""
+        attack_mask = self._is_attack(out[self.ATTACK_COL])
+
+        # An attack episode is contiguous in time for a concrete target node and
+        # attack type. This prevents one episode from being sliced across splits.
+        attacked = out.loc[attack_mask, [
+            "interval", "node_id", self.ATTACK_COL
+        ]].sort_values([self.ATTACK_COL, "node_id", "interval"])
+        for (attack, node), idx in attacked.groupby(
+                [self.ATTACK_COL, "node_id"], sort=False).groups.items():
+            rows = out.loc[list(idx)].sort_values("interval")
+            gaps = rows["interval"].diff().fillna(1).ne(1).cumsum()
+            for run_id, run_idx in rows.groupby(gaps).groups.items():
+                eid = f"A:{attack}:node{int(node)}:run{int(run_id)}"
+                out.loc[list(run_idx), "attack_episode_id"] = eid
+
+        block = int(self.config.split_normal_block_intervals)
+        if block <= 0:
+            raise ValueError("split_normal_block_intervals must be positive")
+        out["_normal_block"] = (
+            out["interval"].astype(int) // block
+        ).astype(int)
+
+        # Build connected components of {normal time block <-> attack episode}.
+        # If an attack episode spans several blocks, all those blocks and all
+        # rows from every node in them must remain in the same partition. This
+        # prevents contemporaneous zone/background rows from leaking across
+        # train/validation/test while still keeping whole attack episodes intact.
+        parent = {}
+
+        def find(key):
+            parent.setdefault(key, key)
+            if parent[key] != key:
+                parent[key] = find(parent[key])
+            return parent[key]
+
+        def union(a, b):
+            ra, rb = find(a), find(b)
+            if ra != rb:
+                parent[rb] = ra
+
+        for b in sorted(out["_normal_block"].unique()):
+            find(f"B:{int(b)}")
+
+        attacked_rows = out.loc[attack_mask]
+        for episode_id, part in attacked_rows.groupby("attack_episode_id"):
+            ekey = f"E:{episode_id}"
+            find(ekey)
+            for b in sorted(part["_normal_block"].unique()):
+                union(ekey, f"B:{int(b)}")
+
+        out["split_group"] = [
+            find(f"B:{int(b)}") for b in out["_normal_block"].to_numpy()
+        ]
+        return (
+            out.sort_values("_row_order")
+            .drop(columns=["_row_order", "_normal_block"])
+        )
+
+    @staticmethod
+    def _split_ok(train, val, test, cfg) -> bool:
+        parts = (train, val, test)
+        if any(len(p) == 0 for p in parts):
+            return False
+        if any(p["is_anomaly"].nunique() < 2 for p in parts):
+            return False
+
+        gs = [set(p["split_group"].astype(str)) for p in parts]
+        if gs[0] & gs[1] or gs[0] & gs[2] or gs[1] & gs[2]:
+            return False
+
+        eps = test.loc[test["is_anomaly"] == 1, "attack_episode_id"]
+        eps = {x for x in eps.astype(str) if x}
+        if len(eps) < int(cfg.split_min_test_episodes):
+            return False
+
+        at = test.loc[test["is_anomaly"] == 1, "attack_type"].astype(str)
+        if at.nunique() < int(cfg.split_min_test_attack_types):
+            return False
+
+        compromise = "node_compromise"
+        if bool(cfg.split_require_compromise_train):
+            if not (train["attack_type"].astype(str) == compromise).any():
+                return False
+        if bool(cfg.split_require_compromise_test):
+            if not (test["attack_type"].astype(str) == compromise).any():
+                return False
+        return True
+
+    def _grouped_split(self, df: pd.DataFrame):
+        groups = df["split_group"].astype(str).to_numpy()
+        val_rel = self.config.val_size / max(
+            1e-9, (1.0 - self.config.test_size)
+        )
+
+        for attempt in range(int(self.config.split_max_tries)):
+            seed1 = int(self.config.seed) + 7919 * attempt
+            gss1 = GroupShuffleSplit(
+                n_splits=1,
+                test_size=self.config.test_size,
+                random_state=seed1,
+            )
+            trv_idx, te_idx = next(gss1.split(df, df[self.LABEL_COL], groups))
+            train_val = df.iloc[trv_idx]
+            test = df.iloc[te_idx]
+
+            g2 = train_val["split_group"].astype(str).to_numpy()
+            gss2 = GroupShuffleSplit(
+                n_splits=1,
+                test_size=val_rel,
+                random_state=seed1 + 104729,
+            )
+            tr_idx, va_idx = next(
+                gss2.split(train_val, train_val[self.LABEL_COL], g2)
+            )
+            train = train_val.iloc[tr_idx]
+            val = train_val.iloc[va_idx]
+
+            if self._split_ok(train, val, test, self.config):
+                return (
+                    train.sort_values(["interval", "node_id"]).copy(),
+                    val.sort_values(["interval", "node_id"]).copy(),
+                    test.sort_values(["interval", "node_id"]).copy(),
+                    attempt,
+                )
+
+        raise RuntimeError(
+            "could not construct episode/time-block-disjoint split satisfying "
+            "class and test-episode constraints"
+        )
+
+    def load_and_prepare(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        df = pd.read_csv(self.config.data_path)
+        print(
+            f"Loaded {len(df)} records, anomalies: {df[self.LABEL_COL].sum()} "
+            f"({100 * df[self.LABEL_COL].mean():.2f}%)"
+        )
+        print(f"Attack distribution:\n{df[self.ATTACK_COL].value_counts()}\n")
+
+        if "node_type" in df.columns and "node_type_enc" not in df.columns:
+            df["node_type_enc"] = LabelEncoder().fit_transform(df["node_type"])
+
+        self._build_feature_cols(df)
+        for c in self.feature_cols:
+            if c.startswith("gt_"):
+                raise ValueError(f"GT column '{c}' in feature set!")
+
+        df = self._annotate_groups(df)
+        train, val, test, attempt = self._grouped_split(df)
+
+        def episodes(p):
+            x = p.loc[p[self.LABEL_COL] == 1, "attack_episode_id"].astype(str)
+            return sorted({v for v in x if v})
+
+        group_sets = {
+            "train": set(train["split_group"].astype(str)),
+            "val": set(val["split_group"].astype(str)),
+            "test": set(test["split_group"].astype(str)),
+        }
+        self.split_report = {
+            "mode": "episode_time_component_holdout",
+            "normal_block_intervals": int(
+                self.config.split_normal_block_intervals
+            ),
+            "attempt": int(attempt),
+            "group_overlap": bool(
+                (group_sets["train"] & group_sets["val"])
+                or (group_sets["train"] & group_sets["test"])
+                or (group_sets["val"] & group_sets["test"])
+            ),
+            "rows": {
+                "train": int(len(train)),
+                "val": int(len(val)),
+                "test": int(len(test)),
+            },
+            "anomaly_rate": {
+                "train": float(train[self.LABEL_COL].mean()),
+                "val": float(val[self.LABEL_COL].mean()),
+                "test": float(test[self.LABEL_COL].mean()),
+            },
+            "episodes": {
+                "train": episodes(train),
+                "val": episodes(val),
+                "test": episodes(test),
+            },
+            "test_attack_types": sorted(
+                test.loc[test[self.LABEL_COL] == 1, self.ATTACK_COL]
+                .astype(str).unique().tolist()
+            ),
+            "compromise_rows": {
+                "train": int(
+                    (train[self.ATTACK_COL].astype(str)
+                     == "node_compromise").sum()
+                ),
+                "val": int(
+                    (val[self.ATTACK_COL].astype(str)
+                     == "node_compromise").sum()
+                ),
+                "test": int(
+                    (test[self.ATTACK_COL].astype(str)
+                     == "node_compromise").sum()
+                ),
+            },
+        }
+
+        print(f"Observable features: {len(self.feature_cols)}")
+        print(
+            "Grouped split — "
+            f"Train: {len(train)}, Val: {len(val)}, Test: {len(test)}"
+        )
+        print(
+            "Attack episodes — "
+            f"Train: {len(self.split_report['episodes']['train'])}, "
+            f"Val: {len(self.split_report['episodes']['val'])}, "
+            f"Test: {len(self.split_report['episodes']['test'])}"
+        )
+        print(
+            f"Test attack types: {self.split_report['test_attack_types']}"
+        )
+        print(f"Group overlap: {self.split_report['group_overlap']}\n")
+        return train, val, test
+
+
+class CascadeCompromiseDetector(base.CascadeCompromiseDetector):
+    """Cascade with an explicit stage-2 availability contract.
+
+    The grouped scientific split is designed to retain compromise examples in
+    training and test. This fallback keeps a rare/degenerate split from
+    crashing the whole experiment: if stage 2 sees one class, the calibrated
+    cascade degrades to stage 1 and reports the condition in provenance.
+    """
+
+    def __init__(self, config, seed=42):
+        super().__init__(config, seed)
+        self.stage2_enabled = True
+        self.stage2_classes = []
+        self.stage2_disabled_reason = None
+
+    def fit(self, X_full, y, X_comp, y_comp):
+        print("  Cascade Stage 1: General RF...")
+        self.stage1_rf.fit(X_full, y)
+
+        classes = np.unique(np.asarray(y_comp, dtype=int))
+        self.stage2_classes = [int(x) for x in classes.tolist()]
+        if len(classes) < 2:
+            self.stage2_enabled = False
+            self.stage2_disabled_reason = (
+                "compromise stage-2 training target contains fewer than "
+                "two classes"
+            )
+            print(
+                "  Cascade Stage 2: disabled — "
+                f"{self.stage2_disabled_reason}; classes={self.stage2_classes}"
+            )
+            return self
+
+        print("  Cascade Stage 2: Compromise-specific GB + RF...")
+        self.stage2_gb.fit(X_comp, y_comp)
+        self.stage2_rf.fit(X_comp, y_comp)
+        self.stage2_enabled = True
+        self.stage2_disabled_reason = None
+        return self
+
+    def predict_proba_stage2(self, X):
+        if not self.stage2_enabled:
+            return np.zeros(len(X), dtype=float)
+        return super().predict_proba_stage2(X)
+
+    def predict_proba(self, X_full, X_comp):
+        p1 = self.predict_proba_stage1(X_full)
+        if not self.stage2_enabled:
+            return p1
+        return np.maximum(p1, self.predict_proba_stage2(X_comp))
