@@ -71,6 +71,13 @@ BASE_METRICS = [
     "episode_recall", "episode_recall_at_val_1pct_fpr",
     "false_incidents_per_day",
     "false_incidents_per_day_at_val_1pct_threshold",
+    # Fixed a-priori operational debounce: alarm only after two consecutive
+    # positive windows on the same node. No test-set tuning of this rule.
+    "debounce2_test_fpr_at_val_1pct_threshold",
+    "debounce2_compromise_recall_at_val_1pct_fpr",
+    "debounce2_episode_recall_at_val_1pct_fpr",
+    "debounce2_false_incidents_per_day_at_val_1pct_threshold",
+    "debounce2_median_detection_delay_s_at_val_1pct_fpr",
 ]
 
 
@@ -191,6 +198,81 @@ def normalize_score01_from_reference(reference, scores):
     if not np.isfinite(scale) or scale <= 1e-12:
         return np.zeros_like(arr, dtype=float)
     return np.clip((arr - p1) / scale, 0.0, 1.0)
+
+
+def debounce_consecutive(df, predictions, required=2):
+    """Require N consecutive positive windows per node before alarming.
+
+    The rule is fixed independently of labels. Gaps in interval numbering reset
+    the run, so disconnected grouped-holdout chunks cannot prime each other.
+    Returned predictions preserve the original dataframe row order.
+    """
+    yp = np.asarray(predictions, dtype=int)
+    if len(df) != len(yp):
+        raise ValueError("df and predictions must have equal length")
+    if required <= 1:
+        return yp.copy()
+    if "node_id" not in df.columns or "interval" not in df.columns:
+        raise ValueError("debounce requires node_id and interval columns")
+
+    tmp = df[["node_id", "interval"]].copy()
+    tmp["_pred"] = yp
+    tmp["_row_pos"] = np.arange(len(tmp))
+    out = np.zeros(len(tmp), dtype=int)
+
+    for _, part in tmp.sort_values(
+        ["node_id", "interval", "_row_pos"]
+    ).groupby("node_id", sort=False):
+        run = 0
+        prev_interval = None
+        for row in part.itertuples(index=False):
+            cur_interval = int(row.interval)
+            pred = int(row._pred)
+            contiguous = (
+                prev_interval is not None
+                and cur_interval == prev_interval + 1
+            )
+            if not contiguous:
+                run = 0
+            run = run + 1 if pred else 0
+            out[int(row._row_pos)] = 1 if run >= required else 0
+            prev_interval = cur_interval
+    return out
+
+
+def episode_alarm_stats(test_df, predictions, labels, interval_s=15.0):
+    """Episode recall and delay using alarms that occur inside attack rows."""
+    yp = np.asarray(predictions, dtype=int)
+    y = np.asarray(labels, dtype=int)
+    if len(test_df) != len(yp) or len(yp) != len(y):
+        raise ValueError("test_df, predictions and labels must have equal length")
+    if "attack_episode_id" not in test_df.columns:
+        return np.nan, np.nan, 0, 0
+
+    epi = test_df["attack_episode_id"].astype(str).to_numpy()
+    intervals = test_df["interval"].to_numpy(dtype=int)
+    attack_mask = y == 1
+    episode_ids = sorted({
+        e for e in epi[attack_mask]
+        if e and e.lower() not in ("nan", "none")
+    })
+    delays = []
+    detected = 0
+    for eid in episode_ids:
+        m = (epi == eid) & attack_mask
+        alarm_intervals = intervals[m & (yp == 1)]
+        if len(alarm_intervals):
+            detected += 1
+            start = int(np.min(intervals[m]))
+            first = int(np.min(alarm_intervals))
+            delays.append(max(0.0, (first - start) * float(interval_s)))
+
+    recall = (
+        100.0 * detected / len(episode_ids)
+        if episode_ids else np.nan
+    )
+    median_delay = float(np.median(delays)) if delays else np.nan
+    return recall, median_delay, int(detected), int(len(episode_ids))
 
 
 def count_false_incidents(test_df, predictions, labels):
@@ -465,10 +547,73 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
                     100.0 * detected_op / len(episode_ids)
                     if episode_ids else np.nan
                 )
+
+                # Operational layer: fixed a-priori 2-consecutive-window
+                # debounce. The rule uses only score-threshold outputs and
+                # timestamps/node IDs; labels are used only afterwards to
+                # evaluate test performance.
+                yp_db2 = debounce_consecutive(test_df, yp_op, required=2)
+                db2_tn, db2_fp, db2_fn, db2_tp = confusion_matrix(
+                    y_test, yp_db2, labels=[0, 1]
+                ).ravel()
+                row["debounce2_test_fpr_at_val_1pct_threshold"] = (
+                    db2_fp / (db2_fp + db2_tn)
+                    if (db2_fp + db2_tn) else np.nan
+                )
+
+                db2_false_incidents = count_false_incidents(
+                    test_df, yp_db2, y_test
+                )
+                row["debounce2_false_incidents"] = int(
+                    db2_false_incidents
+                )
+                row[
+                    "debounce2_false_incidents_per_day_at_val_1pct_threshold"
+                ] = (
+                    float(db2_false_incidents) / test_days
+                    if np.isfinite(test_days) and test_days > 0 else np.nan
+                )
+
+                db2_attack_rec = {}
+                at = np.asarray(atk_test)
+                for attack_name in spec.attack_types:
+                    m = at == attack_name
+                    if np.any(m):
+                        db2_attack_rec[attack_name] = (
+                            100.0 * np.sum(yp_db2[m]) / np.sum(m)
+                        )
+                row["debounce2_compromise_recall_at_val_1pct_fpr"] = (
+                    db2_attack_rec.get(spec.compromise_attack, np.nan)
+                )
+
+                (
+                    row["debounce2_episode_recall_at_val_1pct_fpr"],
+                    row[
+                        "debounce2_median_detection_delay_s_at_val_1pct_fpr"
+                    ],
+                    row["debounce2_detected_episodes"],
+                    row["debounce2_test_episodes"],
+                ) = episode_alarm_stats(
+                    test_df, yp_db2, y_test, interval_s=interval_s
+                )
             else:
                 row["false_incidents_at_val_1pct_threshold"] = np.nan
                 row["false_incidents_per_day_at_val_1pct_threshold"] = np.nan
                 row["episode_recall_at_val_1pct_fpr"] = np.nan
+                row["debounce2_test_fpr_at_val_1pct_threshold"] = np.nan
+                row["debounce2_false_incidents"] = np.nan
+                row[
+                    "debounce2_false_incidents_per_day_at_val_1pct_threshold"
+                ] = np.nan
+                row[
+                    "debounce2_compromise_recall_at_val_1pct_fpr"
+                ] = np.nan
+                row["debounce2_episode_recall_at_val_1pct_fpr"] = np.nan
+                row[
+                    "debounce2_median_detection_delay_s_at_val_1pct_fpr"
+                ] = np.nan
+                row["debounce2_detected_episodes"] = np.nan
+                row["debounce2_test_episodes"] = np.nan
         else:
             row["n_test_episodes"] = np.nan
             row["n_detected_episodes"] = np.nan
@@ -479,6 +624,18 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
             row["false_incidents_at_val_1pct_threshold"] = np.nan
             row["false_incidents_per_day_at_val_1pct_threshold"] = np.nan
             row["episode_recall_at_val_1pct_fpr"] = np.nan
+            row["debounce2_test_fpr_at_val_1pct_threshold"] = np.nan
+            row["debounce2_false_incidents"] = np.nan
+            row[
+                "debounce2_false_incidents_per_day_at_val_1pct_threshold"
+            ] = np.nan
+            row["debounce2_compromise_recall_at_val_1pct_fpr"] = np.nan
+            row["debounce2_episode_recall_at_val_1pct_fpr"] = np.nan
+            row[
+                "debounce2_median_detection_delay_s_at_val_1pct_fpr"
+            ] = np.nan
+            row["debounce2_detected_episodes"] = np.nan
+            row["debounce2_test_episodes"] = np.nan
 
         rows.append(row)
         ep = row.get("episode_recall", np.nan)
@@ -751,6 +908,12 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
             "meta_ensemble_deployable_metric": (
                 "not_reported_validation_is_meta_fit_partition"
             ),
+            "alarm_policy": {
+                "name": "two_consecutive_positive_windows",
+                "required_consecutive_windows": 2,
+                "selected_using_test": False,
+                "window_interval_seconds": 15.0,
+            },
         },
         "cascade_stage2": {
             "enabled": bool(getattr(casc, "stage2_enabled", True)),
@@ -877,6 +1040,8 @@ def run_seeds(spec: ProtocolSpec, seeds: List[int], csv=None, out=None,
     head = [
         "auc_roc", "auc_pr", "f1", "fpr", "compromise_recall",
         "recall_at_val_1pct_fpr", "test_fpr_at_val_1pct_threshold",
+        "debounce2_episode_recall_at_val_1pct_fpr",
+        "debounce2_false_incidents_per_day_at_val_1pct_threshold",
     ]
     print(f"{'Модель':<26s}" + "".join(f"{h:>22s}" for h in head if h in table))
     for i in table.index:
