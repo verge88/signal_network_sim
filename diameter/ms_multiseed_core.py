@@ -640,13 +640,15 @@ def run_one_seed(spec: ProtocolSpec, seed: int, csv: Optional[str] = None,
             row["debounce2_test_episodes"] = np.nan
 
         rows.append(row)
-        ep = row.get("episode_recall", np.nan)
-        ep_text = f"{ep:.1f}%" if np.isfinite(ep) else "—"
+        op_r = row.get("recall_at_val_1pct_fpr", np.nan)
+        op_r_text = f"{op_r:.1f}%" if np.isfinite(op_r) else "—"
+        db2_ep = row.get("debounce2_episode_recall_at_val_1pct_fpr", np.nan)
+        db2_ep_text = f"{db2_ep:.1f}%" if np.isfinite(db2_ep) else "—"
         print(f"  [{family:9s}] {name:22s} AUC-PR={row['auc_pr']:.3f} "
               f"F1={row['f1']:.3f} FPR={row['fpr']:.4f} "
               f"comp={row['compromise_recall']:.1f}% "
-              f"R@1%FPR={row['recall_at_1pct_fpr']:.1f}% "
-              f"episode={ep_text}")
+              f"R@val1%FPR={op_r_text} "
+              f"db2_episode={db2_ep_text}")
         return row
 
     # Label-permutation null: a classifier trained on shuffled labels
