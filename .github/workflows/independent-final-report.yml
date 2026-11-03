@@ -1,0 +1,43 @@
+name: Final independent model evaluation report
+
+on:
+  push:
+    branches: ['codex/independent-evaluation-report-20261103']
+    paths: ['.github/workflows/independent-final-report.yml', 'experiments/independent_diameter/final_report.py']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  report:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pandas
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 41656721943
+          name: independent-complete-summary-41656721943
+          path: diameter
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 41654690603
+          name: independent-ss7-41654690603
+          path: ss7
+      - name: Validate evidence and generate final report
+        run: python experiments/independent_diameter/final_report.py --diameter diameter --ss7 ss7 --out final
+      - name: Publish final report
+        run: cat final/report_ru.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: independent-model-evaluation-final-${{ github.run_id }}
+          path: final/
+          retention-days: 30
