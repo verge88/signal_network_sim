@@ -1,0 +1,57 @@
+name: Independent frozen SS7 evaluation
+
+on:
+  push:
+    branches: ['codex/independent-ss7-evaluation-20261103']
+    paths:
+      - '.github/workflows/independent-ss7-evaluation.yml'
+      - 'experiments/independent_ss7/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  independent:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      PYTHONUNBUFFERED: '1'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: b27957dd75819b8bd9ea8cab2a9617ae49c26435
+          path: source_ss7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.17'
+      - name: Install historical training dependencies
+        run: |
+          python -m pip install numpy==2.4.6 pandas==3.1.0 scipy==1.17.1 scikit-learn==1.9.1 networkx==3.6.1 joblib==1.6.0 threadpoolctl==3.7.0
+          python -m pip freeze > environment.txt
+      - name: Download completed historical SS7 training evidence
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 40283788549
+          name: ss7-calibrated-stack-40283788549
+          path: historical
+      - name: Reconstruct, freeze and evaluate SS7 on independent simulations
+        run: python experiments/independent_ss7/evaluate.py --historical historical --out evidence
+      - name: Publish report
+        if: always()
+        run: |
+          if [ -f evidence/report.md ]; then cat evidence/report.md >> "$GITHUB_STEP_SUMMARY"; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: independent-ss7-${{ github.run_id }}
+          path: |
+            evidence/
+            environment.txt
+          retention-days: 30
