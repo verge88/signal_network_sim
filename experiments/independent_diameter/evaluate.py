@@ -233,6 +233,7 @@ def evaluate(bundle_path, seed, out):
     import ms_multiseed_core as core
 
     out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
     before = digest(bundle_path)
     with open(bundle_path, "rb") as stream:
         frozen = pickle.load(stream)
@@ -244,10 +245,28 @@ def evaluate(bundle_path, seed, out):
             frame, info = generate(test_seed, shifted, out)
             labels = frame["is_anomaly"].to_numpy(int)
             torch.manual_seed(test_seed + 70000)
-            for name, scores in scores_for(frozen, frame).items():
+            all_scores = scores_for(frozen, frame)
+            bad_bases = [name for name, scores in all_scores.items() if not np.isfinite(scores).all()]
+            for name, scores in all_scores.items():
                 reference = references[name]
                 # Meta labels fitted on validation; use its prespecified 0.5 only.
                 threshold = reference["threshold"] if name == "Meta-Ensemble" else reference["val_1pct_fpr_threshold"]
+                invalid = ~np.isfinite(scores)
+                if invalid.any() or not np.isfinite(threshold):
+                    # A numerical failure is an evaluation finding. Do not impute
+                    # invalid model output or silently score only easy/finite rows.
+                    rows.append(dict(model=name, train_seed=seed, test_seed=test_seed,
+                                scenario='shifted' if shifted else 'iid',
+                                status='nonfinite_model_output', invalid_scores=int(invalid.sum()),
+                                invalid_positive_scores=int(invalid[labels == 1].sum()),
+                                invalid_negative_scores=int(invalid[labels == 0].sum()),
+                                score_coverage=float((~invalid).mean()), n=len(labels),
+                                n_positive=int(labels.sum()), n_negative=int((labels == 0).sum()),
+                                threshold=threshold, roc_auc=np.nan, average_precision=np.nan,
+                                recall=np.nan, fpr=np.nan, debounce2_recall=np.nan, debounce2_fpr=np.nan,
+                                historical_predictions_match=bool(audit.loc[name, 'historical_predictions_match']),
+                                dataset_sha256=info['dataset_sha256'], frozen_sha256=before))
+                    continue
                 row = fixed_metrics(labels, scores, threshold)
                 pred = (np.asarray(scores) >= threshold).astype(int)
                 debounced = core.debounce_consecutive(frame, pred, required=2)
@@ -258,6 +277,8 @@ def evaluate(bundle_path, seed, out):
                            debounce2_recall=float(debounced[labels == 1].mean()),
                            debounce2_fpr=float(debounced[labels == 0].mean()),
                            dataset_sha256=info["dataset_sha256"], frozen_sha256=before)
+                row.update(status='ok', invalid_scores=0, score_coverage=1.0,
+                           upstream_nonfinite_models=','.join(bad_bases) if name == 'Meta-Ensemble' else '')
                 rows.append(row)
                 for attack, group in frame.loc[labels == 1].groupby("attack_type"):
                     idx = group.index.to_numpy()
@@ -278,13 +299,19 @@ def evaluate(bundle_path, seed, out):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--original", required=True)
+    p.add_argument("--original")
+    p.add_argument("--frozen", help="Evaluate an already frozen artifact without any fitting")
     p.add_argument("--seed", type=int, required=True, choices=TRAIN_SEEDS)
     p.add_argument("--out", required=True)
     p.add_argument("--neural", action="store_true")
     args = p.parse_args()
     sys.path.insert(0, str(Path("diameter").resolve()))
-    bundle = replay(args.original, args.seed, args.out, args.neural)
+    if args.frozen:
+        bundle = Path(args.frozen)
+    elif args.original:
+        bundle = replay(args.original, args.seed, args.out, args.neural)
+    else:
+        p.error('provide --frozen or --original')
     evaluate(bundle, args.seed, args.out)
 
 

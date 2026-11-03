@@ -1,0 +1,100 @@
+name: Complete independent Diameter evaluation from frozen weights
+
+on:
+  push:
+    branches: ['codex/independent-diameter-resume-20261103']
+    paths:
+      - '.github/workflows/independent-diameter-resume.yml'
+      - 'experiments/independent_diameter/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  resume-neural:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      PYTHONUNBUFFERED: '1'
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.17'
+          cache: pip
+          cache-dependency-path: experiments/independent_diameter/requirements.txt
+      - run: |
+          python -m pip install -r experiments/independent_diameter/requirements.txt
+          python -m pip install torch==2.14.1+cpu --index-url https://download.pytorch.org/whl/cpu
+      - run: python -m unittest experiments.independent_diameter.test_evaluate -v
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 41654090862
+          name: independent-neural-42-41654090862
+          path: frozen
+      - name: Apply export instrumentation for module compatibility only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from experiments.independent_diameter.evaluate import instrument_export
+          p = Path('diameter/ms_multiseed_core.py')
+          p.write_text(instrument_export(p.read_text()), encoding='utf-8')
+          PY
+      - name: Evaluate existing frozen weights; retain numerical failures as findings
+        run: python experiments/independent_diameter/evaluate.py --frozen frozen/evidence/frozen_models.pkl --seed 42 --out evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: resumed-neural-${{ github.run_id }}
+          path: |
+            evidence/independent_metrics.csv
+            evidence/per_attack.csv
+            evidence/*.json
+          retention-days: 30
+
+  report:
+    needs: resume-neural
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pandas
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 41654090862
+          pattern: independent-*-41654090862
+          path: reports
+      - uses: actions/download-artifact@v4
+        with:
+          name: resumed-neural-${{ github.run_id }}
+          path: resumed
+      - name: Replace incomplete neural metrics with the complete frozen evaluation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import shutil
+          for name in ('independent_metrics.csv', 'per_attack.csv'):
+              paths = list(Path('resumed').rglob(name))
+              assert len(paths) == 1, paths
+              target = Path('reports/independent-neural-42-41654090862/evidence') / name
+              assert target.parent.exists()
+              shutil.copyfile(paths[0], target)
+          PY
+          python experiments/independent_diameter/summarize.py --root reports --out summary
+      - name: Publish consolidated report
+        if: always()
+        run: cat summary/report.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: independent-complete-summary-${{ github.run_id }}
+          path: summary/
+          retention-days: 30

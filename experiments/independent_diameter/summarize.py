@@ -34,6 +34,15 @@ def main():
         summary.to_csv(out / 'aggregate.csv')
         means = df.groupby(['suite', 'model', 'scenario'])[['roc_auc', 'recall', 'fpr', 'debounce2_recall', 'debounce2_fpr']].mean()
         text += ['```', means.to_string(), '```', '']
+        if 'status' in df:
+            failures = df[df['status'].notna() & df['status'].ne('ok')]
+            if len(failures):
+                text += ['## Numerical model failures', '',
+                         'These model/dataset combinations did not produce valid scores for all rows. Their aggregate metrics are missing, not zero; finite-only means must not be interpreted as complete evaluation.',
+                         '```', failures[['suite','model','test_seed','scenario','invalid_scores','score_coverage']].to_string(index=False), '```', '']
+            upstream = df[df.get('upstream_nonfinite_models', pd.Series('', index=df.index)).fillna('').ne('')]
+            if len(upstream):
+                text += ['Meta-Ensemble used its historical reference-median fallback for nonfinite upstream scores; see upstream_nonfinite_models in the detailed CSV.', '']
         coverage = df.groupby(['suite', 'train_seed']).agg(test_seeds=('test_seed', 'nunique'), scenarios=('scenario', 'nunique'))
         complete = (len(coverage) == 11 and (coverage.test_seeds == 3).all() and (coverage.scenarios == 2).all())
         # Every model in every suite must cover all 6 preregistered datasets.

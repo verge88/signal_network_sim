@@ -26,6 +26,11 @@ class IndependentContractTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate_features([column])
 
+    def test_nonfinite_scores_are_not_silently_imputed(self):
+        for bad in (float('inf'), float('nan')):
+            with self.assertRaises(ValueError):
+                fixed_metrics([0, 1], [0.1, bad], 0.7)
+
     def test_shift_preserves_duration_and_original_scenarios(self):
         @dataclass
         class Scenario:
