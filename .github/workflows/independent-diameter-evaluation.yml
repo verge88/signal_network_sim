@@ -1,0 +1,114 @@
+name: Independent frozen Diameter evaluation
+
+on:
+  push:
+    branches: ['codex/independent-diameter-evaluation-20261103']
+    paths:
+      - '.github/workflows/independent-diameter-evaluation.yml'
+      - 'experiments/independent_diameter/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  independent:
+    name: Frozen ${{ matrix.kind }} seed ${{ matrix.seed }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+        kind: [classical]
+        include:
+          - seed: 42
+            kind: neural
+    env:
+      PYTHONUNBUFFERED: '1'
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.17'
+          cache: pip
+          cache-dependency-path: experiments/independent_diameter/requirements.txt
+      - name: Install historical training versions
+        run: |
+          python -m pip install -r experiments/independent_diameter/requirements.txt
+          python -m pip install torch==2.14.1+cpu --index-url https://download.pytorch.org/whl/cpu
+          python -m pip freeze > environment.txt
+      - name: Test independence and frozen threshold contracts
+        run: python -m unittest experiments.independent_diameter.test_evaluate -v
+      - name: Download original training data and prediction evidence
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 40538956475
+          name: diameter-calibrated-${{ matrix.kind == 'neural' && 'full-seed42' || 'classical' }}-40538956475
+          path: historical
+      - name: Replay historical models, freeze, and evaluate six independent datasets
+        run: |
+          extra=()
+          if [ '${{ matrix.kind }}' = neural ]; then extra+=(--neural); fi
+          python experiments/independent_diameter/evaluate.py --original historical --seed ${{ matrix.seed }} --out evidence "${extra[@]}"
+      - name: Publish independent metrics
+        if: always()
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          from pathlib import Path
+          import pandas as pd
+          print('## Independent synthetic evaluation')
+          print('Historical weights were not saved. These are reconstructed replicas; see replay_audit.csv for archived prediction agreement.')
+          print('Training seeds 42-51; test seeds 1001-1003; original and shifted/remapped scenarios. No test fitting or threshold tuning.')
+          p = Path('evidence/independent_metrics.csv')
+          if p.exists():
+              df = pd.read_csv(p)
+              print('```\n' + df.groupby(['model', 'scenario'])[['roc_auc','recall','fpr','debounce2_fpr']].mean().to_string() + '\n```')
+          else:
+              print('Evaluation did not produce metrics; inspect failure logs.')
+          PY
+      - name: Retain frozen weights and evaluation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: independent-${{ matrix.kind }}-${{ matrix.seed }}-${{ github.run_id }}
+          path: |
+            evidence/frozen_models.pkl
+            evidence/independent_metrics.csv
+            evidence/per_attack.csv
+            evidence/replay_audit.csv
+            evidence/metrics_seed*.csv
+            evidence/*.json
+            environment.txt
+          retention-days: 30
+          if-no-files-found: error
+
+  report:
+    name: Consolidated independent evaluation report
+    needs: independent
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pandas
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: independent-*-${{ github.run_id }}
+          path: reports
+      - name: Consolidate and check completeness
+        run: python experiments/independent_diameter/summarize.py --root reports --out summary
+      - name: Publish report
+        if: always()
+        run: cat summary/report.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: independent-summary-${{ github.run_id }}
+          path: summary/
+          retention-days: 30
