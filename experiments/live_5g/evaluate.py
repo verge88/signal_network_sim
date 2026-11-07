@@ -31,6 +31,8 @@ FULL = CONTEXT + ["route_mismatch", "report_mismatch", "auth_failure"]
 METHODS = ["rules", "IF_SBI", "IF_CONTEXT", "IF_FULL", "hybrid_without_KIE", "hybrid"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
 PROTOCOL_VERSION = "live-5g-v1"
+EPISODE_COLUMNS = ["run_id", "nf_id", "episode_id", "scenario", "method", "onset", "detected",
+                   "first_alarm_at", "delay_seconds", "observed_until", "timing_source"]
 
 
 def sha256(path):
@@ -266,7 +268,7 @@ def score(frozen_directory, test_directory, output):
                                  onset=onset, detected=alarm_at is not None, first_alarm_at=alarm_at,
                                  delay_seconds=alarm_at - onset if alarm_at is not None else None,
                                  observed_until=float(part.decision_timestamp.max()), timing_source=timing_source))
-    episode_frame = pd.DataFrame(episodes)
+    episode_frame = pd.DataFrame(episodes, columns=EPISODE_COLUMNS)
     add_episode_metrics(totals, episode_frame)
     report = {"protocol_version": PROTOCOL_VERSION, "frozen_model_sha256": manifest["model_sha256"],
               "created_at": time.time(), "test_runs": sorted(frame.run_id.unique().tolist()),
@@ -344,7 +346,7 @@ def write_report(path, report):
     Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def aggregate(input_directory, output):
+def aggregate(input_directory, output, expected_runs=None, required_scenarios=None):
     paths = sorted(Path(input_directory).rglob("report.json"))
     if not paths:
         raise ValueError("No completed held-out reports")
@@ -354,13 +356,25 @@ def aggregate(input_directory, output):
     identities = [r for report in reports for r in report["test_runs"]]
     if len(set(identities)) != len(identities):
         raise ValueError("Duplicate test runs in aggregation")
+    if expected_runs is not None and (expected_runs <= 0 or len(identities) != expected_runs):
+        raise ValueError(f"Expected {expected_runs} complete test runs, found {len(identities)}")
     frame = pd.concat([pd.read_csv(path.with_name("predictions.csv")) for path in paths], ignore_index=True)
+    if required_scenarios:
+        for run_id, run in frame.groupby("run_id"):
+            observed = set(run.loc[run.attack.astype(bool), "scenario"])
+            missing = set(required_scenarios) - observed
+            if missing:
+                raise ValueError(f"Run {run_id} is missing positive scenario exposure: {sorted(missing)}")
     episode_parts = []
     for path in paths:
         episode_path = path.with_name("episodes.csv")
-        if episode_path.stat().st_size > 1:
+        try:
             episode_parts.append(pd.read_csv(episode_path))
-    episodes = pd.concat(episode_parts, ignore_index=True) if episode_parts else pd.DataFrame()
+        except pd.errors.EmptyDataError:
+            # Legacy empty exports may contain LF or CRLF without a header.
+            episode_parts.append(pd.DataFrame(columns=EPISODE_COLUMNS))
+    nonempty_episodes = [part for part in episode_parts if not part.empty]
+    episodes = pd.concat(nonempty_episodes, ignore_index=True) if nonempty_episodes else pd.DataFrame(columns=EPISODE_COLUMNS)
     totals = []
     run_rows = []
     for method, part in frame.groupby("method", sort=False):
@@ -376,6 +390,8 @@ def aggregate(input_directory, output):
     add_episode_metrics(totals, episodes)
     result = {"protocol_version": PROTOCOL_VERSION, "test_runs": sorted(identities), "metrics": totals,
               "per_run": run_rows,
+              "completeness_audit": {"expected_runs": expected_runs, "observed_runs": len(identities),
+                                     "required_scenarios": list(required_scenarios or [])},
               "source_reports": [{"path": str(p), "sha256": sha256(p)} for p in paths],
               "aggregation": "Micro-pooled counts and equal-run means are both reported. Runs use different actor counts; they are scale conditions, not IID replicas. No three-run confidence claim.",
               "average_precision_scope": "Pooled AP ranks model margins from different fits and is descriptive. Per-run AP and its equal-run mean are preferred.",
@@ -402,13 +418,15 @@ def main():
     aggregate_parser = commands.add_parser("aggregate")
     aggregate_parser.add_argument("--input", required=True)
     aggregate_parser.add_argument("--out", required=True)
+    aggregate_parser.add_argument("--expected-runs", type=int)
+    aggregate_parser.add_argument("--require-scenarios", nargs="+", choices=["S1", "S2", "S3", "S4"])
     args = parser.parse_args()
     if args.command == "fit":
         result = fit(args.train, args.cal, args.out, args.alpha, args.seed)
     elif args.command == "score":
         result = score(args.frozen, args.test, args.out)
     else:
-        result = aggregate(args.input, args.out)
+        result = aggregate(args.input, args.out, args.expected_runs, args.require_scenarios)
     print(json.dumps(result, ensure_ascii=False, allow_nan=False))
 
 

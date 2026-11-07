@@ -9,9 +9,9 @@ import numpy as np
 import pandas as pd
 
 try:
-    from .evaluate import FULL, KEYS, add_episode_metrics, attach_online_decisions, conformal_threshold, fit, load_frozen, metrics, require_disjoint, score, score_frame
+    from .evaluate import FULL, KEYS, add_episode_metrics, aggregate, attach_online_decisions, conformal_threshold, fit, load_frozen, metrics, require_disjoint, score, score_frame
 except ImportError:
-    from evaluate import FULL, KEYS, add_episode_metrics, attach_online_decisions, conformal_threshold, fit, load_frozen, metrics, require_disjoint, score, score_frame
+    from evaluate import FULL, KEYS, add_episode_metrics, aggregate, attach_online_decisions, conformal_threshold, fit, load_frozen, metrics, require_disjoint, score, score_frame
 
 
 def fixture(run, n=1000):
@@ -40,6 +40,47 @@ def write_fixture(path, run, n=1000):
 
 
 class ScientificContractTests(unittest.TestCase):
+    def test_complete_pipeline_preserves_empty_and_positive_episode_tables(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_fixture(root / "train", "train", 100)
+            write_fixture(root / "cal", "cal")
+            fit(root / "train", root / "cal", root / "frozen")
+            bundle = load_frozen(root / "frozen")
+            for has_attack in (False, True):
+                name = "attack" if has_attack else "normal"
+                test_dir = root / name
+                test, labels = write_fixture(test_dir, name, 12)
+                # Every held-out observation and online decision uses the real clock
+                # after fit. Data values remain explicitly synthetic unit fixtures.
+                test["timestamp"] = [time.time() for _ in range(len(test))]
+                if has_attack:
+                    test.loc[0, "report_mismatch"] = 1
+                    labels.loc[0, ["attack", "scenario", "onset", "episode_id"]] = [
+                        1, "S1", test.timestamp.iloc[0], "controlled-fixture"]
+                test.to_csv(test_dir / "features.csv", index=False)
+                labels.to_csv(test_dir / "labels.csv", index=False)
+                online = score_frame(bundle, test)
+                online["decision_timestamp"] = time.time()
+                online.to_csv(test_dir / "online_predictions.csv", index=False)
+                result = score(root / "frozen", test_dir, root / "reports" / name)
+                self.assertEqual(result["delay_timing_source"], "online_decision_timestamp")
+                summary = aggregate(root / "reports", root / "summary", expected_runs=1 + int(has_attack))
+                hybrid = next(x for x in summary["metrics"] if x["method"] == "hybrid")
+                self.assertEqual(hybrid["episodes"], int(has_attack))
+                self.assertEqual(hybrid["detected_episodes"], int(has_attack))
+                if has_attack:
+                    self.assertGreaterEqual(hybrid["median_delay_detected_seconds"], 0.)
+                else:
+                    # Also support the previous platform-dependent blank CSV export.
+                    (root / "reports" / name / "episodes.csv").write_bytes(b"\r\n")
+                    aggregate(root / "reports", root / "summary", expected_runs=1)
+            with self.assertRaisesRegex(ValueError, "Expected 9"):
+                aggregate(root / "reports", root / "summary", expected_runs=9)
+            with self.assertRaisesRegex(ValueError, "missing positive scenario"):
+                aggregate(root / "reports", root / "summary", required_scenarios=["S1", "S2", "S3", "S4"])
+            aggregate(root / "reports" / "attack", root / "one-summary", expected_runs=1, required_scenarios=["S1"])
+
     def test_online_decisions_require_complete_causal_frozen_replay(self):
         predictions = pd.DataFrame({"run_id": ["test"], "window_id": [1], "nf_id": ["n"],
             "timestamp": [10.], "method": ["hybrid"], "score": [1.], "alarm": [1]})

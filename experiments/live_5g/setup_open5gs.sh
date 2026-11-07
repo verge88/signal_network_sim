@@ -19,6 +19,9 @@ else
   sudo tar -C /opt -xzf open5gs-2.7.6.tar.gz
   sudo mkdir -p /etc/open5gs /opt/open5gs/var/log/open5gs
   sudo cp /opt/open5gs/etc/open5gs/*.yaml /etc/open5gs/
+  # A profile uses distinct address/service clients. The default pool of 64
+  # is exhausted by 32 actors plus the native Core; provision every NF equally.
+  sudo sed -i 's/^#    peer: 64/    peer: 512/' /etc/open5gs/*.yaml
   for nf in nrf scp udr udm ausf pcf nssf smf amf; do
     sudo tee "/etc/systemd/system/open5gs-${nf}d.service" >/dev/null <<EOF
 [Unit]

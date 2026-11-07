@@ -111,7 +111,7 @@ jobs:
         with:
           pattern: live-5g-*
           path: evidence
-      - run: python -m experiments.live_5g.evaluate aggregate --input evidence --out report
+      - run: python -m experiments.live_5g.evaluate aggregate --input evidence --out report --expected-runs 9 --require-scenarios S1 S2 S3 S4
       - uses: actions/upload-artifact@v4
         with:
           name: live-5g-report-${{ github.run_id }}
