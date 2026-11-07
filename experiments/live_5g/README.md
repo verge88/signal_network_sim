@@ -1,0 +1,40 @@
+# Живая проверка метода на Open5GS
+
+Самостоятельный опыт дополняет прежние Stage38/Stage56: настоящий NRF и NSSF
+Open5GS 2.7.6, программные клиенты SBI, независимые чтения профилей, отдельный
+процесс контрольных отчётов, обучение Isolation Forest на норме и онлайн-решения.
+Границы применимости и критерии заданы в [протоколе](PROTOCOL_RU.md).
+
+Исходный commit Open5GS: `d9d3abdd480be96fac3bc8a997e83446648763ca`.
+Автоматический запуск: `.github/workflows/live-5g-validation.yml`.
+Девять изолированных runner используют 8, 16 и 32 логические позиции, по три
+повтора на масштаб. Одна позиция
+соответствует работающей NSSF; остальные — протокольным исследовательским клиентам.
+
+```bash
+python -m pip install -r experiments/live_5g/requirements.txt
+python -m pytest experiments/live_5g -q
+# Следующие команды требуют изолированного Linux-стенда с работающим Open5GS.
+python -m experiments.live_5g.collect --phase train --seed 7101 --out evidence/train --windows 160 --actors 8
+python -m experiments.live_5g.collect --phase cal --seed 7111 --out evidence/cal --windows 200 --actors 8
+python -m experiments.live_5g.evaluate fit --train evidence/train --cal evidence/cal --out evidence/frozen
+python -m experiments.live_5g.collect --phase test --seed 7121 --out evidence/test --windows 240 --actors 8 --frozen evidence/frozen
+python -m experiments.live_5g.evaluate score --frozen evidence/frozen --test evidence/test --out evidence/evaluation
+python -m experiments.live_5g.overhead --out evidence/overhead --seed 7101 --blocks 8 --requests 30
+```
+
+Выходы: сырые события JSONL, разметка, признаки, замороженная модель и пороги,
+онлайн-прогнозы, метрики и эпизоды с пропусками, замеры расходов, контрольные суммы.
+Actions дополнительно сохраняет PCAP, журналы и конфигурации действующего ядра.
+Статистика запросов детектора берётся из журнала завершённых запросов клиента;
+PCAP сохраняется как независимое свидетельство обмена и фоновых процессов.
+
+Гибрид использует ML и явные проверки инвариантов. Подпись отчёта подтверждает
+источник в пределах доверия к ключу; её нельзя считать доказательством правдивости
+скомпрометированного источника или аппаратной аттестацией. В текущем наборе S1–S4
+несоответствие хеша отчёта профилю может дублировать проверку политики. Поэтому
+нулевой дополнительный эффект КИЕ является допустимым результатом абляции.
+
+Порог 0,1% — цель настройки, а не обещание результата. Неуспешные запуски,
+ложные тревоги и пропущенные эпизоды сохраняются. Результаты тестов программного
+кода не считаются измерениями работающей сети.

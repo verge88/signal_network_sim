@@ -1,0 +1,119 @@
+name: Live Open5GS Data Mining validation
+on:
+  push:
+    branches: ['codex/live-5g-validation-20261107']
+    paths: ['experiments/live_5g/**', '.github/workflows/live-5g-validation.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: open5gs-2.7.6.tar.gz
+          key: open5gs-d9d3abdd-ubuntu22-build-v1
+      - if: steps.cache.outputs.cache-hit != 'true'
+        run: bash experiments/live_5g/setup_open5gs.sh build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: open5gs-pinned-build
+          path: open5gs-2.7.6.tar.gz
+          retention-days: 30
+  live:
+    needs: build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 9
+      matrix:
+        include:
+          - {seed: 7101, actors: 8}
+          - {seed: 7201, actors: 16}
+          - {seed: 7301, actors: 32}
+          - {seed: 7401, actors: 8}
+          - {seed: 7501, actors: 16}
+          - {seed: 7601, actors: 32}
+          - {seed: 7701, actors: 8}
+          - {seed: 7801, actors: 16}
+          - {seed: 7901, actors: 32}
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports: ['27017:27017']
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ping:1}).ok'"
+          --health-interval 10s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: experiments/live_5g/requirements.txt
+      - run: python -m pip install -r experiments/live_5g/requirements.txt
+      - run: python -m pytest experiments/live_5g -q
+      - uses: actions/download-artifact@v4
+        with:
+          name: open5gs-pinned-build
+      - run: bash experiments/live_5g/setup_open5gs.sh runtime
+      - name: Start independent packet capture and record environment
+        run: |
+          mkdir -p evidence
+          git rev-parse HEAD > evidence/source_commit.txt
+          python -m pip freeze > evidence/python_packages.txt
+          cp /etc/open5gs/*.yaml evidence/
+          /opt/open5gs/bin/open5gs-nrfd -v > evidence/open5gs_version.txt 2>&1
+          sudo tcpdump -i lo -U -s 0 -w evidence/sbi.pcap 'tcp port 7777' > evidence/tcpdump.log 2>&1 &
+          echo $! > evidence/tcpdump.pid
+      - name: Independent normal training run
+        run: python -m experiments.live_5g.collect --phase train --seed ${{ matrix.seed }} --out evidence/train --windows 160 --actors ${{ matrix.actors }}
+      - name: Independent normal calibration run
+        run: python -m experiments.live_5g.collect --phase cal --seed $(( ${{ matrix.seed }} + 10 )) --out evidence/cal --windows 200 --actors ${{ matrix.actors }}
+      - name: Freeze models and thresholds before any test acquisition
+        run: python -m experiments.live_5g.evaluate fit --train evidence/train --cal evidence/cal --out evidence/frozen
+      - name: Held-out live scenarios with online detection
+        run: python -m experiments.live_5g.collect --phase test --seed $(( ${{ matrix.seed }} + 20 )) --out evidence/test --windows 240 --actors ${{ matrix.actors }} --frozen evidence/frozen
+      - name: Evaluate every planned scenario and retain failures
+        run: python -m experiments.live_5g.evaluate score --frozen evidence/frozen --test evidence/test --out evidence/evaluation
+      - name: Paired monitoring overhead benchmark
+        run: python -m experiments.live_5g.overhead --out evidence/overhead --seed ${{ matrix.seed }} --blocks 8 --requests 30
+      - name: Preserve raw evidence and diagnostics
+        if: always()
+        run: |
+          mkdir -p evidence
+          if [ -f evidence/tcpdump.pid ]; then sudo kill -INT "$(cat evidence/tcpdump.pid)" || true; fi
+          sudo journalctl --no-pager -u 'open5gs-*' > evidence/open5gs_journal.txt
+          systemctl --no-pager --full --type=service 'open5gs-*' > evidence/service_status.txt || true
+          sudo chown -R "$(id -u):$(id -g)" evidence
+          find evidence -type f ! -name SHA256SUMS -exec sha256sum {} + > evidence/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-5g-${{ matrix.seed }}-${{ github.run_id }}
+          path: evidence/
+          retention-days: 30
+  report:
+    needs: live
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r experiments/live_5g/requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: live-5g-*
+          path: evidence
+      - run: python -m experiments.live_5g.evaluate aggregate --input evidence --out report
+      - uses: actions/upload-artifact@v4
+        with:
+          name: live-5g-report-${{ github.run_id }}
+          path: report/
+          retention-days: 30
