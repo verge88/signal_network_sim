@@ -18,6 +18,7 @@ import os
 from pathlib import Path
 import random
 import secrets
+import socketserver
 import subprocess
 import sys
 import threading
@@ -82,6 +83,49 @@ def verify_report(envelope, nonce, key, max_age=5):
         return False
 
 
+class LoopbackHTTPServer(ThreadingHTTPServer):
+    def server_bind(self):
+        # HTTPServer's reverse DNS lookup can stall on arbitrary 127/8 aliases.
+        socketserver.TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
+
+
+def receiver_process(pipe, addresses):
+    """Research HTTP service endpoints, separate from the consumer/witness."""
+    servers = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            pass
+
+        def do_GET(self):
+            query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+            result = {'served_address': self.connection.getsockname()[0],
+                      'receiver_pid': os.getpid(), 'nonce': query.get('nonce', [''])[0],
+                      'received_at': time.time()}
+            raw = json.dumps(result).encode()
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(raw)))
+            self.end_headers()
+            self.wfile.write(raw)
+
+    try:
+        for address in addresses:
+            loopback_url(f'http://{address}:8080')
+            server = LoopbackHTTPServer((address, 8080), Handler)
+            servers.append(server)
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+        pipe.send({'pid': os.getpid(), 'addresses': addresses})
+        pipe.close()
+        threading.Event().wait()
+    except Exception as exc:
+        pipe.send({'error': str(exc)})
+    finally:
+        for server in servers:
+            server.server_close()
+
+
 def witness_process(pipe, key, initial):
     """Separate process owns the normative software witness and consumer cache.
 
@@ -119,9 +163,32 @@ def witness_process(pipe, key, initial):
                     return self.send_json({'report': report, 'signature': sign_report(report, key)})
                 if parsed.path == '/route':
                     state['route_reads'] = state.get('route_reads', 0) + 1
-                    return self.send_json({'slot': slot, 'selected_address': state['route'],
-                                           'timestamp': time.time(), 'process_pid': os.getpid(),
-                                           'route_reads': state['route_reads']})
+                    result = {'slot': slot, 'selected_address': state['route'],
+                              'timestamp': time.time(), 'process_pid': os.getpid(),
+                              'route_reads': state['route_reads'], 'measurement': 'cache_only'}
+                    if state.get('forward_addresses'):
+                        # Read the destination's response rather than treating
+                        # the consumer's configured address as delivered traffic.
+                        address = state['route']
+                        if address not in state['forward_addresses']:
+                            return self.send_json({'error': 'unprovisioned loopback destination'}, 400)
+                        nonce = secrets.token_hex(16)
+                        url = f'http://{address}:8080/identity?nonce={nonce}'
+                        loopback_url(url)
+                        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+                        started = time.time()
+                        try:
+                            with opener.open(url, timeout=2) as response:
+                                payload = response.read()
+                                delivered = json.loads(payload)
+                                if delivered.get('nonce') != nonce:
+                                    raise ValueError('Receiver response nonce mismatch')
+                                result.update(delivered, http_status=response.status,
+                                              response_bytes=len(payload), request_started=started,
+                                              response_completed=time.time(), measurement='http_forward')
+                        except (OSError, ValueError) as exc:
+                            return self.send_json({'error': str(exc), 'selected_address': address}, 502)
+                    return self.send_json(result)
             self.send_json({'error': 'unknown endpoint'}, 404)
 
         def do_POST(self):
@@ -144,9 +211,32 @@ class Witness:
         parent, child = multiprocessing.Pipe()
         initial = {slot: {'profile': p, 'route': route_address(p), 'version': 1}
                    for slot, p in profiles.items()}
+        self.receiver = None
+        self.receiver_pid = None
+        if 'slot-2' in profiles:
+            addresses = [route_address(profiles['slot-2']), '127.99.0.3']
+            for address in addresses:
+                loopback_url(f'http://{address}:8080')
+            receiver_parent, receiver_child = multiprocessing.Pipe()
+            self.receiver = multiprocessing.Process(target=receiver_process,
+                args=(receiver_child, addresses), daemon=True)
+            self.receiver.start()
+            if not receiver_parent.poll(10):
+                self.receiver.terminate()
+                self.receiver.join(timeout=5)
+                raise RuntimeError('Research receiver failed to start')
+            ready = receiver_parent.recv()
+            if 'error' in ready:
+                self.receiver.join(timeout=5)
+                raise RuntimeError('Research receiver: ' + ready['error'])
+            self.receiver_pid = ready['pid']
+            initial['slot-2']['forward_addresses'] = addresses
         self.process = multiprocessing.Process(target=witness_process, args=(child, self.key, initial), daemon=True)
         self.process.start()
         if not parent.poll(10):
+            if self.receiver is not None:
+                self.receiver.terminate()
+                self.receiver.join(timeout=5)
             raise RuntimeError('Witness process failed to start')
         port, self.token, self.pid = parent.recv()
         self.base = f'http://127.0.0.1:{port}'
@@ -178,6 +268,9 @@ class Witness:
     def close(self):
         self.process.terminate()
         self.process.join(timeout=5)
+        if self.receiver is not None:
+            self.receiver.terminate()
+            self.receiver.join(timeout=5)
 
 
 def software_profile(index, seed):
@@ -251,7 +344,7 @@ def extract_features(events, observed, expected, envelope, consumer, authenticat
               'profile_changes': int(previous_hash is not None and current_hash != previous_hash),
               'forbidden_operation': forbidden,
               'profile_policy_violation': int(current_hash != digest(expected)),
-              'route_mismatch': int(consumer.get('selected_address') != route_address(observed)),
+              'route_mismatch': int(consumer.get('served_address', consumer.get('selected_address')) != route_address(observed)),
               'report_mismatch': int(envelope.get('report', {}).get('profile_hash') != current_hash),
               'auth_failure': int(not authenticated),
               'latency_ms': sum(e['latency_ms'] for e in events) / max(1, count),
@@ -299,11 +392,16 @@ def run(args):
                 'windows': args.windows, 'actors': args.actors, 'window_seconds': args.window_seconds,
                 'started_at': started, 'native_slot': 'slot-0', 'native_type': 'NSSF',
                 'software_actor_slots': list(profiles)[1:], 'witness_pid': witness.pid,
+                'route_receiver_pid': witness.receiver_pid,
                 'collector_pid': os.getpid(), 'scope': 'real NRF and native NSSF plus software NF clients',
                 'consumer_fault': 'separate HTTP consumer route cache, not native AUSF exploit',
                 'schedule': schedule if args.phase == 'test' else [],
                 'feature_source': 'completed HTTP2 actor transactions, separate NRF reads and signed HTTP witness responses',
                 'pcap_scope': 'native background saved externally; not included in actor request_count',
+                'normal_load_profile': {'usual_discovery_requests': [1, 3],
+                    'legitimate_burst_probability': 0.02, 'legitimate_burst_requests': [8, 12],
+                    'applies_to': ['train', 'cal', 'test']},
+                'route_observation': 'slot-2 forwards HTTP to a separate receiver process; other slots read cache state',
                 'frozen': str(args.frozen) if args.frozen else None}
     (args.out / 'manifest.json').write_text(json.dumps(manifest, indent=2))
     history = {slot: collections.deque(maxlen=600) for slot in profiles}
@@ -387,6 +485,10 @@ def run(args):
                 scenario = active[2] if is_target else 'N1'
                 # The policy allows NSSF discovery by these registered research clients.
                 count = rng.randrange(1, 4)
+                # The same benign load variation is present in all phases.
+                # This is not keyed to labels or attack scheduling.
+                if rng.random() < .02:
+                    count = rng.randrange(8, 13)
                 if scenario == 'S4':
                     count = 24
                 for number in range(count):
@@ -475,6 +577,8 @@ def run(args):
             pass
         manifest['measurement_limitations'] = ['Application byte counts exclude HTTP headers and transport framing.',
             'Collector CPU/RSS exclude native Core and witness process.',
+            'Slot-2 consumer HTTP forwarding uses a separate research receiver process; other route observations are cache reads.',
+            'Receiver process CPU and forwarding transport headers are not included in collector overhead totals.',
             'Request latency is observed end-to-end; causal added latency requires a paired monitor-off run.',
             'Native slot heartbeat_age is observation age; native autonomous heartbeat is only recorded in PCAP.',
             'The current signed witness reports operator policy; report_mismatch is redundant with profile_policy_violation in this protocol.',

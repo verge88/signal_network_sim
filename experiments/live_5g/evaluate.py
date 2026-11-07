@@ -29,8 +29,10 @@ SBI = ["request_count", "error_rate", "update_count", "interarrival_mean",
 CONTEXT = SBI + ["profile_changes", "forbidden_operation", "profile_policy_violation"]
 FULL = CONTEXT + ["route_mismatch", "report_mismatch", "auth_failure"]
 METHODS = ["rules", "IF_SBI", "IF_CONTEXT", "IF_FULL", "hybrid_without_KIE", "hybrid"]
+TAIL_METHODS = ["robust_tail", "hybrid_tail_without_KIE", "hybrid_tail"]
+TAIL_FEATURES = ["request_count", "error_rate", "update_count"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
-PROTOCOL_VERSION = "live-5g-v1"
+PROTOCOL_VERSION = "live-5g-v2-tail"
 EPISODE_COLUMNS = ["run_id", "nf_id", "episode_id", "scenario", "method", "onset", "detected",
                    "first_alarm_at", "delay_seconds", "observed_until", "timing_source"]
 
@@ -112,6 +114,30 @@ def require_disjoint(*frames):
         seen |= runs
 
 
+def fit_tail_model(train):
+    """Learn a one-sided current-window normal envelope, without attack labels.
+
+    Counts have one-event resolution. The error-fraction floor is the fraction
+    represented by one error at the largest training-window request count.
+    These floors prevent division by zero; the alarm threshold is independently
+    calibrated, never set to an attack amplitude.
+    """
+    values = train[TAIL_FEATURES].to_numpy(dtype=float)
+    center = np.median(values, axis=0)
+    mad = np.median(np.abs(values - center), axis=0)
+    resolution = np.array([1., 1. / max(1., float(train.request_count.max())), 1.])
+    scale = np.maximum(1.4826 * mad, resolution)
+    return {"features": TAIL_FEATURES, "center": center.tolist(),
+            "scale": scale.tolist(), "resolution_floor": resolution.tolist(),
+            "score": "max(0, max_j((x_j - training_median_j) / scale_j))"}
+
+
+def tail_scores(model, frame):
+    values = frame[model["features"]].to_numpy(dtype=float)
+    return np.maximum(0., np.max((values - np.asarray(model["center"])) /
+                                 np.asarray(model["scale"]), axis=1))
+
+
 def fit(train_directory, cal_directory, output, alpha=0.001, seed=7143):
     train, train_labels, train_files = read_dataset(train_directory)
     cal, cal_labels, cal_files = read_dataset(cal_directory)
@@ -130,17 +156,25 @@ def fit(train_directory, cal_directory, output, alpha=0.001, seed=7143):
         calibration_scores = -model.score_samples(cal[columns].to_numpy(dtype=float))
         bundle["models"][name] = model
         bundle["thresholds"][name] = conformal_threshold(calibration_scores, alpha)
+    bundle["tail_model"] = fit_tail_model(train)
+    bundle["thresholds"]["robust_tail"] = conformal_threshold(tail_scores(bundle["tail_model"], cal), alpha)
     manifest = {
         "protocol_version": PROTOCOL_VERSION, "created_at": time.time(), "seed": seed,
         "alpha_target": alpha, "calibration_rows": len(cal), "training_rows": len(train),
         "train_runs": sorted(train.run_id.unique().tolist()), "calibration_runs": sorted(cal.run_id.unique().tolist()),
         "features": MODEL_FEATURES, "forbidden_inputs": ["attack", "scenario", "onset", "episode_id"] + META,
+        "tail_model": bundle["tail_model"],
+        "development_disclosure": "Tail branch introduced after exploratory run 42368716451 missed S4. "
+                                  "Original six methods are unchanged. New parameters use only fresh normal "
+                                  "training/calibration; confirmation requires a new prospective test run.",
         "thresholds": {k: v if math.isfinite(v) else None for k, v in bundle["thresholds"].items()},
         "threshold_sufficient": all(math.isfinite(v) for v in bundle["thresholds"].values()),
         "score_convention": "Anomaly margin; alarm iff score > 0, strict ties. Rule evidence has margin +1/-1.",
         "rules": {"baseline": "profile_policy_violation > 0 OR heartbeat_age > 30 seconds",
                   "hybrid_without_KIE": "IF_CONTEXT OR baseline OR forbidden_operation > 0 OR route_mismatch > 0",
-                  "hybrid": "hybrid_without_KIE OR report_mismatch > 0 OR auth_failure > 0"},
+                  "hybrid": "hybrid_without_KIE OR report_mismatch > 0 OR auth_failure > 0",
+                  "hybrid_tail_without_KIE": "robust_tail OR baseline OR forbidden_operation > 0 OR route_mismatch > 0",
+                  "hybrid_tail": "hybrid_tail_without_KIE OR report_mismatch > 0 OR auth_failure > 0"},
         "assumptions": ["Fixed operator policy; trusted independent observer and control-channel verifier.",
                         "HMAC authenticates report origin, not the truth of a compromised actor's report.",
                         "A constant-in-training invariant is checked explicitly, not learned by Isolation Forest.",
@@ -167,7 +201,7 @@ def load_frozen(path):
     if sha256(root / "model.joblib") != manifest["model_sha256"]:
         raise ValueError("Frozen model hash mismatch")
     bundle = joblib.load(root / "model.joblib")
-    if bundle["protocol_version"] != PROTOCOL_VERSION:
+    if bundle["protocol_version"] not in ("live-5g-v1", PROTOCOL_VERSION):
         raise ValueError("Unsupported protocol version")
     bundle["manifest"] = manifest
     return bundle
@@ -187,8 +221,16 @@ def score_frame(bundle, frame):
     margins["rules"] = np.where(baseline, 1., -1.)
     margins["hybrid_without_KIE"] = np.maximum(margins["IF_CONTEXT"], np.where(non_kie, 1., -1.))
     margins["hybrid"] = np.maximum(margins["IF_CONTEXT"], np.where(kie, 1., -1.))
+    methods = list(METHODS)
+    if "tail_model" in bundle:
+        threshold = bundle["thresholds"]["robust_tail"]
+        margins["robust_tail"] = (tail_scores(bundle["tail_model"], frame) - threshold
+                                  if math.isfinite(threshold) else np.full(len(frame), -1.))
+        margins["hybrid_tail_without_KIE"] = np.maximum(margins["robust_tail"], np.where(non_kie, 1., -1.))
+        margins["hybrid_tail"] = np.maximum(margins["robust_tail"], np.where(kie, 1., -1.))
+        methods += TAIL_METHODS
     predictions = []
-    for name in METHODS:
+    for name in methods:
         part = frame[META].copy()
         part["method"] = name
         part["score"] = margins[name]
@@ -270,7 +312,7 @@ def score(frozen_directory, test_directory, output):
                                  observed_until=float(part.decision_timestamp.max()), timing_source=timing_source))
     episode_frame = pd.DataFrame(episodes, columns=EPISODE_COLUMNS)
     add_episode_metrics(totals, episode_frame)
-    report = {"protocol_version": PROTOCOL_VERSION, "frozen_model_sha256": manifest["model_sha256"],
+    report = {"protocol_version": bundle["protocol_version"], "frozen_model_sha256": manifest["model_sha256"],
               "created_at": time.time(), "test_runs": sorted(frame.run_id.unique().tolist()),
               "sources": provenance, "metrics": totals, "per_scenario": scenarios, "per_run": runs,
               "delay_timing_source": timing_source,
@@ -337,6 +379,12 @@ def write_report(path, report):
                   "Результаты проверок не выдаются за выученные машинным обучением закономерности. "
                   "Сравнение hybrid и hybrid_without_KIE выделяет добавление контрольных отчётов и проверки подлинности; "
                   "сравнение с правилами показывает вклад статистической ветви.", "",
+                  "Варианты robust_tail и hybrid_tail, когда они присутствуют, относятся к следующей "
+                  "версии метода. robust_tail обучает одностороннюю робастную границу текущих объёмов "
+                  "и ошибок на норме, а hybrid_tail объединяет её с теми же семантическими проверками. "
+                  "Исходные шесть методов сохранены без изменений. Это отдельная статистическая ветвь, "
+                  "а не улучшение Isolation Forest; решение о её добавлении принято после первой "
+                  "исследовательской серии и проверяется на новых проспективных данных.", "",
                   "При наличии online_predictions.csv задержка вычислена по фактическому времени онлайн-решения "
                   "после проверки совпадения с замороженной моделью. В иных случаях используется только время "
                   "завершения наблюдения; источник времени указан в JSON и таблице эпизодов. "
@@ -388,7 +436,9 @@ def aggregate(input_directory, output, expected_runs=None, required_scenarios=No
             row[f"run_range_{metric}"] = [min(values), max(values)] if values else [None, None]
         totals.append(row)
     add_episode_metrics(totals, episodes)
-    result = {"protocol_version": PROTOCOL_VERSION, "test_runs": sorted(identities), "metrics": totals,
+    versions = sorted({r["protocol_version"] for r in reports})
+    result = {"protocol_version": versions[0] if len(versions) == 1 else "mixed",
+              "source_protocol_versions": versions, "test_runs": sorted(identities), "metrics": totals,
               "per_run": run_rows,
               "completeness_audit": {"expected_runs": expected_runs, "observed_runs": len(identities),
                                      "required_scenarios": list(required_scenarios or [])},

@@ -1,5 +1,6 @@
 """Scientific contract tests; fixtures are not experimental evidence."""
 import math
+import copy
 import tempfile
 import time
 import unittest
@@ -9,9 +10,9 @@ import numpy as np
 import pandas as pd
 
 try:
-    from .evaluate import FULL, KEYS, add_episode_metrics, aggregate, attach_online_decisions, conformal_threshold, fit, load_frozen, metrics, require_disjoint, score, score_frame
+    from .evaluate import FULL, KEYS, METHODS, TAIL_FEATURES, add_episode_metrics, aggregate, attach_online_decisions, conformal_threshold, fit, fit_tail_model, load_frozen, metrics, require_disjoint, score, score_frame, tail_scores
 except ImportError:
-    from evaluate import FULL, KEYS, add_episode_metrics, aggregate, attach_online_decisions, conformal_threshold, fit, load_frozen, metrics, require_disjoint, score, score_frame
+    from evaluate import FULL, KEYS, METHODS, TAIL_FEATURES, add_episode_metrics, aggregate, attach_online_decisions, conformal_threshold, fit, fit_tail_model, load_frozen, metrics, require_disjoint, score, score_frame, tail_scores
 
 
 def fixture(run, n=1000):
@@ -40,6 +41,28 @@ def write_fixture(path, run, n=1000):
 
 
 class ScientificContractTests(unittest.TestCase):
+    def test_tail_is_frozen_train_only_one_sided_and_calibrated(self):
+        train = pd.DataFrame({"request_count": [2., 3., 4.], "error_rate": [0., 0., 0.],
+                              "update_count": [1., 1., 1.]})
+        model = fit_tail_model(train)
+        self.assertEqual(model["center"], [3., 0., 1.])
+        self.assertEqual(model["resolution_floor"], [1., .25, 1.])
+        below = pd.DataFrame({key: [0.] for key in TAIL_FEATURES})
+        self.assertEqual(tail_scores(model, below)[0], 0.)
+        # Unlike a capped tree score, the learned envelope preserves the ordering
+        # of different out-of-support magnitudes without seeing any attack label.
+        outside = train.iloc[[2, 2]].copy()
+        outside["request_count"] = [7., 11.]
+        scores = tail_scores(model, outside)
+        self.assertGreater(scores[1], scores[0])
+        unchanged = copy.deepcopy(model)
+        outside["attack"] = 1
+        outside["scenario"] = "arbitrary"
+        np.testing.assert_array_equal(scores, tail_scores(model, outside))
+        self.assertEqual(model, unchanged)
+        threshold = conformal_threshold(np.repeat(tail_scores(model, train), 400))
+        self.assertFalse((tail_scores(model, train) > threshold).any())
+
     def test_complete_pipeline_preserves_empty_and_positive_episode_tables(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -138,6 +161,10 @@ class ScientificContractTests(unittest.TestCase):
             manifest = fit(root / "train", root / "cal", root / "frozen")
             self.assertTrue(manifest["threshold_sufficient"])
             bundle = load_frozen(root / "frozen")
+            legacy = copy.deepcopy(bundle)
+            legacy["protocol_version"] = "live-5g-v1"
+            legacy.pop("tail_model")
+            legacy["thresholds"].pop("robust_tail")
             original, _ = fixture("test", 12)
             changed = original.copy()
             changed["attack"] = 1
@@ -146,6 +173,10 @@ class ScientificContractTests(unittest.TestCase):
             a = score_frame(bundle, original)
             b = score_frame(bundle, changed)
             pd.testing.assert_series_equal(a.score, b.score)
+            legacy_predictions = score_frame(legacy, original)
+            self.assertEqual(set(legacy_predictions.method), set(METHODS))
+            pd.testing.assert_frame_equal(legacy_predictions.reset_index(drop=True),
+                a.loc[a.method.isin(METHODS)].reset_index(drop=True))
             poisoned = original.copy()
             poisoned.loc[0, "report_mismatch"] = 1
             c = score_frame(bundle, poisoned)

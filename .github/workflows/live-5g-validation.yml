@@ -33,15 +33,15 @@ jobs:
       max-parallel: 9
       matrix:
         include:
-          - {seed: 7101, actors: 8}
-          - {seed: 7201, actors: 16}
-          - {seed: 7301, actors: 32}
-          - {seed: 7401, actors: 8}
-          - {seed: 7501, actors: 16}
-          - {seed: 7601, actors: 32}
-          - {seed: 7701, actors: 8}
-          - {seed: 7801, actors: 16}
-          - {seed: 7901, actors: 32}
+          - {seed: 8101, actors: 8}
+          - {seed: 8201, actors: 16}
+          - {seed: 8301, actors: 32}
+          - {seed: 8401, actors: 8}
+          - {seed: 8501, actors: 16}
+          - {seed: 8601, actors: 32}
+          - {seed: 8701, actors: 8}
+          - {seed: 8801, actors: 16}
+          - {seed: 8901, actors: 32}
     services:
       mongodb:
         image: mongo:7.0

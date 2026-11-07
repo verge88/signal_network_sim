@@ -67,6 +67,33 @@ def fixture_features():
     return [event], p, copy.deepcopy(p), {'report': {'profile_hash': digest(p)}}, {'selected_address': '127.10.0.2'}
 
 
+def test_consumer_measures_actual_receiver_before_and_after_route_fault():
+    profile = software_profile(2, 42)
+    witness = Witness({'slot-2': profile})
+    try:
+        _, normal, valid, _ = witness.observe('slot-2')
+        assert valid and normal['measurement'] == 'http_forward'
+        assert normal['http_status'] == 200
+        assert normal['served_address'] == '127.10.0.3'
+        assert normal['receiver_pid'] == witness.receiver_pid != witness.pid
+        assert normal['response_completed'] >= normal['request_started']
+        witness.update('slot-2', route='127.99.0.3')
+        _, fault, valid, _ = witness.observe('slot-2')
+        assert valid and fault['served_address'] == '127.99.0.3'
+        assert fault['receiver_pid'] == witness.receiver_pid
+        assert fault['nonce'] != normal['nonce']
+        # The feature uses the destination's observed response, even if the
+        # consumer's stored/claimed address disagrees with it.
+        fault['selected_address'] = '127.10.0.3'
+        now = time.time()
+        features, _, _ = extract_features([], profile, profile,
+            {'report': {'profile_hash': digest(profile)}}, fault, True, None, [], now, now)
+        assert features['route_mismatch'] == 1
+    finally:
+        witness.close()
+    assert not witness.receiver.is_alive()
+
+
 def test_measured_features_have_allowlisted_schema_and_no_label_dependence():
     args = fixture_features()
     first, _, _ = extract_features(*args, True, None, [], 100., 99.)
