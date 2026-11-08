@@ -1,0 +1,173 @@
+{
+  "run_id": 42485017499,
+  "commit": "637c4a815b871eec8c564889f2ec71e1b0b191b7",
+  "artifact_sha256": "424fe36a8cc669fa55a79bc089296ac8143dd9bf1adfe66e06fa6cbe97fd9598",
+  "local_audit_pass": true,
+  "repeats": [
+    {
+      "seed": 9101,
+      "live_nrf": true,
+      "rows": 160,
+      "conditions": {
+        "normal": {
+          "B": 0,
+          "O": 0,
+          "K": 0,
+          "n": 20
+        },
+        "authorized_change": {
+          "B": 0,
+          "O": 0,
+          "K": 0,
+          "n": 20
+        },
+        "config_change": {
+          "B": 0,
+          "O": 20,
+          "K": 20,
+          "n": 20
+        },
+        "forged_fresh": {
+          "B": 0,
+          "O": 0,
+          "K": 20,
+          "n": 20
+        },
+        "replay": {
+          "B": 0,
+          "O": 20,
+          "K": 20,
+          "n": 20
+        },
+        "stale": {
+          "B": 0,
+          "O": 20,
+          "K": 20,
+          "n": 20
+        },
+        "rebound": {
+          "B": 0,
+          "O": 0,
+          "K": 20,
+          "n": 20
+        },
+        "key_compromise": {
+          "B": 0,
+          "O": 0,
+          "K": 0,
+          "n": 20
+        }
+      }
+    },
+    {
+      "seed": 9201,
+      "live_nrf": true,
+      "rows": 160,
+      "conditions": {
+        "normal": {
+          "B": 0,
+          "O": 0,
+          "K": 0,
+          "n": 20
+        },
+        "authorized_change": {
+          "B": 0,
+          "O": 0,
+          "K": 0,
+          "n": 20
+        },
+        "config_change": {
+          "B": 0,
+          "O": 20,
+          "K": 20,
+          "n": 20
+        },
+        "forged_fresh": {
+          "B": 0,
+          "O": 0,
+          "K": 20,
+          "n": 20
+        },
+        "replay": {
+          "B": 0,
+          "O": 20,
+          "K": 20,
+          "n": 20
+        },
+        "stale": {
+          "B": 0,
+          "O": 20,
+          "K": 20,
+          "n": 20
+        },
+        "rebound": {
+          "B": 0,
+          "O": 0,
+          "K": 20,
+          "n": 20
+        },
+        "key_compromise": {
+          "B": 0,
+          "O": 0,
+          "K": 0,
+          "n": 20
+        }
+      }
+    },
+    {
+      "seed": 9301,
+      "live_nrf": true,
+      "rows": 160,
+      "conditions": {
+        "normal": {
+          "B": 0,
+          "O": 0,
+          "K": 0,
+          "n": 20
+        },
+        "authorized_change": {
+          "B": 0,
+          "O": 0,
+          "K": 0,
+          "n": 20
+        },
+        "config_change": {
+          "B": 0,
+          "O": 20,
+          "K": 20,
+          "n": 20
+        },
+        "forged_fresh": {
+          "B": 0,
+          "O": 0,
+          "K": 20,
+          "n": 20
+        },
+        "replay": {
+          "B": 0,
+          "O": 20,
+          "K": 20,
+          "n": 20
+        },
+        "stale": {
+          "B": 0,
+          "O": 20,
+          "K": 20,
+          "n": 20
+        },
+        "rebound": {
+          "B": 0,
+          "O": 0,
+          "K": 20,
+          "n": 20
+        },
+        "key_compromise": {
+          "B": 0,
+          "O": 0,
+          "K": 0,
+          "n": 20
+        }
+      }
+    }
+  ]
+}
