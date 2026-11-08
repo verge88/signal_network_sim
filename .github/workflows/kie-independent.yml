@@ -1,0 +1,50 @@
+name: Independent KIE contribution
+on:
+  push:
+    branches: ['codex/live-5g-validation-20261107']
+    paths: ['experiments/kie_independent/**', '.github/workflows/kie-independent.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  experiment:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports: ['27017:27017']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r experiments/live_5g/requirements.txt
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: open5gs-2.7.6.tar.gz
+          key: open5gs-d9d3abdd-ubuntu22-build-v1
+      - if: steps.cache.outputs.cache-hit != 'true'
+        run: bash experiments/live_5g/setup_open5gs.sh build
+      - run: bash experiments/live_5g/setup_open5gs.sh runtime
+      - name: Three preregistered repeats and independent replay
+        run: |
+          mkdir -p evidence
+          git rev-parse HEAD > evidence/source_commit.txt
+          for seed in 9101 9201 9301; do
+            python -m experiments.kie_independent.run --nrf --seed "$seed" --out "evidence/$seed"
+            python experiments/kie_independent/audit.py "evidence/$seed"
+          done
+      - name: Preserve service diagnostics
+        if: always()
+        run: |
+          mkdir -p evidence
+          sudo journalctl --no-pager -u 'open5gs-*' > evidence/services.log
+          systemctl list-units --all --no-pager --full --type=service 'open5gs-*' > evidence/service_status.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kie-independent-${{ github.run_id }}
+          path: evidence/
+          retention-days: 30
