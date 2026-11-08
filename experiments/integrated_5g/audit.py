@@ -43,6 +43,22 @@ def audit(root):
     base_by_id = {tuple(r):bool(v) for r,v in zip(test[keys].values,base)}
     controls = {r['window_id']:r for r in map(json.loads,(root/'test/control_events.jsonl').read_text().splitlines())}
     key = bytes.fromhex((root/'test/lab_control_key.hex').read_text())
+    control_labels = labels[labels.nf_id=='slot-4'].set_index('window_id')
+    actual_effects_ok = True
+    original_auth_ok = True
+    for window,c in controls.items():
+        lab = control_labels.loc[window]
+        changed = bool(lab.attack) and lab.scenario in ['C','F','R','D']
+        actual_effects_ok &= c['ground_truth']['answer']==('DENY' if changed else 'ALLOW')
+        actual_effects_ok &= (c['ground_truth']['config_hash']!=c['expected'])==changed
+        if c['original']:
+            p = c['original']['report']
+            raw = json.dumps(p,sort_keys=True,separators=(',',':')).encode()
+            signature = hmac.new(key,raw,hashlib.sha256).hexdigest()
+            original_auth_ok &= hmac.compare_digest(signature,c['original']['signature'])
+            original_auth_ok &= p['nonce']==c['nonce'] and p['instance']==c['instance']
+    checks['actual_interventions_verified'] = actual_effects_ok
+    checks['original_report_authenticity'] = original_auth_ok
     decisions = list(map(json.loads,(root/'test/integrated_predictions.jsonl').read_text().splitlines()))
     replay_ok = True
     observed_config_ok = True

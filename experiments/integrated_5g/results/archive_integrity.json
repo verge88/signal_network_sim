@@ -1,0 +1,26 @@
+[
+  {
+    "name": "integrated-5g-10301-42489202574",
+    "artifact_id": 13621785804,
+    "bytes": 10418933,
+    "github_digest": "sha256:d5479dd455121a79f1557762b6ea2a283b4e5dbad99896b9f4e605414bdc588a",
+    "local_digest": "sha256:d5479dd455121a79f1557762b6ea2a283b4e5dbad99896b9f4e605414bdc588a",
+    "match": true
+  },
+  {
+    "name": "integrated-5g-10101-42489202574",
+    "artifact_id": 13621377399,
+    "bytes": 10308323,
+    "github_digest": "sha256:f5893e2a0401548104c8b5bda60c102f1e46cf231ff7d85e3fddfaed6ae8c4bb",
+    "local_digest": "sha256:f5893e2a0401548104c8b5bda60c102f1e46cf231ff7d85e3fddfaed6ae8c4bb",
+    "match": true
+  },
+  {
+    "name": "integrated-5g-10201-42489202574",
+    "artifact_id": 13621319859,
+    "bytes": 10246869,
+    "github_digest": "sha256:0e11f4e7f28d506c8579da96f9f2beb901328e7aa40bbd5348f4136d46405eba",
+    "local_digest": "sha256:0e11f4e7f28d506c8579da96f9f2beb901328e7aa40bbd5348f4136d46405eba",
+    "match": true
+  }
+]
