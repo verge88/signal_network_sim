@@ -1,5 +1,11 @@
 # Живая проверка метода на Open5GS
 
+[Итоговый отчёт](RESULTS_RU.md): подтверждающая серия завершена, новый гибрид
+обнаружил 36/36 эпизодов, 432/432 атакующих NF-окон, без ложных тревог на 39 888
+нормальных NF-окнах. Это результат заданного лабораторного режима;
+дополнительная польза КИЕ не установлена. Числа, задержки, расходы и ограничения
+приведены в отчёте вместе с исходной менее успешной серией.
+
 Версия 2 сохраняет первую полную серию 42368716451 как исходное сравнение
 (гибрид: 75% обнаружения, FPR 0,0702%; нулевой дополнительный эффект КИЕ).
 После пропусков S4 добавлена обучаемая на норме статистическая ветвь robust_tail.
@@ -21,12 +27,12 @@ Open5GS 2.7.6, программные клиенты SBI, независимые
 python -m pip install -r experiments/live_5g/requirements.txt
 python -m pytest experiments/live_5g -q
 # Следующие команды требуют изолированного Linux-стенда с работающим Open5GS.
-python -m experiments.live_5g.collect --phase train --seed 7101 --out evidence/train --windows 160 --actors 8
-python -m experiments.live_5g.collect --phase cal --seed 7111 --out evidence/cal --windows 200 --actors 8
+python -m experiments.live_5g.collect --phase train --seed 8101 --out evidence/train --windows 160 --actors 8
+python -m experiments.live_5g.collect --phase cal --seed 8111 --out evidence/cal --windows 200 --actors 8
 python -m experiments.live_5g.evaluate fit --train evidence/train --cal evidence/cal --out evidence/frozen
-python -m experiments.live_5g.collect --phase test --seed 7121 --out evidence/test --windows 240 --actors 8 --frozen evidence/frozen
+python -m experiments.live_5g.collect --phase test --seed 8121 --out evidence/test --windows 240 --actors 8 --frozen evidence/frozen
 python -m experiments.live_5g.evaluate score --frozen evidence/frozen --test evidence/test --out evidence/evaluation
-python -m experiments.live_5g.overhead --out evidence/overhead --seed 7101 --blocks 8 --requests 30
+python -m experiments.live_5g.overhead --out evidence/overhead --seed 8101 --blocks 8 --requests 30
 ```
 
 Выходы: сырые события JSONL, разметка, признаки, замороженная модель и пороги,
@@ -49,3 +55,19 @@ PCAP сохраняется как независимое свидетельст
 Порог 0,1% — цель настройки, а не обещание результата. Неуспешные запуски,
 ложные тревоги и пропущенные эпизоды сохраняются. Результаты тестов программного
 кода не считаются измерениями работающей сети.
+
+Для независимого пересчёта скачайте девять исходных артефактов
+[подтверждающего запуска](https://github.com/verge88/signal_network_sim/actions/runs/42395496419).
+Сохраните ZIP под именами артефактов и распакуйте каждый в одноимённую папку
+внутри общего каталога. Затем выполните:
+
+```bash
+python experiments/live_5g/results/audit_confirm.py /path/to/artifacts
+```
+
+Сценарий повторно вычисляет параметры, пороги, решения и метрики, проверяет
+разделение данных и контрольные суммы, сохраняет AUDIT_V2.json и AUDIT_V2.md
+в каталоге артефактов. Сводка явно сохраняет несовпадение исторических хешей PCAP;
+оно раскрыто в итоговом отчёте. Сверку ZIP с хешами GitHub содержит
+[archive_integrity.json](results/archive_integrity.json).
+

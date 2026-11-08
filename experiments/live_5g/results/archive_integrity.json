@@ -1,0 +1,62 @@
+[
+  {
+    "name": "live-5g-8101-42395496419",
+    "artifact_id": 13584120230,
+    "github_digest": "sha256:20468e69e2cbe2536fd234e3dc6954928721790c2a17c81a59b6f8693e772b45",
+    "local_digest": "sha256:20468e69e2cbe2536fd234e3dc6954928721790c2a17c81a59b6f8693e772b45"
+  },
+  {
+    "name": "live-5g-8801-42395496419",
+    "artifact_id": 13583965489,
+    "github_digest": "sha256:b5aed9cd04f6a6c2f281ff8b4cfbb6d0a82d75662e38c8109ae59d2962ac3a18",
+    "local_digest": "sha256:b5aed9cd04f6a6c2f281ff8b4cfbb6d0a82d75662e38c8109ae59d2962ac3a18"
+  },
+  {
+    "name": "live-5g-report-42395496419",
+    "artifact_id": 13583880663,
+    "github_digest": "sha256:e35578b27af1246e0966e4d14988f57e12a1bc49b7fbe7d04b12b9e735ab6b9d",
+    "local_digest": "sha256:e35578b27af1246e0966e4d14988f57e12a1bc49b7fbe7d04b12b9e735ab6b9d"
+  },
+  {
+    "name": "live-5g-8901-42395496419",
+    "artifact_id": 13583566895,
+    "github_digest": "sha256:12cad4a1540b30a83653995a11a37d8c0cc7619d110567d362d297958e77522b",
+    "local_digest": "sha256:12cad4a1540b30a83653995a11a37d8c0cc7619d110567d362d297958e77522b"
+  },
+  {
+    "name": "live-5g-8501-42395496419",
+    "artifact_id": 13583532141,
+    "github_digest": "sha256:f059a6ccfbc66660755dc445406dc8514a23c1412f1c531ccca1ff8c42a2a975",
+    "local_digest": "sha256:f059a6ccfbc66660755dc445406dc8514a23c1412f1c531ccca1ff8c42a2a975"
+  },
+  {
+    "name": "live-5g-8201-42395496419",
+    "artifact_id": 13583492263,
+    "github_digest": "sha256:9a1c78fd53a4adba97818079967336872df3b672672775238c020ac5877e46fc",
+    "local_digest": "sha256:9a1c78fd53a4adba97818079967336872df3b672672775238c020ac5877e46fc"
+  },
+  {
+    "name": "live-5g-8401-42395496419",
+    "artifact_id": 13583244747,
+    "github_digest": "sha256:91bb75be70203cf32cb4248747472bc52997c9b13ea0036460657acca2f47f8f",
+    "local_digest": "sha256:91bb75be70203cf32cb4248747472bc52997c9b13ea0036460657acca2f47f8f"
+  },
+  {
+    "name": "live-5g-8601-42395496419",
+    "artifact_id": 13583173364,
+    "github_digest": "sha256:47db0d21e0354631204c76e9ff1ddf681302c5c1f22f6d01b0f7e9485652d8f5",
+    "local_digest": "sha256:47db0d21e0354631204c76e9ff1ddf681302c5c1f22f6d01b0f7e9485652d8f5"
+  },
+  {
+    "name": "live-5g-8701-42395496419",
+    "artifact_id": 13583159941,
+    "github_digest": "sha256:f46f4833036a0adb9a2b2ca28923554e98bee11ef26c1728aaa35f250aa93833",
+    "local_digest": "sha256:f46f4833036a0adb9a2b2ca28923554e98bee11ef26c1728aaa35f250aa93833"
+  },
+  {
+    "name": "live-5g-8301-42395496419",
+    "artifact_id": 13582569658,
+    "github_digest": "sha256:ebbc990afd9d6d59dcc6ae51aeb9dcd22a0bd06edca76daed918dc732618b08d",
+    "local_digest": "sha256:ebbc990afd9d6d59dcc6ae51aeb9dcd22a0bd06edca76daed918dc732618b08d"
+  }
+]

@@ -69,8 +69,7 @@ jobs:
           python -m pip freeze > evidence/python_packages.txt
           cp /etc/open5gs/*.yaml evidence/
           /opt/open5gs/bin/open5gs-nrfd -v > evidence/open5gs_version.txt 2>&1
-          sudo tcpdump -i lo -U -s 0 -w evidence/sbi.pcap 'tcp port 7777' > evidence/tcpdump.log 2>&1 &
-          echo $! > evidence/tcpdump.pid
+          sudo sh -c 'echo $$ > evidence/tcpdump.pid; exec tcpdump -i lo -U -s 0 -w evidence/sbi.pcap "tcp port 7777"' > evidence/tcpdump.log 2>&1 &
       - name: Independent normal training run
         run: python -m experiments.live_5g.collect --phase train --seed ${{ matrix.seed }} --out evidence/train --windows 160 --actors ${{ matrix.actors }}
       - name: Independent normal calibration run
@@ -87,9 +86,20 @@ jobs:
         if: always()
         run: |
           mkdir -p evidence
-          if [ -f evidence/tcpdump.pid ]; then sudo kill -INT "$(cat evidence/tcpdump.pid)" || true; fi
+          if [ -f evidence/tcpdump.pid ]; then
+            CAPTURE_PID="$(cat evidence/tcpdump.pid)"
+            sudo kill -INT "$CAPTURE_PID" || true
+            for attempt in $(seq 1 100); do
+              if ! sudo kill -0 "$CAPTURE_PID" 2>/dev/null; then break; fi
+              sleep 0.1
+            done
+            if sudo kill -0 "$CAPTURE_PID" 2>/dev/null; then
+              echo 'Packet collector did not stop; refusing a mutable capture hash' >&2
+              exit 1
+            fi
+          fi
           sudo journalctl --no-pager -u 'open5gs-*' > evidence/open5gs_journal.txt
-          systemctl --no-pager --full --type=service 'open5gs-*' > evidence/service_status.txt || true
+          systemctl list-units --all --no-pager --full --type=service 'open5gs-*' > evidence/service_status.txt
           sudo chown -R "$(id -u):$(id -g)" evidence
           find evidence -type f ! -name SHA256SUMS -exec sha256sum {} + > evidence/SHA256SUMS
       - uses: actions/upload-artifact@v4
