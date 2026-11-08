@@ -1,0 +1,26 @@
+[
+  {
+    "name": "resilient-5g-21301-42509270381.zip",
+    "size": 11179555,
+    "github_digest": "sha256:78ec1f489a9e7b749e304124ae08de3a7cb785bb172a560bec065c58b2906fea",
+    "local_digest": "sha256:78ec1f489a9e7b749e304124ae08de3a7cb785bb172a560bec065c58b2906fea",
+    "matches": true,
+    "all_audit_checks_pass": true
+  },
+  {
+    "name": "resilient-5g-21201-42509270381.zip",
+    "size": 11110778,
+    "github_digest": "sha256:f3a1a7ee825294538b26eb7e6050e77825d92db9e76cef02a2a813ca7a292bea",
+    "local_digest": "sha256:f3a1a7ee825294538b26eb7e6050e77825d92db9e76cef02a2a813ca7a292bea",
+    "matches": true,
+    "all_audit_checks_pass": true
+  },
+  {
+    "name": "resilient-5g-21101-42509270381.zip",
+    "size": 11382092,
+    "github_digest": "sha256:3a0856614bdcb93057db83e5f3f949a0e6a390d9d68f22208cfc6a681b862268",
+    "local_digest": "sha256:3a0856614bdcb93057db83e5f3f949a0e6a390d9d68f22208cfc6a681b862268",
+    "matches": true,
+    "all_audit_checks_pass": true
+  }
+]

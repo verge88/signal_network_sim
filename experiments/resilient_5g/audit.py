@@ -53,6 +53,14 @@ def replay_temporal(frame,grants,key):
 def run(root):
     baseaudit=audit_baseline(root)
     checks=dict(baseaudit['checks'])
+    for phase in ['train','cal','test']:
+        manifest=read(root/phase/'manifest.json')
+        samples=pd.read_csv(root/phase/'features.csv')
+        checks[phase+'_complete_grid']=bool(manifest.get('complete') and
+            len(samples)==manifest['windows']*manifest['actors'] and
+            set(samples.window_id)==set(range(manifest['windows'])) and
+            samples.groupby('window_id').size().eq(manifest['actors']).all() and
+            samples.groupby('nf_id').window_id.nunique().eq(manifest['windows']).all())
     model=read(root/'frozen/extensions.json')
     testmanifest=read(root/'test/manifest.json')
     checks['extensions_frozen']=model['created_at']<testmanifest['started_at'] and model==testmanifest['extensions']
@@ -127,6 +135,7 @@ def run(root):
             verified &= value==expected
     checks['extensions_online_replayed']=bool(verified)
     frame=pd.DataFrame(decisions).merge(labels,on=keys,validate='one_to_one')
+    frame['underlying_unknown']=[old[tuple(r[k] for k in keys)]['states']['K']=='unknown' for r in frame.to_dict('records')]
     checks['complete_new_predictions']=len(frame)==len(f)
     methods=list(decisions[0]['outputs'])
     metrics={}; episodes=[]
@@ -137,16 +146,31 @@ def run(root):
             security=group.outputs.map(lambda x:x[m]['security'])
             availability=group.outputs.map(lambda x:x[m]['availability'])
             notification=security|availability
+            unresolved=group.outputs.map(lambda x:x[m]['state']=='unknown')
+            normal_incidents=0
+            for _,part in group.groupby('nf_id'):
+                active=part.sort_values('window_id').outputs.map(lambda x:x[m]['availability']) & ~part.sort_values('window_id').attack.astype(bool)
+                normal_incidents+=int((active & ~active.shift(fill_value=False)).sum())
             metrics[scope][m]=dict(security_tp=int((security&y).sum()),security_fp=int((security&~y).sum()),security_fn=int((~security&y).sum()),
                 attack_windows=int(y.sum()),normal_windows=int((~y).sum()),
                 availability_attack_windows=int((availability&y).sum()),availability_normal_windows=int((availability&~y).sum()),
-                operational_tp=int((notification&y).sum()),operational_normal_windows=int((notification&~y).sum()))
+                operational_tp=int((notification&y).sum()),operational_normal_windows=int((notification&~y).sum()),
+                availability_normal_episodes=normal_incidents,
+                underlying_unknown_normal=int((group.underlying_unknown&~y).sum()),
+                underlying_unknown_attack=int((group.underlying_unknown&y).sum()),
+                unresolved_unknown_normal=int((unresolved&~y).sum()),unresolved_unknown_attack=int((unresolved&y).sum()))
     for episode,g in frame[frame.attack==1].groupby('episode_id'):
+        specification=next(x for x in testmanifest['schedule'] if x[0]==int(g.window_id.min()))
         for m in methods:
             security=g[g.outputs.map(lambda x:x[m]['security'])]
             incident=g[g.outputs.map(lambda x:x[m]['availability'])]
             notified=g[g.outputs.map(lambda x:x[m]['security'] or x[m]['availability'])]
             episodes.append(dict(episode=episode,scenario=g.scenario.iloc[0],method=m,
+              ramp_step=specification[4] if g.scenario.iloc[0]=='G' else None,
+              permitted_windows=int(g.signals.map(lambda s:s['permit_valid']).sum()),
+              max_temporal_score=float(g.signals.map(lambda s:s['temporal_score']).max()),
+              max_policy_temporal_score=float(g.signals.map(lambda s:s['policy_temporal_score']).max()),
+              max_gap_seconds=float(g.signals.map(lambda s:s['gap_seconds']).max()),
               security=not security.empty,availability=not incident.empty,operational=not notified.empty,
               security_delay=float(security.decision_time.min()-g.onset.iloc[0]) if not security.empty else None,
               operational_delay=float(notified.decision_time.min()-g.onset.iloc[0]) if not notified.empty else None))

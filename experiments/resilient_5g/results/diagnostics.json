@@ -1,0 +1,824 @@
+[
+  {
+    "run": "resilient-5g-21101-42509270381",
+    "false_alarms": [
+      {
+        "window": 279,
+        "nf": "slot-0",
+        "methods": [
+          "KALL",
+          "KP"
+        ],
+        "signals": {
+          "availability": false,
+          "gap_seconds": 0.0,
+          "permit_valid": false,
+          "policy_temporal_score": 2.0,
+          "replay": false,
+          "temporal_score": 2.0
+        },
+        "history": [
+          {
+            "window_id": 269,
+            "request_count": 6,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 270,
+            "request_count": 2,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 271,
+            "request_count": 2,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 272,
+            "request_count": 2,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 273,
+            "request_count": 3,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 274,
+            "request_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 275,
+            "request_count": 2,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 276,
+            "request_count": 3,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 277,
+            "request_count": 4,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 278,
+            "request_count": 5,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 279,
+            "request_count": 6,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      }
+    ],
+    "normal_availability_segments": [
+      {
+        "start": 86,
+        "end": 87,
+        "windows": 2,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 255,
+        "end": 256,
+        "windows": 2,
+        "previous_scenario": "D",
+        "previous_attack": true
+      },
+      {
+        "start": 385,
+        "end": 387,
+        "windows": 3,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 405,
+        "end": 406,
+        "windows": 2,
+        "previous_scenario": "R",
+        "previous_attack": true
+      },
+      {
+        "start": 685,
+        "end": 687,
+        "windows": 3,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 855,
+        "end": 856,
+        "windows": 2,
+        "previous_scenario": "F",
+        "previous_attack": true
+      },
+      {
+        "start": 986,
+        "end": 987,
+        "windows": 2,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      }
+    ],
+    "tail_threshold": 10.791852151625523,
+    "tail_model": {
+      "features": [
+        "request_count",
+        "error_rate",
+        "update_count"
+      ],
+      "center": [
+        5.0,
+        0.0,
+        1.0
+      ],
+      "scale": [
+        2.9652,
+        0.02702702702702703,
+        1.0
+      ],
+      "resolution_floor": [
+        1.0,
+        0.02702702702702703,
+        1.0
+      ],
+      "score": "max(0, max_j((x_j - training_median_j) / scale_j))"
+    },
+    "s4_score_min": 11.84,
+    "s4_score_max": 11.84,
+    "s4_alarm_windows": 40,
+    "calibration_extremes": [
+      {
+        "window_id": 18,
+        "nf_id": "slot-4",
+        "request_count": 37,
+        "error_rate": 0.0,
+        "update_count": 1,
+        "tail_score": 10.791852151625523
+      },
+      {
+        "window_id": 180,
+        "nf_id": "slot-5",
+        "request_count": 37,
+        "error_rate": 0.027027027027027,
+        "update_count": 1,
+        "tail_score": 10.791852151625523
+      },
+      {
+        "window_id": 23,
+        "nf_id": "slot-1",
+        "request_count": 36,
+        "error_rate": 0.0,
+        "update_count": 1,
+        "tail_score": 10.454606771887226
+      }
+    ]
+  },
+  {
+    "run": "resilient-5g-21201-42509270381",
+    "false_alarms": [
+      {
+        "window": 189,
+        "nf": "slot-3",
+        "methods": [
+          "KT"
+        ],
+        "signals": {
+          "availability": false,
+          "gap_seconds": 0.0,
+          "permit_valid": true,
+          "policy_temporal_score": 0.0,
+          "replay": false,
+          "temporal_score": 14.0
+        },
+        "history": [
+          {
+            "window_id": 179,
+            "request_count": 3,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 180,
+            "request_count": 5,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 181,
+            "request_count": 7,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 182,
+            "request_count": 9,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 183,
+            "request_count": 11,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 184,
+            "request_count": 13,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 185,
+            "request_count": 15,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 186,
+            "request_count": 17,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 187,
+            "request_count": 19,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 188,
+            "request_count": 21,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 189,
+            "request_count": 23,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      }
+    ],
+    "normal_availability_segments": [
+      {
+        "start": 86,
+        "end": 87,
+        "windows": 2,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 386,
+        "end": 387,
+        "windows": 2,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 405,
+        "end": 406,
+        "windows": 2,
+        "previous_scenario": "R",
+        "previous_attack": true
+      },
+      {
+        "start": 685,
+        "end": 687,
+        "windows": 3,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 705,
+        "end": 706,
+        "windows": 2,
+        "previous_scenario": "F",
+        "previous_attack": true
+      },
+      {
+        "start": 985,
+        "end": 987,
+        "windows": 3,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      }
+    ],
+    "tail_threshold": 10.791852151625523,
+    "tail_model": {
+      "features": [
+        "request_count",
+        "error_rate",
+        "update_count"
+      ],
+      "center": [
+        5.0,
+        0.0,
+        1.0
+      ],
+      "scale": [
+        2.9652,
+        0.027777777777777776,
+        1.0
+      ],
+      "resolution_floor": [
+        1.0,
+        0.027777777777777776,
+        1.0
+      ],
+      "score": "max(0, max_j((x_j - training_median_j) / scale_j))"
+    },
+    "s4_score_min": 11.520000000000001,
+    "s4_score_max": 11.520000000000001,
+    "s4_alarm_windows": 40,
+    "calibration_extremes": [
+      {
+        "window_id": 34,
+        "nf_id": "slot-7",
+        "request_count": 37,
+        "error_rate": 0.0,
+        "update_count": 1,
+        "tail_score": 10.791852151625523
+      },
+      {
+        "window_id": 51,
+        "nf_id": "slot-6",
+        "request_count": 37,
+        "error_rate": 0.0,
+        "update_count": 1,
+        "tail_score": 10.791852151625523
+      },
+      {
+        "window_id": 97,
+        "nf_id": "slot-3",
+        "request_count": 37,
+        "error_rate": 0.0,
+        "update_count": 1,
+        "tail_score": 10.791852151625523
+      }
+    ]
+  },
+  {
+    "run": "resilient-5g-21301-42509270381",
+    "false_alarms": [
+      {
+        "window": 91,
+        "nf": "slot-5",
+        "methods": [
+          "KALL",
+          "KP"
+        ],
+        "signals": {
+          "availability": false,
+          "gap_seconds": 0.0,
+          "permit_valid": false,
+          "policy_temporal_score": 2.0,
+          "replay": false,
+          "temporal_score": 2.0
+        },
+        "history": [
+          {
+            "window_id": 81,
+            "request_count": 7,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 82,
+            "request_count": 5,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 83,
+            "request_count": 5,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 84,
+            "request_count": 7,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 85,
+            "request_count": 7,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 86,
+            "request_count": 2,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 87,
+            "request_count": 3,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 88,
+            "request_count": 4,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 89,
+            "request_count": 5,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 90,
+            "request_count": 6,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 91,
+            "request_count": 7,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 639,
+        "nf": "slot-4",
+        "methods": [
+          "KALL",
+          "KP"
+        ],
+        "signals": {
+          "availability": false,
+          "gap_seconds": 0.0,
+          "permit_valid": false,
+          "policy_temporal_score": 2.0,
+          "replay": false,
+          "temporal_score": 2.0
+        },
+        "history": [
+          {
+            "window_id": 629,
+            "request_count": 4,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 630,
+            "request_count": 6,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 631,
+            "request_count": 7,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 632,
+            "request_count": 13,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 633,
+            "request_count": 5,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 634,
+            "request_count": 2,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 635,
+            "request_count": 3,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 636,
+            "request_count": 4,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 637,
+            "request_count": 5,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 638,
+            "request_count": 6,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 639,
+            "request_count": 7,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 717,
+        "nf": "slot-3",
+        "methods": [
+          "KALL",
+          "KP"
+        ],
+        "signals": {
+          "availability": false,
+          "gap_seconds": 0.0,
+          "permit_valid": false,
+          "policy_temporal_score": 2.0,
+          "replay": false,
+          "temporal_score": 2.0
+        },
+        "history": [
+          {
+            "window_id": 707,
+            "request_count": 3,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 708,
+            "request_count": 3,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 709,
+            "request_count": 3,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 710,
+            "request_count": 6,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 711,
+            "request_count": 3,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 712,
+            "request_count": 2,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 713,
+            "request_count": 3,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 714,
+            "request_count": 4,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 715,
+            "request_count": 5,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 716,
+            "request_count": 6,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 717,
+            "request_count": 7,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 1030,
+        "nf": "slot-3",
+        "methods": [
+          "KT"
+        ],
+        "signals": {
+          "availability": false,
+          "gap_seconds": 0.0,
+          "permit_valid": false,
+          "policy_temporal_score": 0.0,
+          "replay": false,
+          "temporal_score": 16.0
+        },
+        "history": [
+          {
+            "window_id": 1020,
+            "request_count": 5,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1021,
+            "request_count": 7,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1022,
+            "request_count": 9,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1023,
+            "request_count": 11,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1024,
+            "request_count": 13,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1025,
+            "request_count": 15,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1026,
+            "request_count": 17,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1027,
+            "request_count": 19,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1028,
+            "request_count": 21,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1029,
+            "request_count": 23,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1030,
+            "request_count": 31,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      }
+    ],
+    "normal_availability_segments": [
+      {
+        "start": 85,
+        "end": 87,
+        "windows": 3,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 255,
+        "end": 256,
+        "windows": 2,
+        "previous_scenario": "F",
+        "previous_attack": true
+      },
+      {
+        "start": 386,
+        "end": 387,
+        "windows": 2,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 686,
+        "end": 687,
+        "windows": 2,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 855,
+        "end": 856,
+        "windows": 2,
+        "previous_scenario": "D",
+        "previous_attack": true
+      },
+      {
+        "start": 986,
+        "end": 987,
+        "windows": 2,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 1155,
+        "end": 1156,
+        "windows": 2,
+        "previous_scenario": "R",
+        "previous_attack": true
+      }
+    ],
+    "tail_threshold": 14.61396645532623,
+    "tail_model": {
+      "features": [
+        "request_count",
+        "error_rate",
+        "update_count"
+      ],
+      "center": [
+        4.5,
+        0.0,
+        1.0
+      ],
+      "scale": [
+        2.2239,
+        0.02702702702702703,
+        1.0
+      ],
+      "resolution_floor": [
+        1.0,
+        0.02702702702702703,
+        1.0
+      ],
+      "score": "max(0, max_j((x_j - training_median_j) / scale_j))"
+    },
+    "s4_score_min": 11.84,
+    "s4_score_max": 11.84,
+    "s4_alarm_windows": 0,
+    "calibration_extremes": [
+      {
+        "window_id": 23,
+        "nf_id": "slot-5",
+        "request_count": 37,
+        "error_rate": 0.0,
+        "update_count": 1,
+        "tail_score": 14.61396645532623
+      },
+      {
+        "window_id": 106,
+        "nf_id": "slot-4",
+        "request_count": 37,
+        "error_rate": 0.027027027027027,
+        "update_count": 1,
+        "tail_score": 14.61396645532623
+      },
+      {
+        "window_id": 170,
+        "nf_id": "slot-1",
+        "request_count": 37,
+        "error_rate": 0.0,
+        "update_count": 1,
+        "tail_score": 14.61396645532623
+      }
+    ]
+  }
+]
