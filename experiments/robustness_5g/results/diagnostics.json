@@ -1,0 +1,7283 @@
+[
+  {
+    "run": "robustness-5g-16-33101-42617081721",
+    "actors": 16,
+    "source_seed": 33101,
+    "episode_boundary_states": [
+      {
+        "episode": "test-44117-nf16-C-2250",
+        "nf_id": "slot-4",
+        "start_window": 2250,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-C-2340",
+        "nf_id": "slot-4",
+        "start_window": 2340,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-C-2550",
+        "nf_id": "slot-4",
+        "start_window": 2550,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-C-3360",
+        "nf_id": "slot-4",
+        "start_window": 3360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-D-1260",
+        "nf_id": "slot-4",
+        "start_window": 1260,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-D-1560",
+        "nf_id": "slot-4",
+        "start_window": 1560,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-D-2850",
+        "nf_id": "slot-4",
+        "start_window": 2850,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-D-3540",
+        "nf_id": "slot-4",
+        "start_window": 3540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-F-1050",
+        "nf_id": "slot-4",
+        "start_window": 1050,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-F-1650",
+        "nf_id": "slot-4",
+        "start_window": 1650,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-F-3060",
+        "nf_id": "slot-4",
+        "start_window": 3060,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-F-3450",
+        "nf_id": "slot-4",
+        "start_window": 3450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-G-150",
+        "nf_id": "slot-3",
+        "start_window": 150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-G-3150",
+        "nf_id": "slot-3",
+        "start_window": 3150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-G-3240",
+        "nf_id": "slot-3",
+        "start_window": 3240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-G-60",
+        "nf_id": "slot-3",
+        "start_window": 60,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-R-1350",
+        "nf_id": "slot-4",
+        "start_window": 1350,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-R-2040",
+        "nf_id": "slot-4",
+        "start_window": 2040,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-R-240",
+        "nf_id": "slot-4",
+        "start_window": 240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-R-840",
+        "nf_id": "slot-4",
+        "start_window": 840,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S1-1440",
+        "nf_id": "slot-0",
+        "start_window": 1440,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S1-1860",
+        "nf_id": "slot-0",
+        "start_window": 1860,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S1-2160",
+        "nf_id": "slot-0",
+        "start_window": 2160,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S1-540",
+        "nf_id": "slot-0",
+        "start_window": 540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S2-1740",
+        "nf_id": "slot-1",
+        "start_window": 1740,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S2-360",
+        "nf_id": "slot-1",
+        "start_window": 360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S2-660",
+        "nf_id": "slot-1",
+        "start_window": 660,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S2-960",
+        "nf_id": "slot-1",
+        "start_window": 960,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S3-1950",
+        "nf_id": "slot-2",
+        "start_window": 1950,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S3-2460",
+        "nf_id": "slot-2",
+        "start_window": 2460,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S3-2760",
+        "nf_id": "slot-2",
+        "start_window": 2760,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S3-750",
+        "nf_id": "slot-2",
+        "start_window": 750,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S4-1140",
+        "nf_id": "slot-3",
+        "start_window": 1140,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S4-2640",
+        "nf_id": "slot-3",
+        "start_window": 2640,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S4-2940",
+        "nf_id": "slot-3",
+        "start_window": 2940,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44117-nf16-S4-450",
+        "nf_id": "slot-3",
+        "start_window": 450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      }
+    ],
+    "normal_control_windows": 3440,
+    "normal_missing_original_reports": 288,
+    "normal_original_reports_older_than_250ms": 100,
+    "normal_reports_aging_past_250ms_after_return": 4,
+    "normal_reports_already_late_at_return": 96,
+    "normal_post_return_wait_p95_ms": 94.87465620040892,
+    "normal_report_age_p50_ms": 59.146761894226074,
+    "normal_report_age_p95_ms": 104.45176362991329,
+    "growth": [
+      {
+        "episode": "test-44117-nf16-G-150",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "slow",
+        "load_regime": "reference",
+        "windows": 60
+      },
+      {
+        "episode": "test-44117-nf16-G-3150",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 2,
+        "permitted_windows": 0,
+        "security": true,
+        "availability": false,
+        "operational": true,
+        "security_delay": 4.077311038970947,
+        "operational_delay": 4.077311038970947,
+        "variant": "fast",
+        "load_regime": "bursty_recovery",
+        "windows": 10
+      },
+      {
+        "episode": "test-44117-nf16-G-3240",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "intermittent",
+        "load_regime": "bursty_recovery",
+        "windows": 60
+      },
+      {
+        "episode": "test-44117-nf16-G-60",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 20,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "inside_permit",
+        "load_regime": "reference",
+        "windows": 20
+      }
+    ],
+    "false_alarm_reason_counts": {
+      "higher_load/SPLIT": {
+        "separate_tail": 365
+      },
+      "higher_load/PERSIST": {
+        "separate_tail": 365
+      },
+      "higher_load/CARRY": {
+        "separate_tail": 365
+      }
+    },
+    "first_five_false_examples_per_regime_method": {
+      "higher_load/SPLIT": [
+        {
+          "window": 900,
+          "nf": "slot-3",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-4",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 902,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 903,
+          "nf": "slot-0",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 903,
+          "nf": "slot-8",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/PERSIST": [
+        {
+          "window": 900,
+          "nf": "slot-3",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-4",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 902,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 903,
+          "nf": "slot-0",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 903,
+          "nf": "slot-8",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/CARRY": [
+        {
+          "window": 900,
+          "nf": "slot-3",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-4",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 902,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 903,
+          "nf": "slot-0",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 903,
+          "nf": "slot-8",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "run": "robustness-5g-16-33201-42617081721",
+    "actors": 16,
+    "source_seed": 33201,
+    "episode_boundary_states": [
+      {
+        "episode": "test-44217-nf16-C-1140",
+        "nf_id": "slot-4",
+        "start_window": 1140,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-C-2160",
+        "nf_id": "slot-4",
+        "start_window": 2160,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-C-2760",
+        "nf_id": "slot-4",
+        "start_window": 2760,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-C-2850",
+        "nf_id": "slot-4",
+        "start_window": 2850,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-D-2040",
+        "nf_id": "slot-4",
+        "start_window": 2040,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-D-3240",
+        "nf_id": "slot-4",
+        "start_window": 3240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-D-450",
+        "nf_id": "slot-4",
+        "start_window": 450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-D-750",
+        "nf_id": "slot-4",
+        "start_window": 750,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-F-1560",
+        "nf_id": "slot-4",
+        "start_window": 1560,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-F-2460",
+        "nf_id": "slot-4",
+        "start_window": 2460,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-F-360",
+        "nf_id": "slot-4",
+        "start_window": 360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-F-540",
+        "nf_id": "slot-4",
+        "start_window": 540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-G-150",
+        "nf_id": "slot-3",
+        "start_window": 150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-G-240",
+        "nf_id": "slot-3",
+        "start_window": 240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-G-3450",
+        "nf_id": "slot-3",
+        "start_window": 3450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-G-60",
+        "nf_id": "slot-3",
+        "start_window": 60,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-R-1050",
+        "nf_id": "slot-4",
+        "start_window": 1050,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-R-1740",
+        "nf_id": "slot-4",
+        "start_window": 1740,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-R-2640",
+        "nf_id": "slot-4",
+        "start_window": 2640,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-R-3540",
+        "nf_id": "slot-4",
+        "start_window": 3540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S1-1950",
+        "nf_id": "slot-0",
+        "start_window": 1950,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S1-2250",
+        "nf_id": "slot-0",
+        "start_window": 2250,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S1-3360",
+        "nf_id": "slot-0",
+        "start_window": 3360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S1-840",
+        "nf_id": "slot-0",
+        "start_window": 840,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S2-1260",
+        "nf_id": "slot-1",
+        "start_window": 1260,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S2-1650",
+        "nf_id": "slot-1",
+        "start_window": 1650,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S2-660",
+        "nf_id": "slot-1",
+        "start_window": 660,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S2-960",
+        "nf_id": "slot-1",
+        "start_window": 960,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S3-1860",
+        "nf_id": "slot-2",
+        "start_window": 1860,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S3-2340",
+        "nf_id": "slot-2",
+        "start_window": 2340,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S3-2940",
+        "nf_id": "slot-2",
+        "start_window": 2940,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S3-3150",
+        "nf_id": "slot-2",
+        "start_window": 3150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S4-1350",
+        "nf_id": "slot-3",
+        "start_window": 1350,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S4-1440",
+        "nf_id": "slot-3",
+        "start_window": 1440,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S4-2550",
+        "nf_id": "slot-3",
+        "start_window": 2550,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44217-nf16-S4-3060",
+        "nf_id": "slot-3",
+        "start_window": 3060,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      }
+    ],
+    "normal_control_windows": 3440,
+    "normal_missing_original_reports": 288,
+    "normal_original_reports_older_than_250ms": 104,
+    "normal_reports_aging_past_250ms_after_return": 8,
+    "normal_reports_already_late_at_return": 96,
+    "normal_post_return_wait_p95_ms": 184.20270681381226,
+    "normal_report_age_p50_ms": 121.15800380706787,
+    "normal_report_age_p95_ms": 200.4606008529662,
+    "growth": [
+      {
+        "episode": "test-44217-nf16-G-150",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "slow",
+        "load_regime": "reference",
+        "windows": 60
+      },
+      {
+        "episode": "test-44217-nf16-G-240",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "intermittent",
+        "load_regime": "reference",
+        "windows": 60
+      },
+      {
+        "episode": "test-44217-nf16-G-3450",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 2,
+        "permitted_windows": 0,
+        "security": true,
+        "availability": false,
+        "operational": true,
+        "security_delay": 4.219247817993164,
+        "operational_delay": 4.219247817993164,
+        "variant": "fast",
+        "load_regime": "bursty_recovery",
+        "windows": 10
+      },
+      {
+        "episode": "test-44217-nf16-G-60",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 20,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "inside_permit",
+        "load_regime": "reference",
+        "windows": 20
+      }
+    ],
+    "false_alarm_reason_counts": {
+      "higher_load/SPLIT": {
+        "separate_tail": 376
+      },
+      "higher_load/PERSIST": {
+        "separate_tail": 376,
+        "temporal_or_control": 1
+      },
+      "higher_load/CARRY": {
+        "separate_tail": 376,
+        "temporal_or_control": 2
+      }
+    },
+    "first_five_false_examples_per_regime_method": {
+      "higher_load/SPLIT": [
+        {
+          "window": 900,
+          "nf": "slot-14",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 904,
+          "nf": "slot-9",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 914,
+          "nf": "slot-11",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 915,
+          "nf": "slot-4",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 918,
+          "nf": "slot-13",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/PERSIST": [
+        {
+          "window": 900,
+          "nf": "slot-14",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 904,
+          "nf": "slot-9",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 914,
+          "nf": "slot-11",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 915,
+          "nf": "slot-4",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 918,
+          "nf": "slot-13",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/CARRY": [
+        {
+          "window": 900,
+          "nf": "slot-14",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 904,
+          "nf": "slot-9",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 914,
+          "nf": "slot-11",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 915,
+          "nf": "slot-4",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 918,
+          "nf": "slot-13",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "run": "robustness-5g-16-33301-42617081721",
+    "actors": 16,
+    "source_seed": 33301,
+    "episode_boundary_states": [
+      {
+        "episode": "test-44317-nf16-C-1260",
+        "nf_id": "slot-4",
+        "start_window": 1260,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-C-1740",
+        "nf_id": "slot-4",
+        "start_window": 1740,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-C-1860",
+        "nf_id": "slot-4",
+        "start_window": 1860,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-C-2160",
+        "nf_id": "slot-4",
+        "start_window": 2160,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-D-1140",
+        "nf_id": "slot-4",
+        "start_window": 1140,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-D-2460",
+        "nf_id": "slot-4",
+        "start_window": 2460,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-D-3240",
+        "nf_id": "slot-4",
+        "start_window": 3240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-D-450",
+        "nf_id": "slot-4",
+        "start_window": 450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-F-2250",
+        "nf_id": "slot-4",
+        "start_window": 2250,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-F-3150",
+        "nf_id": "slot-4",
+        "start_window": 3150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-F-360",
+        "nf_id": "slot-4",
+        "start_window": 360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-F-840",
+        "nf_id": "slot-4",
+        "start_window": 840,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-G-150",
+        "nf_id": "slot-3",
+        "start_window": 150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-G-240",
+        "nf_id": "slot-3",
+        "start_window": 240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-G-2940",
+        "nf_id": "slot-3",
+        "start_window": 2940,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-G-60",
+        "nf_id": "slot-3",
+        "start_window": 60,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-R-1560",
+        "nf_id": "slot-4",
+        "start_window": 1560,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-R-3360",
+        "nf_id": "slot-4",
+        "start_window": 3360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-R-3450",
+        "nf_id": "slot-4",
+        "start_window": 3450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-R-3540",
+        "nf_id": "slot-4",
+        "start_window": 3540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S1-1050",
+        "nf_id": "slot-0",
+        "start_window": 1050,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S1-2040",
+        "nf_id": "slot-0",
+        "start_window": 2040,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S1-2550",
+        "nf_id": "slot-0",
+        "start_window": 2550,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S1-3060",
+        "nf_id": "slot-0",
+        "start_window": 3060,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S2-1440",
+        "nf_id": "slot-1",
+        "start_window": 1440,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S2-1650",
+        "nf_id": "slot-1",
+        "start_window": 1650,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S2-2760",
+        "nf_id": "slot-1",
+        "start_window": 2760,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S2-750",
+        "nf_id": "slot-1",
+        "start_window": 750,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S3-1350",
+        "nf_id": "slot-2",
+        "start_window": 1350,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S3-2640",
+        "nf_id": "slot-2",
+        "start_window": 2640,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S3-660",
+        "nf_id": "slot-2",
+        "start_window": 660,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S3-960",
+        "nf_id": "slot-2",
+        "start_window": 960,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S4-1950",
+        "nf_id": "slot-3",
+        "start_window": 1950,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S4-2340",
+        "nf_id": "slot-3",
+        "start_window": 2340,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S4-2850",
+        "nf_id": "slot-3",
+        "start_window": 2850,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44317-nf16-S4-540",
+        "nf_id": "slot-3",
+        "start_window": 540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      }
+    ],
+    "normal_control_windows": 3440,
+    "normal_missing_original_reports": 288,
+    "normal_original_reports_older_than_250ms": 97,
+    "normal_reports_aging_past_250ms_after_return": 1,
+    "normal_reports_already_late_at_return": 96,
+    "normal_post_return_wait_p95_ms": 155.87306022644037,
+    "normal_report_age_p50_ms": 102.77748107910156,
+    "normal_report_age_p95_ms": 171.37680053710938,
+    "growth": [
+      {
+        "episode": "test-44317-nf16-G-150",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "slow",
+        "load_regime": "reference",
+        "windows": 60
+      },
+      {
+        "episode": "test-44317-nf16-G-240",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "intermittent",
+        "load_regime": "reference",
+        "windows": 60
+      },
+      {
+        "episode": "test-44317-nf16-G-2940",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 2,
+        "permitted_windows": 0,
+        "security": true,
+        "availability": false,
+        "operational": true,
+        "security_delay": 4.126372575759888,
+        "operational_delay": 4.126372575759888,
+        "variant": "fast",
+        "load_regime": "bursty_recovery",
+        "windows": 10
+      },
+      {
+        "episode": "test-44317-nf16-G-60",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 20,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "inside_permit",
+        "load_regime": "reference",
+        "windows": 20
+      }
+    ],
+    "false_alarm_reason_counts": {
+      "higher_load/SPLIT": {
+        "separate_tail": 417
+      },
+      "higher_load/PERSIST": {
+        "separate_tail": 417,
+        "temporal_or_control": 1
+      },
+      "higher_load/CARRY": {
+        "separate_tail": 417,
+        "temporal_or_control": 6
+      },
+      "bursty_recovery/CARRY": {
+        "temporal_or_control": 1
+      }
+    },
+    "first_five_false_examples_per_regime_method": {
+      "higher_load/SPLIT": [
+        {
+          "window": 901,
+          "nf": "slot-4",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 902,
+          "nf": "slot-15",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 903,
+          "nf": "slot-12",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 904,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 905,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/PERSIST": [
+        {
+          "window": 901,
+          "nf": "slot-4",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 902,
+          "nf": "slot-15",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 903,
+          "nf": "slot-12",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 904,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 905,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/CARRY": [
+        {
+          "window": 901,
+          "nf": "slot-4",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 902,
+          "nf": "slot-15",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 903,
+          "nf": "slot-12",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 904,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 905,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "bursty_recovery/CARRY": [
+        {
+          "window": 3299,
+          "nf": "slot-13",
+          "signals": {
+            "carry": 2.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "run": "robustness-5g-32-33101-42617081721",
+    "actors": 32,
+    "source_seed": 33101,
+    "episode_boundary_states": [
+      {
+        "episode": "test-44133-nf32-C-1140",
+        "nf_id": "slot-4",
+        "start_window": 1140,
+        "before": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        },
+        "first": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-C-1350",
+        "nf_id": "slot-4",
+        "start_window": 1350,
+        "before": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        },
+        "first": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-C-3060",
+        "nf_id": "slot-4",
+        "start_window": 3060,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-C-3360",
+        "nf_id": "slot-4",
+        "start_window": 3360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-D-1260",
+        "nf_id": "slot-4",
+        "start_window": 1260,
+        "before": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        },
+        "first": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-D-240",
+        "nf_id": "slot-4",
+        "start_window": 240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-D-2460",
+        "nf_id": "slot-4",
+        "start_window": 2460,
+        "before": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        },
+        "first": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-D-3240",
+        "nf_id": "slot-4",
+        "start_window": 3240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-F-1050",
+        "nf_id": "slot-4",
+        "start_window": 1050,
+        "before": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        },
+        "first": {
+          "availability": true,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-F-2160",
+        "nf_id": "slot-4",
+        "start_window": 2160,
+        "before": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        },
+        "first": {
+          "availability": true,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-F-2940",
+        "nf_id": "slot-4",
+        "start_window": 2940,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-F-540",
+        "nf_id": "slot-4",
+        "start_window": 540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-G-1440",
+        "nf_id": "slot-3",
+        "start_window": 1440,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-G-150",
+        "nf_id": "slot-3",
+        "start_window": 150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-G-2850",
+        "nf_id": "slot-3",
+        "start_window": 2850,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-G-60",
+        "nf_id": "slot-3",
+        "start_window": 60,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-R-1950",
+        "nf_id": "slot-4",
+        "start_window": 1950,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-R-3540",
+        "nf_id": "slot-4",
+        "start_window": 3540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-R-360",
+        "nf_id": "slot-4",
+        "start_window": 360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-R-840",
+        "nf_id": "slot-4",
+        "start_window": 840,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S1-1560",
+        "nf_id": "slot-0",
+        "start_window": 1560,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S1-1650",
+        "nf_id": "slot-0",
+        "start_window": 1650,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S1-3450",
+        "nf_id": "slot-0",
+        "start_window": 3450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S1-660",
+        "nf_id": "slot-0",
+        "start_window": 660,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S2-1740",
+        "nf_id": "slot-1",
+        "start_window": 1740,
+        "before": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S2-1860",
+        "nf_id": "slot-1",
+        "start_window": 1860,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S2-2550",
+        "nf_id": "slot-1",
+        "start_window": 2550,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S2-960",
+        "nf_id": "slot-1",
+        "start_window": 960,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S3-2640",
+        "nf_id": "slot-2",
+        "start_window": 2640,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S3-3150",
+        "nf_id": "slot-2",
+        "start_window": 3150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S3-450",
+        "nf_id": "slot-2",
+        "start_window": 450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S3-750",
+        "nf_id": "slot-2",
+        "start_window": 750,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S4-2040",
+        "nf_id": "slot-3",
+        "start_window": 2040,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S4-2250",
+        "nf_id": "slot-3",
+        "start_window": 2250,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S4-2340",
+        "nf_id": "slot-3",
+        "start_window": 2340,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44133-nf32-S4-2760",
+        "nf_id": "slot-3",
+        "start_window": 2760,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      }
+    ],
+    "normal_control_windows": 3440,
+    "normal_missing_original_reports": 288,
+    "normal_original_reports_older_than_250ms": 1587,
+    "normal_reports_aging_past_250ms_after_return": 1491,
+    "normal_reports_already_late_at_return": 96,
+    "normal_post_return_wait_p95_ms": 403.70442867279047,
+    "normal_report_age_p50_ms": 251.87277793884277,
+    "normal_report_age_p95_ms": 432.43334293365467,
+    "growth": [
+      {
+        "episode": "test-44133-nf32-G-1440",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "slow",
+        "load_regime": "higher_load",
+        "windows": 60
+      },
+      {
+        "episode": "test-44133-nf32-G-150",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "intermittent",
+        "load_regime": "reference",
+        "windows": 60
+      },
+      {
+        "episode": "test-44133-nf32-G-2850",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 2,
+        "permitted_windows": 0,
+        "security": true,
+        "availability": false,
+        "operational": true,
+        "security_delay": 4.304344415664673,
+        "operational_delay": 4.304344415664673,
+        "variant": "fast",
+        "load_regime": "bursty_recovery",
+        "windows": 10
+      },
+      {
+        "episode": "test-44133-nf32-G-60",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 20,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "inside_permit",
+        "load_regime": "reference",
+        "windows": 20
+      }
+    ],
+    "false_alarm_reason_counts": {
+      "higher_load/SPLIT": {
+        "separate_tail": 845
+      },
+      "higher_load/PERSIST": {
+        "separate_tail": 845,
+        "temporal_or_control": 1
+      },
+      "higher_load/CARRY": {
+        "separate_tail": 845,
+        "temporal_or_control": 1
+      }
+    },
+    "first_five_false_examples_per_regime_method": {
+      "higher_load/SPLIT": [
+        {
+          "window": 901,
+          "nf": "slot-31",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 902,
+          "nf": "slot-24",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 906,
+          "nf": "slot-19",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 907,
+          "nf": "slot-22",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 909,
+          "nf": "slot-2",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/PERSIST": [
+        {
+          "window": 901,
+          "nf": "slot-31",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 902,
+          "nf": "slot-24",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 906,
+          "nf": "slot-19",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 907,
+          "nf": "slot-22",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 909,
+          "nf": "slot-2",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/CARRY": [
+        {
+          "window": 901,
+          "nf": "slot-31",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 902,
+          "nf": "slot-24",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 906,
+          "nf": "slot-19",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 907,
+          "nf": "slot-22",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 909,
+          "nf": "slot-2",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "run": "robustness-5g-32-33201-42617081721",
+    "actors": 32,
+    "source_seed": 33201,
+    "episode_boundary_states": [
+      {
+        "episode": "test-44233-nf32-C-1140",
+        "nf_id": "slot-4",
+        "start_window": 1140,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-C-1560",
+        "nf_id": "slot-4",
+        "start_window": 1560,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-C-2640",
+        "nf_id": "slot-4",
+        "start_window": 2640,
+        "before": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        },
+        "first": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-C-2850",
+        "nf_id": "slot-4",
+        "start_window": 2850,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-D-2340",
+        "nf_id": "slot-4",
+        "start_window": 2340,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-D-3450",
+        "nf_id": "slot-4",
+        "start_window": 3450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-D-750",
+        "nf_id": "slot-4",
+        "start_window": 750,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-D-960",
+        "nf_id": "slot-4",
+        "start_window": 960,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-F-1260",
+        "nf_id": "slot-4",
+        "start_window": 1260,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-F-3240",
+        "nf_id": "slot-4",
+        "start_window": 3240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-F-3360",
+        "nf_id": "slot-4",
+        "start_window": 3360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-F-660",
+        "nf_id": "slot-4",
+        "start_window": 660,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-G-1740",
+        "nf_id": "slot-3",
+        "start_window": 1740,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-G-540",
+        "nf_id": "slot-3",
+        "start_window": 540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-G-60",
+        "nf_id": "slot-3",
+        "start_window": 60,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-G-840",
+        "nf_id": "slot-3",
+        "start_window": 840,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-R-1050",
+        "nf_id": "slot-4",
+        "start_window": 1050,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-R-1860",
+        "nf_id": "slot-4",
+        "start_window": 1860,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-R-2460",
+        "nf_id": "slot-4",
+        "start_window": 2460,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-R-3150",
+        "nf_id": "slot-4",
+        "start_window": 3150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S1-1950",
+        "nf_id": "slot-0",
+        "start_window": 1950,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S1-2040",
+        "nf_id": "slot-0",
+        "start_window": 2040,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S1-2940",
+        "nf_id": "slot-0",
+        "start_window": 2940,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S1-3540",
+        "nf_id": "slot-0",
+        "start_window": 3540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S2-1350",
+        "nf_id": "slot-1",
+        "start_window": 1350,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S2-150",
+        "nf_id": "slot-1",
+        "start_window": 150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S2-240",
+        "nf_id": "slot-1",
+        "start_window": 240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S2-3060",
+        "nf_id": "slot-1",
+        "start_window": 3060,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S3-1650",
+        "nf_id": "slot-2",
+        "start_window": 1650,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S3-2250",
+        "nf_id": "slot-2",
+        "start_window": 2250,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S3-2760",
+        "nf_id": "slot-2",
+        "start_window": 2760,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S3-360",
+        "nf_id": "slot-2",
+        "start_window": 360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S4-1440",
+        "nf_id": "slot-3",
+        "start_window": 1440,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S4-2160",
+        "nf_id": "slot-3",
+        "start_window": 2160,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S4-2550",
+        "nf_id": "slot-3",
+        "start_window": 2550,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44233-nf32-S4-450",
+        "nf_id": "slot-3",
+        "start_window": 450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      }
+    ],
+    "normal_control_windows": 3440,
+    "normal_missing_original_reports": 288,
+    "normal_original_reports_older_than_250ms": 464,
+    "normal_reports_aging_past_250ms_after_return": 368,
+    "normal_reports_already_late_at_return": 96,
+    "normal_post_return_wait_p95_ms": 282.886278629303,
+    "normal_report_age_p50_ms": 177.3974895477295,
+    "normal_report_age_p95_ms": 307.1610569953918,
+    "growth": [
+      {
+        "episode": "test-44233-nf32-G-1740",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 2,
+        "permitted_windows": 0,
+        "security": true,
+        "availability": false,
+        "operational": true,
+        "security_delay": 5.2291953563690186,
+        "operational_delay": 5.2291953563690186,
+        "variant": "fast",
+        "load_regime": "higher_load",
+        "windows": 10
+      },
+      {
+        "episode": "test-44233-nf32-G-540",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "intermittent",
+        "load_regime": "reference",
+        "windows": 60
+      },
+      {
+        "episode": "test-44233-nf32-G-60",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 20,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "inside_permit",
+        "load_regime": "reference",
+        "windows": 20
+      },
+      {
+        "episode": "test-44233-nf32-G-840",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "slow",
+        "load_regime": "reference",
+        "windows": 60
+      }
+    ],
+    "false_alarm_reason_counts": {
+      "higher_load/SPLIT": {
+        "separate_tail": 838
+      },
+      "higher_load/PERSIST": {
+        "separate_tail": 838
+      },
+      "higher_load/CARRY": {
+        "separate_tail": 838
+      }
+    },
+    "first_five_false_examples_per_regime_method": {
+      "higher_load/SPLIT": [
+        {
+          "window": 900,
+          "nf": "slot-9",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-18",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-24",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-29",
+          "signals": {
+            "carry": 1.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/PERSIST": [
+        {
+          "window": 900,
+          "nf": "slot-9",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-18",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-24",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-29",
+          "signals": {
+            "carry": 1.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/CARRY": [
+        {
+          "window": 900,
+          "nf": "slot-9",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-18",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-24",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 901,
+          "nf": "slot-29",
+          "signals": {
+            "carry": 1.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "run": "robustness-5g-32-33301-42617081721",
+    "actors": 32,
+    "source_seed": 33301,
+    "episode_boundary_states": [
+      {
+        "episode": "test-44333-nf32-C-2340",
+        "nf_id": "slot-4",
+        "start_window": 2340,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-C-2550",
+        "nf_id": "slot-4",
+        "start_window": 2550,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-C-2940",
+        "nf_id": "slot-4",
+        "start_window": 2940,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-C-3360",
+        "nf_id": "slot-4",
+        "start_window": 3360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-D-1950",
+        "nf_id": "slot-4",
+        "start_window": 1950,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-D-2040",
+        "nf_id": "slot-4",
+        "start_window": 2040,
+        "before": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        },
+        "first": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-D-2640",
+        "nf_id": "slot-4",
+        "start_window": 2640,
+        "before": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        },
+        "first": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-D-3540",
+        "nf_id": "slot-4",
+        "start_window": 3540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-F-1650",
+        "nf_id": "slot-4",
+        "start_window": 1650,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-F-2460",
+        "nf_id": "slot-4",
+        "start_window": 2460,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-F-3150",
+        "nf_id": "slot-4",
+        "start_window": 3150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-F-660",
+        "nf_id": "slot-4",
+        "start_window": 660,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-G-150",
+        "nf_id": "slot-3",
+        "start_window": 150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-G-1740",
+        "nf_id": "slot-3",
+        "start_window": 1740,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-G-240",
+        "nf_id": "slot-3",
+        "start_window": 240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-G-60",
+        "nf_id": "slot-3",
+        "start_window": 60,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-R-1140",
+        "nf_id": "slot-4",
+        "start_window": 1140,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        },
+        "first": {
+          "availability": true,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-R-1260",
+        "nf_id": "slot-4",
+        "start_window": 1260,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-R-2160",
+        "nf_id": "slot-4",
+        "start_window": 2160,
+        "before": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        },
+        "first": {
+          "availability": true,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-R-840",
+        "nf_id": "slot-4",
+        "start_window": 840,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S1-1560",
+        "nf_id": "slot-0",
+        "start_window": 1560,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S1-2760",
+        "nf_id": "slot-0",
+        "start_window": 2760,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S1-450",
+        "nf_id": "slot-0",
+        "start_window": 450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S1-540",
+        "nf_id": "slot-0",
+        "start_window": 540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S2-1050",
+        "nf_id": "slot-1",
+        "start_window": 1050,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S2-1350",
+        "nf_id": "slot-1",
+        "start_window": 1350,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S2-2250",
+        "nf_id": "slot-1",
+        "start_window": 2250,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S2-3060",
+        "nf_id": "slot-1",
+        "start_window": 3060,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S3-1440",
+        "nf_id": "slot-2",
+        "start_window": 1440,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S3-1860",
+        "nf_id": "slot-2",
+        "start_window": 1860,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S3-2850",
+        "nf_id": "slot-2",
+        "start_window": 2850,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S3-750",
+        "nf_id": "slot-2",
+        "start_window": 750,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S4-3240",
+        "nf_id": "slot-3",
+        "start_window": 3240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S4-3450",
+        "nf_id": "slot-3",
+        "start_window": 3450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S4-360",
+        "nf_id": "slot-3",
+        "start_window": 360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44333-nf32-S4-960",
+        "nf_id": "slot-3",
+        "start_window": 960,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      }
+    ],
+    "normal_control_windows": 3440,
+    "normal_missing_original_reports": 288,
+    "normal_original_reports_older_than_250ms": 805,
+    "normal_reports_aging_past_250ms_after_return": 709,
+    "normal_reports_already_late_at_return": 96,
+    "normal_post_return_wait_p95_ms": 313.36556673049927,
+    "normal_report_age_p50_ms": 200.32787322998047,
+    "normal_report_age_p95_ms": 343.6594367027282,
+    "growth": [
+      {
+        "episode": "test-44333-nf32-G-150",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "slow",
+        "load_regime": "reference",
+        "windows": 60
+      },
+      {
+        "episode": "test-44333-nf32-G-1740",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 2,
+        "permitted_windows": 0,
+        "security": true,
+        "availability": false,
+        "operational": true,
+        "security_delay": 4.257211685180664,
+        "operational_delay": 4.257211685180664,
+        "variant": "fast",
+        "load_regime": "higher_load",
+        "windows": 10
+      },
+      {
+        "episode": "test-44333-nf32-G-240",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "intermittent",
+        "load_regime": "reference",
+        "windows": 60
+      },
+      {
+        "episode": "test-44333-nf32-G-60",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 20,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "inside_permit",
+        "load_regime": "reference",
+        "windows": 20
+      }
+    ],
+    "false_alarm_reason_counts": {
+      "reference/CARRY": {
+        "temporal_or_control": 1
+      },
+      "higher_load/SPLIT": {
+        "separate_tail": 813
+      },
+      "higher_load/PERSIST": {
+        "separate_tail": 813
+      },
+      "higher_load/CARRY": {
+        "separate_tail": 813,
+        "temporal_or_control": 11
+      },
+      "bursty_recovery/CARRY": {
+        "temporal_or_control": 1
+      }
+    },
+    "first_five_false_examples_per_regime_method": {
+      "reference/CARRY": [
+        {
+          "window": 809,
+          "nf": "slot-13",
+          "signals": {
+            "carry": 2.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": false
+          }
+        }
+      ],
+      "higher_load/SPLIT": [
+        {
+          "window": 901,
+          "nf": "slot-12",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 902,
+          "nf": "slot-9",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 903,
+          "nf": "slot-27",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 904,
+          "nf": "slot-21",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 905,
+          "nf": "slot-28",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/PERSIST": [
+        {
+          "window": 901,
+          "nf": "slot-12",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 902,
+          "nf": "slot-9",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 903,
+          "nf": "slot-27",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 904,
+          "nf": "slot-21",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 905,
+          "nf": "slot-28",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/CARRY": [
+        {
+          "window": 901,
+          "nf": "slot-12",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 902,
+          "nf": "slot-9",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 903,
+          "nf": "slot-27",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 904,
+          "nf": "slot-21",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 905,
+          "nf": "slot-28",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "bursty_recovery/CARRY": [
+        {
+          "window": 3564,
+          "nf": "slot-8",
+          "signals": {
+            "carry": 2.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "run": "robustness-5g-8-33101-42617081721",
+    "actors": 8,
+    "source_seed": 33101,
+    "episode_boundary_states": [
+      {
+        "episode": "test-44109-nf8-C-2340",
+        "nf_id": "slot-4",
+        "start_window": 2340,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-C-2760",
+        "nf_id": "slot-4",
+        "start_window": 2760,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-C-3060",
+        "nf_id": "slot-4",
+        "start_window": 3060,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-C-540",
+        "nf_id": "slot-4",
+        "start_window": 540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-D-1740",
+        "nf_id": "slot-4",
+        "start_window": 1740,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-D-2460",
+        "nf_id": "slot-4",
+        "start_window": 2460,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-D-2850",
+        "nf_id": "slot-4",
+        "start_window": 2850,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-D-840",
+        "nf_id": "slot-4",
+        "start_window": 840,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-F-1440",
+        "nf_id": "slot-4",
+        "start_window": 1440,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-F-1560",
+        "nf_id": "slot-4",
+        "start_window": 1560,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-F-1860",
+        "nf_id": "slot-4",
+        "start_window": 1860,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-F-2040",
+        "nf_id": "slot-4",
+        "start_window": 2040,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-G-1050",
+        "nf_id": "slot-3",
+        "start_window": 1050,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-G-3240",
+        "nf_id": "slot-3",
+        "start_window": 3240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-G-3450",
+        "nf_id": "slot-3",
+        "start_window": 3450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-G-60",
+        "nf_id": "slot-3",
+        "start_window": 60,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-R-1140",
+        "nf_id": "slot-4",
+        "start_window": 1140,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-R-2250",
+        "nf_id": "slot-4",
+        "start_window": 2250,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-R-2640",
+        "nf_id": "slot-4",
+        "start_window": 2640,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-R-3150",
+        "nf_id": "slot-4",
+        "start_window": 3150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S1-1950",
+        "nf_id": "slot-0",
+        "start_window": 1950,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S1-2160",
+        "nf_id": "slot-0",
+        "start_window": 2160,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S1-2940",
+        "nf_id": "slot-0",
+        "start_window": 2940,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S1-960",
+        "nf_id": "slot-0",
+        "start_window": 960,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S2-1260",
+        "nf_id": "slot-1",
+        "start_window": 1260,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S2-1350",
+        "nf_id": "slot-1",
+        "start_window": 1350,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S2-240",
+        "nf_id": "slot-1",
+        "start_window": 240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S2-3360",
+        "nf_id": "slot-1",
+        "start_window": 3360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S3-1650",
+        "nf_id": "slot-2",
+        "start_window": 1650,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S3-2550",
+        "nf_id": "slot-2",
+        "start_window": 2550,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S3-450",
+        "nf_id": "slot-2",
+        "start_window": 450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S3-750",
+        "nf_id": "slot-2",
+        "start_window": 750,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S4-150",
+        "nf_id": "slot-3",
+        "start_window": 150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S4-3540",
+        "nf_id": "slot-3",
+        "start_window": 3540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S4-360",
+        "nf_id": "slot-3",
+        "start_window": 360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44109-nf8-S4-660",
+        "nf_id": "slot-3",
+        "start_window": 660,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      }
+    ],
+    "normal_control_windows": 3440,
+    "normal_missing_original_reports": 288,
+    "normal_original_reports_older_than_250ms": 96,
+    "normal_reports_aging_past_250ms_after_return": 0,
+    "normal_reports_already_late_at_return": 96,
+    "normal_post_return_wait_p95_ms": 73.09457063674927,
+    "normal_report_age_p50_ms": 49.90661144256592,
+    "normal_report_age_p95_ms": 78.90192270278928,
+    "growth": [
+      {
+        "episode": "test-44109-nf8-G-1050",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "intermittent",
+        "load_regime": "higher_load",
+        "windows": 60
+      },
+      {
+        "episode": "test-44109-nf8-G-3240",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "slow",
+        "load_regime": "bursty_recovery",
+        "windows": 60
+      },
+      {
+        "episode": "test-44109-nf8-G-3450",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 2,
+        "permitted_windows": 0,
+        "security": true,
+        "availability": false,
+        "operational": true,
+        "security_delay": 4.083237648010254,
+        "operational_delay": 4.083237648010254,
+        "variant": "fast",
+        "load_regime": "bursty_recovery",
+        "windows": 10
+      },
+      {
+        "episode": "test-44109-nf8-G-60",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 20,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "inside_permit",
+        "load_regime": "reference",
+        "windows": 20
+      }
+    ],
+    "false_alarm_reason_counts": {
+      "higher_load/SPLIT": {
+        "separate_tail": 207
+      },
+      "higher_load/PERSIST": {
+        "separate_tail": 207
+      },
+      "higher_load/CARRY": {
+        "separate_tail": 207
+      }
+    },
+    "first_five_false_examples_per_regime_method": {
+      "higher_load/SPLIT": [
+        {
+          "window": 900,
+          "nf": "slot-2",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 904,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 905,
+          "nf": "slot-2",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 910,
+          "nf": "slot-5",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 931,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/PERSIST": [
+        {
+          "window": 900,
+          "nf": "slot-2",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 904,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 905,
+          "nf": "slot-2",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 910,
+          "nf": "slot-5",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 931,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/CARRY": [
+        {
+          "window": 900,
+          "nf": "slot-2",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 904,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 905,
+          "nf": "slot-2",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 910,
+          "nf": "slot-5",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 931,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "run": "robustness-5g-8-33201-42617081721",
+    "actors": 8,
+    "source_seed": 33201,
+    "episode_boundary_states": [
+      {
+        "episode": "test-44209-nf8-C-2340",
+        "nf_id": "slot-4",
+        "start_window": 2340,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-C-2760",
+        "nf_id": "slot-4",
+        "start_window": 2760,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-C-2850",
+        "nf_id": "slot-4",
+        "start_window": 2850,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-C-360",
+        "nf_id": "slot-4",
+        "start_window": 360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-D-1350",
+        "nf_id": "slot-4",
+        "start_window": 1350,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-D-1950",
+        "nf_id": "slot-4",
+        "start_window": 1950,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-D-2460",
+        "nf_id": "slot-4",
+        "start_window": 2460,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-D-3450",
+        "nf_id": "slot-4",
+        "start_window": 3450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-F-2550",
+        "nf_id": "slot-4",
+        "start_window": 2550,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-F-2640",
+        "nf_id": "slot-4",
+        "start_window": 2640,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-F-450",
+        "nf_id": "slot-4",
+        "start_window": 450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-F-750",
+        "nf_id": "slot-4",
+        "start_window": 750,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-G-1050",
+        "nf_id": "slot-3",
+        "start_window": 1050,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-G-150",
+        "nf_id": "slot-3",
+        "start_window": 150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-G-3540",
+        "nf_id": "slot-3",
+        "start_window": 3540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-G-60",
+        "nf_id": "slot-3",
+        "start_window": 60,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-R-1140",
+        "nf_id": "slot-4",
+        "start_window": 1140,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-R-1860",
+        "nf_id": "slot-4",
+        "start_window": 1860,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-R-2160",
+        "nf_id": "slot-4",
+        "start_window": 2160,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-R-840",
+        "nf_id": "slot-4",
+        "start_window": 840,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S1-2250",
+        "nf_id": "slot-0",
+        "start_window": 2250,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S1-3060",
+        "nf_id": "slot-0",
+        "start_window": 3060,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S1-3150",
+        "nf_id": "slot-0",
+        "start_window": 3150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S1-660",
+        "nf_id": "slot-0",
+        "start_window": 660,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S2-240",
+        "nf_id": "slot-1",
+        "start_window": 240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S2-3360",
+        "nf_id": "slot-1",
+        "start_window": 3360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S2-540",
+        "nf_id": "slot-1",
+        "start_window": 540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S2-960",
+        "nf_id": "slot-1",
+        "start_window": 960,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S3-1440",
+        "nf_id": "slot-2",
+        "start_window": 1440,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S3-1650",
+        "nf_id": "slot-2",
+        "start_window": 1650,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S3-2040",
+        "nf_id": "slot-2",
+        "start_window": 2040,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S3-3240",
+        "nf_id": "slot-2",
+        "start_window": 3240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S4-1260",
+        "nf_id": "slot-3",
+        "start_window": 1260,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S4-1560",
+        "nf_id": "slot-3",
+        "start_window": 1560,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S4-1740",
+        "nf_id": "slot-3",
+        "start_window": 1740,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44209-nf8-S4-2940",
+        "nf_id": "slot-3",
+        "start_window": 2940,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      }
+    ],
+    "normal_control_windows": 3440,
+    "normal_missing_original_reports": 288,
+    "normal_original_reports_older_than_250ms": 96,
+    "normal_reports_aging_past_250ms_after_return": 0,
+    "normal_reports_already_late_at_return": 96,
+    "normal_post_return_wait_p95_ms": 51.50890350341796,
+    "normal_report_age_p50_ms": 35.89022159576416,
+    "normal_report_age_p95_ms": 55.67401647567746,
+    "growth": [
+      {
+        "episode": "test-44209-nf8-G-1050",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "slow",
+        "load_regime": "higher_load",
+        "windows": 60
+      },
+      {
+        "episode": "test-44209-nf8-G-150",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "intermittent",
+        "load_regime": "reference",
+        "windows": 60
+      },
+      {
+        "episode": "test-44209-nf8-G-3540",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 2,
+        "permitted_windows": 0,
+        "security": true,
+        "availability": false,
+        "operational": true,
+        "security_delay": 5.061036586761475,
+        "operational_delay": 5.061036586761475,
+        "variant": "fast",
+        "load_regime": "bursty_recovery",
+        "windows": 10
+      },
+      {
+        "episode": "test-44209-nf8-G-60",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 20,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "inside_permit",
+        "load_regime": "reference",
+        "windows": 20
+      }
+    ],
+    "false_alarm_reason_counts": {
+      "higher_load/SPLIT": {
+        "separate_tail": 194
+      },
+      "higher_load/PERSIST": {
+        "separate_tail": 194
+      },
+      "higher_load/CARRY": {
+        "separate_tail": 194
+      }
+    },
+    "first_five_false_examples_per_regime_method": {
+      "higher_load/SPLIT": [
+        {
+          "window": 904,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 905,
+          "nf": "slot-5",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 919,
+          "nf": "slot-7",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 921,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 928,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/PERSIST": [
+        {
+          "window": 904,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 905,
+          "nf": "slot-5",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 919,
+          "nf": "slot-7",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 921,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 928,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/CARRY": [
+        {
+          "window": 904,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 905,
+          "nf": "slot-5",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 919,
+          "nf": "slot-7",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 921,
+          "nf": "slot-1",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 928,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "run": "robustness-5g-8-33301-42617081721",
+    "actors": 8,
+    "source_seed": 33301,
+    "episode_boundary_states": [
+      {
+        "episode": "test-44309-nf8-C-1260",
+        "nf_id": "slot-4",
+        "start_window": 1260,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-C-2250",
+        "nf_id": "slot-4",
+        "start_window": 2250,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-C-3240",
+        "nf_id": "slot-4",
+        "start_window": 3240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-C-3540",
+        "nf_id": "slot-4",
+        "start_window": 3540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-D-240",
+        "nf_id": "slot-4",
+        "start_window": 240,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-D-2550",
+        "nf_id": "slot-4",
+        "start_window": 2550,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-D-3150",
+        "nf_id": "slot-4",
+        "start_window": 3150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-D-450",
+        "nf_id": "slot-4",
+        "start_window": 450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-F-1350",
+        "nf_id": "slot-4",
+        "start_window": 1350,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-F-1950",
+        "nf_id": "slot-4",
+        "start_window": 1950,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-F-2460",
+        "nf_id": "slot-4",
+        "start_window": 2460,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-F-750",
+        "nf_id": "slot-4",
+        "start_window": 750,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-G-150",
+        "nf_id": "slot-3",
+        "start_window": 150,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-G-1560",
+        "nf_id": "slot-3",
+        "start_window": 1560,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-G-2940",
+        "nf_id": "slot-3",
+        "start_window": 2940,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-G-60",
+        "nf_id": "slot-3",
+        "start_window": 60,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-R-2040",
+        "nf_id": "slot-4",
+        "start_window": 2040,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-R-2340",
+        "nf_id": "slot-4",
+        "start_window": 2340,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-R-2640",
+        "nf_id": "slot-4",
+        "start_window": 2640,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-R-840",
+        "nf_id": "slot-4",
+        "start_window": 840,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S1-1140",
+        "nf_id": "slot-0",
+        "start_window": 1140,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S1-1650",
+        "nf_id": "slot-0",
+        "start_window": 1650,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S1-3060",
+        "nf_id": "slot-0",
+        "start_window": 3060,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S1-360",
+        "nf_id": "slot-0",
+        "start_window": 360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S2-1050",
+        "nf_id": "slot-1",
+        "start_window": 1050,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S2-1440",
+        "nf_id": "slot-1",
+        "start_window": 1440,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S2-1740",
+        "nf_id": "slot-1",
+        "start_window": 1740,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S2-1860",
+        "nf_id": "slot-1",
+        "start_window": 1860,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S3-2160",
+        "nf_id": "slot-2",
+        "start_window": 2160,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S3-2760",
+        "nf_id": "slot-2",
+        "start_window": 2760,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S3-2850",
+        "nf_id": "slot-2",
+        "start_window": 2850,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S3-660",
+        "nf_id": "slot-2",
+        "start_window": 660,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S4-3360",
+        "nf_id": "slot-3",
+        "start_window": 3360,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S4-3450",
+        "nf_id": "slot-3",
+        "start_window": 3450,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S4-540",
+        "nf_id": "slot-3",
+        "start_window": 540,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "episode": "test-44309-nf8-S4-960",
+        "nf_id": "slot-3",
+        "start_window": 960,
+        "before": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        },
+        "first": {
+          "availability": false,
+          "security": true,
+          "state": "security"
+        }
+      }
+    ],
+    "normal_control_windows": 3440,
+    "normal_missing_original_reports": 288,
+    "normal_original_reports_older_than_250ms": 96,
+    "normal_reports_aging_past_250ms_after_return": 0,
+    "normal_reports_already_late_at_return": 96,
+    "normal_post_return_wait_p95_ms": 34.23795700073242,
+    "normal_report_age_p50_ms": 23.986458778381348,
+    "normal_report_age_p95_ms": 37.88628578186032,
+    "growth": [
+      {
+        "episode": "test-44309-nf8-G-150",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "intermittent",
+        "load_regime": "reference",
+        "windows": 60
+      },
+      {
+        "episode": "test-44309-nf8-G-1560",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 2,
+        "permitted_windows": 10,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "fast",
+        "load_regime": "higher_load",
+        "windows": 10
+      },
+      {
+        "episode": "test-44309-nf8-G-2940",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 0,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "slow",
+        "load_regime": "bursty_recovery",
+        "windows": 60
+      },
+      {
+        "episode": "test-44309-nf8-G-60",
+        "scenario": "G",
+        "method": "CARRY",
+        "ramp_step": 1,
+        "permitted_windows": 20,
+        "security": false,
+        "availability": false,
+        "operational": false,
+        "security_delay": null,
+        "operational_delay": null,
+        "variant": "inside_permit",
+        "load_regime": "reference",
+        "windows": 20
+      }
+    ],
+    "false_alarm_reason_counts": {
+      "higher_load/SPLIT": {
+        "separate_tail": 166
+      },
+      "higher_load/PERSIST": {
+        "separate_tail": 166
+      },
+      "higher_load/CARRY": {
+        "separate_tail": 166,
+        "temporal_or_control": 1
+      },
+      "bursty_recovery/CARRY": {
+        "temporal_or_control": 1
+      }
+    },
+    "first_five_false_examples_per_regime_method": {
+      "higher_load/SPLIT": [
+        {
+          "window": 907,
+          "nf": "slot-5",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 910,
+          "nf": "slot-2",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 918,
+          "nf": "slot-7",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 921,
+          "nf": "slot-3",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 926,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/PERSIST": [
+        {
+          "window": 907,
+          "nf": "slot-5",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 910,
+          "nf": "slot-2",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 918,
+          "nf": "slot-7",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 921,
+          "nf": "slot-3",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 926,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "higher_load/CARRY": [
+        {
+          "window": 907,
+          "nf": "slot-5",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 910,
+          "nf": "slot-2",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 918,
+          "nf": "slot-7",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 921,
+          "nf": "slot-3",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        },
+        {
+          "window": 926,
+          "nf": "slot-6",
+          "signals": {
+            "carry": 0.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": true
+          }
+        }
+      ],
+      "bursty_recovery/CARRY": [
+        {
+          "window": 3149,
+          "nf": "slot-0",
+          "signals": {
+            "carry": 2.0,
+            "permit_valid": false,
+            "persistence": 0.0,
+            "semantic": false,
+            "separate_tail": false
+          }
+        }
+      ]
+    }
+  }
+]

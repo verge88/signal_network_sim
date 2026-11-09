@@ -1,0 +1,74 @@
+[
+  {
+    "name": "robustness-5g-16-33101-42617081721.zip",
+    "size": 56375771,
+    "github_digest": "sha256:01513615bc11f6b987bd3e1a7ae1818fe8a0f775b20905b5ec5bb40f7bb21379",
+    "local_digest": "sha256:01513615bc11f6b987bd3e1a7ae1818fe8a0f775b20905b5ec5bb40f7bb21379",
+    "matches": true,
+    "all_audit_checks_pass": true
+  },
+  {
+    "name": "robustness-5g-8-33201-42617081721.zip",
+    "size": 33035312,
+    "github_digest": "sha256:41feac012e6db3a861b37c3d285c6cdf8b93a4e051c72331bfecbfd5e39f0f4a",
+    "local_digest": "sha256:41feac012e6db3a861b37c3d285c6cdf8b93a4e051c72331bfecbfd5e39f0f4a",
+    "matches": true,
+    "all_audit_checks_pass": true
+  },
+  {
+    "name": "robustness-5g-16-33301-42617081721.zip",
+    "size": 56732258,
+    "github_digest": "sha256:392bfe9dbc77a6585a69f7de45bf64988154afeb6c51bae89203b60b5b8e455b",
+    "local_digest": "sha256:392bfe9dbc77a6585a69f7de45bf64988154afeb6c51bae89203b60b5b8e455b",
+    "matches": true,
+    "all_audit_checks_pass": true
+  },
+  {
+    "name": "robustness-5g-16-33201-42617081721.zip",
+    "size": 56791421,
+    "github_digest": "sha256:8fbceec66fa223027d6eb86447d8c92bb2ddf08d53a3fc2bc2a16b8fbf176844",
+    "local_digest": "sha256:8fbceec66fa223027d6eb86447d8c92bb2ddf08d53a3fc2bc2a16b8fbf176844",
+    "matches": true,
+    "all_audit_checks_pass": true
+  },
+  {
+    "name": "robustness-5g-8-33101-42617081721.zip",
+    "size": 33204674,
+    "github_digest": "sha256:662c4edbdeac3f15462274de43be1e314220a285642c53339682c69ee2335868",
+    "local_digest": "sha256:662c4edbdeac3f15462274de43be1e314220a285642c53339682c69ee2335868",
+    "matches": true,
+    "all_audit_checks_pass": true
+  },
+  {
+    "name": "robustness-5g-32-33301-42617081721.zip",
+    "size": 103880485,
+    "github_digest": "sha256:4bda12c94988731e615f77f5b5d50456c03cb7c05fe42e82e9513fd18d6952e5",
+    "local_digest": "sha256:4bda12c94988731e615f77f5b5d50456c03cb7c05fe42e82e9513fd18d6952e5",
+    "matches": true,
+    "all_audit_checks_pass": true
+  },
+  {
+    "name": "robustness-5g-8-33301-42617081721.zip",
+    "size": 32975883,
+    "github_digest": "sha256:6c310a63a5ba6ec297f3019a04e16128fc26c0a7e9abb3e08aed9af37eb33ae6",
+    "local_digest": "sha256:6c310a63a5ba6ec297f3019a04e16128fc26c0a7e9abb3e08aed9af37eb33ae6",
+    "matches": true,
+    "all_audit_checks_pass": true
+  },
+  {
+    "name": "robustness-5g-32-33201-42617081721.zip",
+    "size": 103382439,
+    "github_digest": "sha256:1eeaca4646b44af5b5fcaa794db5b9b6f9c2632a48754962a0427530d73d4731",
+    "local_digest": "sha256:1eeaca4646b44af5b5fcaa794db5b9b6f9c2632a48754962a0427530d73d4731",
+    "matches": true,
+    "all_audit_checks_pass": true
+  },
+  {
+    "name": "robustness-5g-32-33101-42617081721.zip",
+    "size": 103870689,
+    "github_digest": "sha256:8913edfb2596fbdd32a6185af8fb0c870f38a5634be14bbb536ea8fee6b56b6c",
+    "local_digest": "sha256:8913edfb2596fbdd32a6185af8fb0c870f38a5634be14bbb536ea8fee6b56b6c",
+    "matches": true,
+    "all_audit_checks_pass": true
+  }
+]

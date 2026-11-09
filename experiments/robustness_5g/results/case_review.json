@@ -1,0 +1,668 @@
+[
+  {
+    "episode": {
+      "episode": "test-44133-nf32-C-1140",
+      "scenario": "C",
+      "method": "CARRY",
+      "ramp_step": null,
+      "permitted_windows": 0,
+      "security": false,
+      "availability": true,
+      "operational": true,
+      "security_delay": null,
+      "operational_delay": 0.41089797019958496,
+      "variant": "standard",
+      "load_regime": "higher_load",
+      "windows": 10,
+      "actors": 32,
+      "source_seed": 33101
+    },
+    "nf_id": "slot-4",
+    "rows": [
+      {
+        "window_id": 1140,
+        "request_count": 11,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 347.0332622528076,
+        "delivered_missing": false,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "window_id": 1141,
+        "request_count": 5,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 312.41345405578613,
+        "delivered_missing": false,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "window_id": 1142,
+        "request_count": 10,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 344.3291187286377,
+        "delivered_missing": false,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "window_id": 1143,
+        "request_count": 37,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 278.99980545043945,
+        "delivered_missing": false,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "window_id": 1144,
+        "request_count": 13,
+        "error_count": 1,
+        "update_count": 1,
+        "original_report_age_ms": 380.04064559936523,
+        "delivered_missing": false,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "window_id": 1145,
+        "request_count": 32,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 295.8180904388428,
+        "delivered_missing": false,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "window_id": 1146,
+        "request_count": 12,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 363.1737232208252,
+        "delivered_missing": false,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "window_id": 1147,
+        "request_count": 5,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 351.168155670166,
+        "delivered_missing": false,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "window_id": 1148,
+        "request_count": 6,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 317.5382614135742,
+        "delivered_missing": false,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "window_id": 1149,
+        "request_count": 5,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 359.7698211669922,
+        "delivered_missing": false,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      }
+    ]
+  },
+  {
+    "episode": {
+      "episode": "test-44233-nf32-D-960",
+      "scenario": "D",
+      "method": "CARRY",
+      "ramp_step": null,
+      "permitted_windows": 0,
+      "security": true,
+      "availability": true,
+      "operational": true,
+      "security_delay": 5.267770051956177,
+      "operational_delay": 5.267770051956177,
+      "variant": "standard",
+      "load_regime": "higher_load",
+      "windows": 10,
+      "actors": 32,
+      "source_seed": 33201
+    },
+    "nf_id": "slot-4",
+    "rows": [
+      {
+        "window_id": 960,
+        "request_count": 5,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 219.0542221069336,
+        "delivered_missing": true,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "window_id": 961,
+        "request_count": 11,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 209.9604606628418,
+        "delivered_missing": true,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "window_id": 962,
+        "request_count": 5,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 232.2382926940918,
+        "delivered_missing": true,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "window_id": 963,
+        "request_count": 8,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 226.91059112548828,
+        "delivered_missing": true,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "window_id": 964,
+        "request_count": 12,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 215.65556526184082,
+        "delivered_missing": true,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "unknown"
+        }
+      },
+      {
+        "window_id": 965,
+        "request_count": 42,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 203.26900482177734,
+        "delivered_missing": true,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "output": {
+          "availability": true,
+          "security": true,
+          "state": "security"
+        }
+      },
+      {
+        "window_id": 966,
+        "request_count": 10,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 266.5131092071533,
+        "delivered_missing": true,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "window_id": 967,
+        "request_count": 5,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 231.8253517150879,
+        "delivered_missing": true,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "window_id": 968,
+        "request_count": 5,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 249.34840202331543,
+        "delivered_missing": true,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      },
+      {
+        "window_id": 969,
+        "request_count": 10,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": 234.89093780517578,
+        "delivered_missing": true,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": true,
+          "security": false,
+          "state": "availability"
+        }
+      }
+    ]
+  },
+  {
+    "episode": {
+      "episode": "test-44309-nf8-G-1560",
+      "scenario": "G",
+      "method": "CARRY",
+      "ramp_step": 2,
+      "permitted_windows": 10,
+      "security": false,
+      "availability": false,
+      "operational": false,
+      "security_delay": null,
+      "operational_delay": null,
+      "variant": "fast",
+      "load_regime": "higher_load",
+      "windows": 10,
+      "actors": 8,
+      "source_seed": 33301
+    },
+    "nf_id": "slot-3",
+    "rows": [
+      {
+        "window_id": 1560,
+        "request_count": 5,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": null,
+        "delivered_missing": null,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "window_id": 1561,
+        "request_count": 7,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": null,
+        "delivered_missing": null,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "window_id": 1562,
+        "request_count": 9,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": null,
+        "delivered_missing": null,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "window_id": 1563,
+        "request_count": 11,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": null,
+        "delivered_missing": null,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "window_id": 1564,
+        "request_count": 13,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": null,
+        "delivered_missing": null,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "window_id": 1565,
+        "request_count": 15,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": null,
+        "delivered_missing": null,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "window_id": 1566,
+        "request_count": 17,
+        "error_count": 1,
+        "update_count": 1,
+        "original_report_age_ms": null,
+        "delivered_missing": null,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "window_id": 1567,
+        "request_count": 19,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": null,
+        "delivered_missing": null,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "window_id": 1568,
+        "request_count": 21,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": null,
+        "delivered_missing": null,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      },
+      {
+        "window_id": 1569,
+        "request_count": 23,
+        "error_count": 0,
+        "update_count": 1,
+        "original_report_age_ms": null,
+        "delivered_missing": null,
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "output": {
+          "availability": false,
+          "security": false,
+          "state": "normal"
+        }
+      }
+    ]
+  }
+]
