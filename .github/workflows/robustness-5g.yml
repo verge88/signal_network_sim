@@ -1,0 +1,61 @@
+name: Frozen 5G detector one-hour scale and shift validation
+on:
+  push:
+    branches: ['codex/live-5g-validation-20261107']
+    paths: ['experiments/robustness_5g/**', '.github/workflows/robustness-5g.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  live:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      max-parallel: 9
+      matrix:
+        actors: [8,16,32]
+        source_seed: [33101,33201,33301]
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports: ['27017:27017']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r experiments/live_5g/requirements.txt
+      - run: python -m pytest experiments/live_5g experiments/integrated_5g experiments/resilient_5g experiments/calibrated_5g experiments/calibrated_5g_v2 experiments/robustness_5g -q
+      - name: Fetch previously confirmed frozen evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 42577623990 --repo verge88/signal_network_sim --name calibrated-v2-5g-${{ matrix.source_seed }}-42577623990 --dir previous
+          python -m experiments.robustness_5g.prepare previous evidence ${{ matrix.source_seed }}
+          git rev-parse HEAD > evidence/source_commit.txt
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: open5gs-2.7.6.tar.gz
+          key: open5gs-d9d3abdd-ubuntu22-build-v1
+      - if: steps.cache.outputs.cache-hit != 'true'
+        run: bash experiments/live_5g/setup_open5gs.sh build
+      - run: bash experiments/live_5g/setup_open5gs.sh runtime
+      - name: One-hour test with unchanged models and thresholds
+        run: python -m experiments.robustness_5g.collect --phase test --seed $(( ${{ matrix.source_seed }} + 11000 + ${{ matrix.actors }} )) --out evidence/test --windows 3600 --actors ${{ matrix.actors }} --frozen evidence/frozen
+      - name: Independent replay and distribution-shift audit
+        run: python -m experiments.robustness_5g.audit evidence
+      - name: Diagnostics
+        if: always()
+        run: |
+          mkdir -p evidence
+          sudo journalctl --no-pager -u 'open5gs-*' > evidence/services.log
+          systemctl list-units --all --no-pager --full --type=service 'open5gs-*' > evidence/service_status.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: robustness-5g-${{ matrix.actors }}-${{ matrix.source_seed }}-${{ github.run_id }}
+          path: evidence/
+          retention-days: 30
