@@ -37,13 +37,13 @@ def run(root):
     checks['separate_calibration']=thresholds==model['feature_thresholds']
     checks['persistence_calibration']=sorted(x[0] for x in cal_scores.values())[rank-1]==model['persistence_threshold']
     checks['carry_calibration']=sorted(x[1] for x in cal_scores.values())[rank-1]==model['carry_threshold']
-    f=pd.read_csv(root/'test/features.csv'); labels=pd.read_csv(root/'test/labels.csv').fillna({'episode_id':''})
+    f=pd.read_csv(root/'test/features.csv',float_precision='round_trip'); labels=pd.read_csv(root/'test/labels.csv').fillna({'episode_id':''})
     keys=['run_id','window_id','nf_id']; rows={tuple(r[k] for k in keys):r for r in f.to_dict('records')}
     previous={tuple(r[k] for k in keys):r for r in lines(root/'test/resilient_predictions.jsonl')}
     decisions=lines(root/'test/refined_predictions.jsonl'); calculated=scores('test',f)
     control={c['window_id']:c for c in lines(root/'test/control_events.jsonl')}
     key=bytes.fromhex((root/'test/lab_control_key.hex').read_text())
-    verified=True
+    verified=True; mismatches=[]
     for d in decisions:
         identity=tuple(d[k] for k in keys); r=rows[identity]; prior=previous[identity]
         persistent,carry,allowed=calculated[identity]
@@ -60,12 +60,17 @@ def run(root):
                 state='alarm' if security else 'normal' if fresh else 'unknown'
         signals=dict(separate_tail=bool(tail),semantic=semantic,persistence=persistent,carry=carry,permit_valid=bool(allowed))
         verified &= signals==d['signals']
+        if signals!=d['signals']:
+            mismatches.append(dict(identity=identity,expected_signals=signals,observed_signals=d['signals']))
         for method,extra in [('SPLIT',False),('PERSIST',persistent>model['persistence_threshold']),('CARRY',carry>model['carry_threshold'])]:
             alarm=state=='alarm' or prior['signals']['replay'] or extra
             availability=prior['signals']['availability']
             expected=dict(security=bool(alarm),availability=availability,state='security' if alarm else 'availability' if availability else state)
             verified &= d['outputs'][method]==expected
+            if d['outputs'][method]!=expected:
+                mismatches.append(dict(identity=identity,method=method,expected=expected,observed=d['outputs'][method]))
     checks['refinement_online_replayed']=bool(verified)
+    (root/'replay_mismatches.json').write_text(json.dumps(mismatches,indent=2))
     frame=pd.DataFrame(decisions).merge(labels,on=keys,validate='one_to_one')
     checks['refinement_complete']=len(frame)==len(f) and len(decisions)==len(f)
     for i,r in frame.iterrows():

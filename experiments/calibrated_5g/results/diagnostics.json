@@ -1,0 +1,5166 @@
+[
+  {
+    "run": "calibrated-5g-31101-42514975308",
+    "false_alarms": [
+      {
+        "window": 115,
+        "nf": "slot-7",
+        "methods": [
+          "PREVIOUS"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "history": [
+          {
+            "window_id": 105,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 106,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 107,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 108,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 109,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 110,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 111,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 112,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 113,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 114,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 115,
+            "request_count": 37,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 178,
+        "nf": "slot-1",
+        "methods": [
+          "PREVIOUS"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "history": [
+          {
+            "window_id": 168,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 169,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 170,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 171,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 172,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 173,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 174,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 175,
+            "request_count": 16,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 176,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 177,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 178,
+            "request_count": 37,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 191,
+        "nf": "slot-7",
+        "methods": [
+          "PREVIOUS"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "history": [
+          {
+            "window_id": 181,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 182,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 183,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 184,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 185,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 186,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 187,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 188,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 189,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 190,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 191,
+            "request_count": 37,
+            "error_rate": 0.02702702702702703,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 286,
+        "nf": "slot-4",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "PREVIOUS"
+        ],
+        "signals": {
+          "carry": 2.0,
+          "permit_valid": false,
+          "persistence": 1.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "history": [
+          {
+            "window_id": 276,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 1,
+            "scenario": "R"
+          },
+          {
+            "window_id": 277,
+            "request_count": 37,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 1,
+            "scenario": "R"
+          },
+          {
+            "window_id": 278,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 1,
+            "scenario": "R"
+          },
+          {
+            "window_id": 279,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 1,
+            "scenario": "R"
+          },
+          {
+            "window_id": 280,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 1,
+            "scenario": "R"
+          },
+          {
+            "window_id": 281,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 1,
+            "scenario": "R"
+          },
+          {
+            "window_id": 282,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 1,
+            "scenario": "R"
+          },
+          {
+            "window_id": 283,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 1,
+            "scenario": "R"
+          },
+          {
+            "window_id": 284,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 1,
+            "scenario": "R"
+          },
+          {
+            "window_id": 285,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 286,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 289,
+        "nf": "slot-6",
+        "methods": [
+          "PREVIOUS"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "history": [
+          {
+            "window_id": 279,
+            "request_count": 32,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 280,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 281,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 282,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 283,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 284,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 285,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 286,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 287,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 288,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 289,
+            "request_count": 37,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 310,
+        "nf": "slot-3",
+        "methods": [
+          "CARRY"
+        ],
+        "signals": {
+          "carry": 14.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "history": [
+          {
+            "window_id": 300,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 301,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 302,
+            "request_count": 9,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 303,
+            "request_count": 11,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 304,
+            "request_count": 13,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 305,
+            "request_count": 15,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 306,
+            "request_count": 17,
+            "error_rate": 0.058823529411764705,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 307,
+            "request_count": 19,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 308,
+            "request_count": 21,
+            "error_rate": 0.047619047619047616,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 309,
+            "request_count": 23,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 310,
+            "request_count": 35,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 390,
+        "nf": "slot-6",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 380,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 381,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 382,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 383,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 384,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 385,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 386,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 387,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 388,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 389,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 390,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 407,
+        "nf": "slot-5",
+        "methods": [
+          "PREVIOUS"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "history": [
+          {
+            "window_id": 397,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 398,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 399,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 400,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 401,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 402,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 403,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 404,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 405,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 406,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 407,
+            "request_count": 37,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 425,
+        "nf": "slot-0",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 415,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 416,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 417,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 418,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 419,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 420,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 421,
+            "request_count": 1,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 422,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 423,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 424,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 425,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 555,
+        "nf": "slot-5",
+        "methods": [
+          "PREVIOUS"
+        ],
+        "signals": {
+          "carry": 1.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "history": [
+          {
+            "window_id": 545,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 546,
+            "request_count": 14,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 547,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 548,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 549,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 550,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 551,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 552,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 553,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 554,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 555,
+            "request_count": 37,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 635,
+        "nf": "slot-7",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 625,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 626,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 627,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 628,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 629,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 630,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 631,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 632,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 633,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 634,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 635,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 743,
+        "nf": "slot-2",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 733,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 734,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 735,
+            "request_count": 35,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 736,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 737,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 738,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 739,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 740,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 741,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 742,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 743,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 798,
+        "nf": "slot-2",
+        "methods": [
+          "PREVIOUS"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "history": [
+          {
+            "window_id": 788,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 789,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 790,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 791,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 792,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 793,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 794,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 795,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 796,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 797,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 798,
+            "request_count": 37,
+            "error_rate": 0.02702702702702703,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 855,
+        "nf": "slot-2",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 845,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 846,
+            "request_count": 27,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 847,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 848,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 849,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 850,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 851,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 852,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 853,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 854,
+            "request_count": 24,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 855,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 1090,
+        "nf": "slot-6",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "PREVIOUS"
+        ],
+        "signals": {
+          "carry": 2.0,
+          "permit_valid": false,
+          "persistence": 1.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "history": [
+          {
+            "window_id": 1080,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1081,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1082,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1083,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1084,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1085,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1086,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1087,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1088,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1089,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1090,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 1111,
+        "nf": "slot-1",
+        "methods": [
+          "PREVIOUS"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "history": [
+          {
+            "window_id": 1101,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1102,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1103,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1104,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1105,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1106,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1107,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1108,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1109,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1110,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1111,
+            "request_count": 37,
+            "error_rate": 0.02702702702702703,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 1171,
+        "nf": "slot-3",
+        "methods": [
+          "PREVIOUS"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "history": [
+          {
+            "window_id": 1161,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1162,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1163,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1164,
+            "request_count": 15,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1165,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1166,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1167,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1168,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1169,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1170,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1171,
+            "request_count": 37,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      }
+    ],
+    "growth": [
+      {
+        "episode": "test-31121-G-1055",
+        "permitted_windows": 0,
+        "persistence_max": 6.0,
+        "carry_max": 7.0,
+        "request_counts": [
+          5,
+          7,
+          9,
+          11,
+          13,
+          15,
+          17,
+          19,
+          21,
+          23
+        ],
+        "detected": {
+          "PREVIOUS": true,
+          "SPLIT": false,
+          "PERSIST": true,
+          "CARRY": true
+        }
+      },
+      {
+        "episode": "test-31121-G-215",
+        "permitted_windows": 0,
+        "persistence_max": 15.0,
+        "carry_max": 18.0,
+        "request_counts": [
+          5,
+          8,
+          11,
+          14,
+          17,
+          20,
+          23,
+          26,
+          29,
+          32
+        ],
+        "detected": {
+          "PREVIOUS": true,
+          "SPLIT": false,
+          "PERSIST": true,
+          "CARRY": true
+        }
+      },
+      {
+        "episode": "test-31121-G-425",
+        "permitted_windows": 5,
+        "persistence_max": 0.0,
+        "carry_max": 18.0,
+        "request_counts": [
+          5,
+          8,
+          11,
+          14,
+          17,
+          20,
+          23,
+          26,
+          29,
+          32
+        ],
+        "detected": {
+          "PREVIOUS": true,
+          "SPLIT": false,
+          "PERSIST": false,
+          "CARRY": true
+        }
+      },
+      {
+        "episode": "test-31121-G-935",
+        "permitted_windows": 0,
+        "persistence_max": 10.0,
+        "carry_max": 12.0,
+        "request_counts": [
+          5,
+          7,
+          9,
+          11,
+          13,
+          15,
+          17,
+          19,
+          21,
+          23
+        ],
+        "detected": {
+          "PREVIOUS": true,
+          "SPLIT": true,
+          "PERSIST": true,
+          "CARRY": true
+        }
+      }
+    ],
+    "normal_availability_segments": [
+      {
+        "start": 86,
+        "end": 87,
+        "windows": 2,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 385,
+        "end": 387,
+        "windows": 3,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 686,
+        "end": 687,
+        "windows": 2,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 855,
+        "end": 856,
+        "windows": 2,
+        "previous_scenario": "D",
+        "previous_attack": true
+      },
+      {
+        "start": 986,
+        "end": 987,
+        "windows": 2,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      }
+    ],
+    "refinement": {
+      "created_at": 1794167206.6916392,
+      "alpha_total": 0.001,
+      "alpha_component": 0.00025,
+      "feature_thresholds": {
+        "request_count": 37.0,
+        "error_rate": 0.0769230769230769,
+        "update_count": 1.0
+      },
+      "persistence_threshold": 0.0,
+      "carry_threshold": 1.0,
+      "source_hashes": {
+        "train/integrated_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "train/sha256.json": "d3bd7200af0c9fc1e3929422873ad4ea292496032d3c0d9e47111a1c9c5f40f6",
+        "train/control_events.jsonl": "d9c95e034661f9984e8b48b6712a20689f05b4626af7b8df2cbc803141f9b6b0",
+        "train/events.jsonl": "aa0500049c16c54c319ee92e0b15bd0beaca587c33d10fff9ee0936fb65dfb52",
+        "train/refined_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "train/manifest.json": "06e9ce6340cb2f99a8b873d7ae13c307f88ab15d63b0aedee41cbc41d0eaeba1",
+        "train/actual_nf_config.json": "23d089b7336688d1d40f79a70dbade1abd25122717dd5ff6b22e8c33e50289de",
+        "train/interventions.jsonl": "a9911ff0ed123b6e355d13089a0a8ae97c2ca181643a301e6423a4d675e2106f",
+        "train/lab_operator_key.hex": "6ee2ddc0f58a80202ae8d4f4c8a46addb74f57d5f3ad36b5535c4cda1b8f9320",
+        "train/load_grants.jsonl": "4783dd86236d285fbbdf81d22c240b3daa1632153e7813083c44a824e83f5b87",
+        "train/lab_control_key.hex": "452688c2edd5ec1a95a07344231bdacac1bf66e86bc06eae214c545d78f2b039",
+        "train/labels.csv": "44d08002f4801465f37cf3b68cf6d41c8744d7a48ab936d48ba538825f9fea8a",
+        "train/resilient_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "train/features.csv": "c83e9abd196c5d36b782af487b7b393a0cf01116a02ede035fa5626366c45f25",
+        "cal/integrated_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cal/sha256.json": "e9e767a48abc8c0557723b2f69faee19db22a5a14c508fee5f3e97fbb75a26d5",
+        "cal/control_events.jsonl": "a4f9e43bca25fe85152061b4e46178c7a8ca717dfdd0c70e30e806441110efd0",
+        "cal/events.jsonl": "3b51b4181ebdc7039c422bd55d1a22a72ebea647473f8529da400667728fa204",
+        "cal/refined_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cal/manifest.json": "deabd0bfce27e3b6a6b30921554faa941076db19a0796a312032004816747254",
+        "cal/actual_nf_config.json": "23d089b7336688d1d40f79a70dbade1abd25122717dd5ff6b22e8c33e50289de",
+        "cal/interventions.jsonl": "e9653b37d4abc9c3ed1f2093f2053557f11deefeab2654306c14b3a8c1d5fc47",
+        "cal/lab_operator_key.hex": "6b78ad92fc5ac93356f24609a0fa7e0193dccf2e3410676deaf6c9d8c3b2bde4",
+        "cal/load_grants.jsonl": "9b26482fca7eafc95f97dade036c39a5c8dff3bdfb4b2ded7bb3e7ddcae97b86",
+        "cal/lab_control_key.hex": "740d6a73b6ecee228aa989d855a9329a1310a4d20e66b9e42cd09f819c80ef46",
+        "cal/labels.csv": "eb39f1290a22694c8976f5c90407a4d16b719fb96869ceb9758e51174e6ccb96",
+        "cal/resilient_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cal/features.csv": "207ac36c0f7997e0afee033e056b89c52505b71c67be39a3f3737060542de337"
+      },
+      "note": "Four statistical tests per variant; dependent windows do not establish an operational FPR guarantee. Carry is an ablation, not combined with persistence."
+    },
+    "previous_thresholds": {
+      "IF_SBI": 0.7005124715965011,
+      "IF_CONTEXT": 0.6979872625095375,
+      "IF_FULL": 0.6902688945564669,
+      "robust_tail": 10.454606771887226
+    },
+    "s4_error_rate_min": 0.32,
+    "s4_error_rate_max": 0.32,
+    "s4_alarm_windows": {
+      "PREVIOUS": 40,
+      "SPLIT": 40,
+      "PERSIST": 40,
+      "CARRY": 40
+    }
+  },
+  {
+    "run": "calibrated-5g-31201-42514975308",
+    "false_alarms": [
+      {
+        "window": 457,
+        "nf": "slot-5",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 447,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 448,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 449,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 450,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 451,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 452,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 453,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 454,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 455,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 456,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 457,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 460,
+        "nf": "slot-4",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "PREVIOUS"
+        ],
+        "signals": {
+          "carry": 2.0,
+          "permit_valid": false,
+          "persistence": 1.0,
+          "semantic": false,
+          "separate_tail": false
+        },
+        "history": [
+          {
+            "window_id": 450,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 451,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 452,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 453,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 454,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 455,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 456,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 457,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 458,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 459,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 460,
+            "request_count": 22,
+            "error_rate": 0.045454545454545456,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 871,
+        "nf": "slot-0",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 861,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 862,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 863,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 864,
+            "request_count": 1,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 865,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 866,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 867,
+            "request_count": 1,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 868,
+            "request_count": 1,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 869,
+            "request_count": 1,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 870,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 871,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      }
+    ],
+    "growth": [
+      {
+        "episode": "test-31221-G-1025",
+        "permitted_windows": 5,
+        "persistence_max": 0.0,
+        "carry_max": 18.0,
+        "request_counts": [
+          5,
+          8,
+          11,
+          14,
+          17,
+          20,
+          23,
+          26,
+          29,
+          32
+        ],
+        "detected": {
+          "PREVIOUS": true,
+          "SPLIT": false,
+          "PERSIST": false,
+          "CARRY": true
+        }
+      },
+      {
+        "episode": "test-31221-G-155",
+        "permitted_windows": 0,
+        "persistence_max": 6.0,
+        "carry_max": 7.0,
+        "request_counts": [
+          5,
+          7,
+          9,
+          11,
+          13,
+          15,
+          17,
+          19,
+          21,
+          23
+        ],
+        "detected": {
+          "PREVIOUS": true,
+          "SPLIT": false,
+          "PERSIST": true,
+          "CARRY": true
+        }
+      },
+      {
+        "episode": "test-31221-G-455",
+        "permitted_windows": 0,
+        "persistence_max": 6.0,
+        "carry_max": 7.0,
+        "request_counts": [
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "detected": {
+          "PREVIOUS": true,
+          "SPLIT": false,
+          "PERSIST": true,
+          "CARRY": true
+        }
+      },
+      {
+        "episode": "test-31221-G-935",
+        "permitted_windows": 0,
+        "persistence_max": 15.0,
+        "carry_max": 18.0,
+        "request_counts": [
+          5,
+          8,
+          11,
+          14,
+          17,
+          20,
+          23,
+          26,
+          29,
+          32
+        ],
+        "detected": {
+          "PREVIOUS": true,
+          "SPLIT": false,
+          "PERSIST": true,
+          "CARRY": true
+        }
+      }
+    ],
+    "normal_availability_segments": [
+      {
+        "start": 86,
+        "end": 87,
+        "windows": 2,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 385,
+        "end": 387,
+        "windows": 3,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 555,
+        "end": 556,
+        "windows": 2,
+        "previous_scenario": "F",
+        "previous_attack": true
+      },
+      {
+        "start": 686,
+        "end": 687,
+        "windows": 2,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 986,
+        "end": 987,
+        "windows": 2,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 1005,
+        "end": 1006,
+        "windows": 2,
+        "previous_scenario": "R",
+        "previous_attack": true
+      },
+      {
+        "start": 1155,
+        "end": 1156,
+        "windows": 2,
+        "previous_scenario": "R",
+        "previous_attack": true
+      }
+    ],
+    "refinement": {
+      "created_at": 1794167223.9303114,
+      "alpha_total": 0.001,
+      "alpha_component": 0.00025,
+      "feature_thresholds": {
+        "request_count": 37.0,
+        "error_rate": 0.0769230769230769,
+        "update_count": 1.0
+      },
+      "persistence_threshold": 0.0,
+      "carry_threshold": 1.0,
+      "source_hashes": {
+        "train/integrated_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "train/sha256.json": "e125bfd1bc3008257f898f75cced89b80c8508e257f591b14395027ce688b2d8",
+        "train/control_events.jsonl": "e914f5d3ee982f8516420bb6f8d798504c48eb175f6b8b859906da66d4167b4f",
+        "train/events.jsonl": "ce172c30421e7eb5926af584ec90d31d34026dd57144d3a30546cd30a43ead88",
+        "train/refined_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "train/manifest.json": "ea98cef9f444a870a39126a781f5df3803f96ca118a9046b3eccf9eb03f8ca71",
+        "train/actual_nf_config.json": "23d089b7336688d1d40f79a70dbade1abd25122717dd5ff6b22e8c33e50289de",
+        "train/interventions.jsonl": "a25dd0facc212dce5fbb053c2af9d655ce42ec65c337d8a8d0d1ad6ade2065d5",
+        "train/lab_operator_key.hex": "34a8cc1bf7fd64780261210d71f720b8150bc0201e4183b97bc4384f346cc73d",
+        "train/load_grants.jsonl": "84d73f56f3ac9b2a93af6b2a41919b2dea5db20d895475d01c59b9c190d9496e",
+        "train/lab_control_key.hex": "041764d79f85d7d6bbaa2cba03e8a77f41ded16b45eec5905b149d079d58fb01",
+        "train/labels.csv": "8d762720cff70bc4b4f714035627333498e7f304f9f59118bf7c83bc79698bee",
+        "train/resilient_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "train/features.csv": "00ef8a32e479c70ce8cf57ff4aa9d5f2c8e422f475770d650ef5ba8baebb98a8",
+        "cal/integrated_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cal/sha256.json": "45c18d2da8c4efa3f88d376325c03a55308b64eeff99a9112f502d62c1e31175",
+        "cal/control_events.jsonl": "8c1e6d67eea46c6697e28f319e70830e88765bfdd7b229ce0c63f0512bb85503",
+        "cal/events.jsonl": "c782bd1e84465c44cc54350bceeacaf550ef6fb580b9a15c43e97fef2b0e0468",
+        "cal/refined_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cal/manifest.json": "b759ff3e249e08f1daf8dc34d0939f1ef06534d353e8f73c159385a0ab220163",
+        "cal/actual_nf_config.json": "23d089b7336688d1d40f79a70dbade1abd25122717dd5ff6b22e8c33e50289de",
+        "cal/interventions.jsonl": "073e66939f8510e23f009de8a11a398bb6d880584d26410cdb43732c60148c3e",
+        "cal/lab_operator_key.hex": "1ec34a96b0b9d3540f6dfa570792a370a4f885465486a387b7f1106ba59a5691",
+        "cal/load_grants.jsonl": "c04441025fd3f5665fa26c71d69ef812d91b05b94604b922e71fea16a2c34116",
+        "cal/lab_control_key.hex": "6e012e5abeca478127c47ff4024dd1198a1b2c409ff4ac52ae43a454a161e35a",
+        "cal/labels.csv": "a3155415d4c1ab80a05fde735e0992da72c1368f9062ff3a167bba9f46a1f360",
+        "cal/resilient_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cal/features.csv": "2a50541a80368a66f7c0520917863504bb9549c97017343129594f7b45915c8e"
+      },
+      "note": "Four statistical tests per variant; dependent windows do not establish an operational FPR guarantee. Carry is an ablation, not combined with persistence."
+    },
+    "previous_thresholds": {
+      "IF_SBI": 0.6955718900516524,
+      "IF_CONTEXT": 0.7062295282603898,
+      "IF_FULL": 0.705932827461869,
+      "robust_tail": 11.12909753136382
+    },
+    "s4_error_rate_min": 0.32,
+    "s4_error_rate_max": 0.32,
+    "s4_alarm_windows": {
+      "PREVIOUS": 40,
+      "SPLIT": 40,
+      "PERSIST": 40,
+      "CARRY": 40
+    }
+  },
+  {
+    "run": "calibrated-5g-31301-42514975308",
+    "false_alarms": [
+      {
+        "window": 96,
+        "nf": "slot-7",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 86,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 87,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 88,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 89,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 90,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 91,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 92,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 93,
+            "request_count": 26,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 94,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 95,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 96,
+            "request_count": 14,
+            "error_rate": 0.07142857142857142,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 136,
+        "nf": "slot-6",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 126,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 127,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 128,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 129,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 130,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 131,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 132,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 133,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 134,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 135,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 136,
+            "request_count": 14,
+            "error_rate": 0.07142857142857142,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 185,
+        "nf": "slot-3",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 175,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 176,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 177,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 178,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 179,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 180,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 181,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 182,
+            "request_count": 9,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 183,
+            "request_count": 11,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 184,
+            "request_count": 13,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 185,
+            "request_count": 15,
+            "error_rate": 0.06666666666666667,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 237,
+        "nf": "slot-0",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 227,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 228,
+            "request_count": 22,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 229,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 230,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 231,
+            "request_count": 22,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 232,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 233,
+            "request_count": 1,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 234,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 235,
+            "request_count": 1,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 236,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 237,
+            "request_count": 16,
+            "error_rate": 0.0625,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 281,
+        "nf": "slot-5",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 271,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 272,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 273,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 274,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 275,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 276,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 277,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 278,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 279,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 280,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 281,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 304,
+        "nf": "slot-3",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 294,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 295,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 296,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 297,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 298,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 299,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 300,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 301,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 302,
+            "request_count": 9,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 303,
+            "request_count": 11,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 304,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 306,
+        "nf": "slot-3",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 296,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 297,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 298,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 299,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 300,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 301,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 302,
+            "request_count": 9,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 303,
+            "request_count": 11,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 304,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 305,
+            "request_count": 15,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 306,
+            "request_count": 17,
+            "error_rate": 0.058823529411764705,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 424,
+        "nf": "slot-3",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 414,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 415,
+            "request_count": 37,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 416,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 417,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 418,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 419,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 420,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 421,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 422,
+            "request_count": 9,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 423,
+            "request_count": 11,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 424,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 498,
+        "nf": "slot-5",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 488,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 489,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 490,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 491,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 492,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 493,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 494,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 495,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 496,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 497,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 498,
+            "request_count": 16,
+            "error_rate": 0.0625,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 545,
+        "nf": "slot-3",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 535,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 536,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 537,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 538,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 539,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 540,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 541,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 542,
+            "request_count": 9,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 543,
+            "request_count": 11,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 544,
+            "request_count": 13,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 545,
+            "request_count": 15,
+            "error_rate": 0.06666666666666667,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 585,
+        "nf": "slot-4",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 575,
+            "request_count": 37,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 576,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 577,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 578,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 579,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 580,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 581,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 582,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 583,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 584,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 585,
+            "request_count": 16,
+            "error_rate": 0.0625,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 596,
+        "nf": "slot-2",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 586,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 587,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 588,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 589,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 590,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 591,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 592,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 593,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 594,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 595,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 596,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 602,
+        "nf": "slot-0",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 592,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 593,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 594,
+            "request_count": 18,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 595,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 596,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 597,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 598,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 599,
+            "request_count": 1,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 600,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 601,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 602,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 647,
+        "nf": "slot-0",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 637,
+            "request_count": 1,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 638,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 639,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 640,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 641,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 642,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 643,
+            "request_count": 36,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 644,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 645,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 646,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 647,
+            "request_count": 15,
+            "error_rate": 0.06666666666666667,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 664,
+        "nf": "slot-3",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 654,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 655,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 656,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 657,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 658,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 659,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 660,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 661,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 662,
+            "request_count": 9,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 663,
+            "request_count": 11,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 664,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 675,
+        "nf": "slot-2",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 665,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 666,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 667,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 668,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 669,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 670,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 671,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 672,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 673,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 674,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 675,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 818,
+        "nf": "slot-3",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 808,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 809,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 810,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 811,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 812,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 813,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 814,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 815,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 816,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 817,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 818,
+            "request_count": 16,
+            "error_rate": 0.0625,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 886,
+        "nf": "slot-0",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 876,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 877,
+            "request_count": 1,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 878,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 879,
+            "request_count": 20,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 880,
+            "request_count": 1,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 881,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 882,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 883,
+            "request_count": 1,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 884,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 885,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 886,
+            "request_count": 12,
+            "error_rate": 0.08333333333333333,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 904,
+        "nf": "slot-3",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 894,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 895,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 896,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 897,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 898,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 899,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 900,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 901,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 902,
+            "request_count": 9,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 903,
+            "request_count": 11,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 904,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 1013,
+        "nf": "slot-7",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 1003,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1004,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1005,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1006,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1007,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1008,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1009,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1010,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1011,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1012,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1013,
+            "request_count": 15,
+            "error_rate": 0.06666666666666667,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 1025,
+        "nf": "slot-3",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": true,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 1015,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1016,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1017,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1018,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1019,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1020,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1021,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1022,
+            "request_count": 9,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1023,
+            "request_count": 11,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1024,
+            "request_count": 13,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1025,
+            "request_count": 15,
+            "error_rate": 0.06666666666666667,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 1065,
+        "nf": "slot-4",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 1055,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1056,
+            "request_count": 7,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1057,
+            "request_count": 6,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1058,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1059,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1060,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1061,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1062,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1063,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1064,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1065,
+            "request_count": 13,
+            "error_rate": 0.07692307692307693,
+            "update_count": 1,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      },
+      {
+        "window": 1120,
+        "nf": "slot-0",
+        "methods": [
+          "CARRY",
+          "PERSIST",
+          "SPLIT"
+        ],
+        "signals": {
+          "carry": 0.0,
+          "permit_valid": false,
+          "persistence": 0.0,
+          "semantic": false,
+          "separate_tail": true
+        },
+        "history": [
+          {
+            "window_id": 1110,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1111,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1112,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1113,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1114,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1115,
+            "request_count": 4,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1116,
+            "request_count": 2,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1117,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1118,
+            "request_count": 5,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1119,
+            "request_count": 3,
+            "error_rate": 0.0,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          },
+          {
+            "window_id": 1120,
+            "request_count": 14,
+            "error_rate": 0.07142857142857142,
+            "update_count": 0,
+            "attack": 0,
+            "scenario": "N1"
+          }
+        ]
+      }
+    ],
+    "growth": [
+      {
+        "episode": "test-31321-G-1085",
+        "permitted_windows": 0,
+        "persistence_max": 18.0,
+        "carry_max": 21.0,
+        "request_counts": [
+          5,
+          8,
+          11,
+          14,
+          17,
+          20,
+          23,
+          26,
+          29,
+          32
+        ],
+        "detected": {
+          "PREVIOUS": true,
+          "SPLIT": true,
+          "PERSIST": true,
+          "CARRY": true
+        }
+      },
+      {
+        "episode": "test-31321-G-1145",
+        "permitted_windows": 5,
+        "persistence_max": 0.0,
+        "carry_max": 6.0,
+        "request_counts": [
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "detected": {
+          "PREVIOUS": false,
+          "SPLIT": false,
+          "PERSIST": false,
+          "CARRY": true
+        }
+      },
+      {
+        "episode": "test-31321-G-725",
+        "permitted_windows": 0,
+        "persistence_max": 12.0,
+        "carry_max": 14.0,
+        "request_counts": [
+          5,
+          7,
+          9,
+          11,
+          13,
+          15,
+          17,
+          19,
+          21,
+          23
+        ],
+        "detected": {
+          "PREVIOUS": true,
+          "SPLIT": false,
+          "PERSIST": true,
+          "CARRY": true
+        }
+      },
+      {
+        "episode": "test-31321-G-995",
+        "permitted_windows": 0,
+        "persistence_max": 12.0,
+        "carry_max": 14.0,
+        "request_counts": [
+          5,
+          7,
+          9,
+          11,
+          13,
+          15,
+          17,
+          19,
+          21,
+          23
+        ],
+        "detected": {
+          "PREVIOUS": true,
+          "SPLIT": false,
+          "PERSIST": true,
+          "CARRY": true
+        }
+      }
+    ],
+    "normal_availability_segments": [
+      {
+        "start": 86,
+        "end": 87,
+        "windows": 2,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 255,
+        "end": 256,
+        "windows": 2,
+        "previous_scenario": "F",
+        "previous_attack": true
+      },
+      {
+        "start": 385,
+        "end": 387,
+        "windows": 3,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 405,
+        "end": 406,
+        "windows": 2,
+        "previous_scenario": "R",
+        "previous_attack": true
+      },
+      {
+        "start": 555,
+        "end": 556,
+        "windows": 2,
+        "previous_scenario": "F",
+        "previous_attack": true
+      },
+      {
+        "start": 685,
+        "end": 687,
+        "windows": 3,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      },
+      {
+        "start": 855,
+        "end": 856,
+        "windows": 2,
+        "previous_scenario": "R",
+        "previous_attack": true
+      },
+      {
+        "start": 985,
+        "end": 987,
+        "windows": 3,
+        "previous_scenario": "N1",
+        "previous_attack": false
+      }
+    ],
+    "refinement": {
+      "created_at": 1794167209.198168,
+      "alpha_total": 0.001,
+      "alpha_component": 0.00025,
+      "feature_thresholds": {
+        "request_count": 37.0,
+        "error_rate": 0.0588235294117647,
+        "update_count": 1.0
+      },
+      "persistence_threshold": 0.0,
+      "carry_threshold": 1.0,
+      "source_hashes": {
+        "train/integrated_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "train/sha256.json": "56bb631c72aad4310b790c5a67dd408646a198a5e089ecee0e0f3156e831c10b",
+        "train/control_events.jsonl": "b398629b29e9491fad14fc78c707cd1953995fbe48dab328227d3c894bad283b",
+        "train/events.jsonl": "1d0f70216c1026b0c82c9236f1ec4b6240675691f722e8237e8b5be64304db88",
+        "train/refined_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "train/manifest.json": "b974fa384aec896d4c68b9b460ba24f162f04b3e94f5c8384578e12d0bdaa10c",
+        "train/actual_nf_config.json": "23d089b7336688d1d40f79a70dbade1abd25122717dd5ff6b22e8c33e50289de",
+        "train/interventions.jsonl": "89053be02aec1051db9ff9568bf93ecf41aa203038f99530af594201a016db80",
+        "train/lab_operator_key.hex": "7de05bbf606246710e68d8ae56a890f599733acf2154cafd9cdb662cb09666c0",
+        "train/load_grants.jsonl": "ce4aa978c2fcd21c0b1207ea8d4c6e08ff04d324ba06451113886a2c66acf7d3",
+        "train/lab_control_key.hex": "ef212c9894460a0c8c86ca00163da069af00c55d56c9803534c16d3c57c2bc10",
+        "train/labels.csv": "8d72af36e9ab20f6352828193261fb09992e7fa746500851cd644fb3bd7e793a",
+        "train/resilient_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "train/features.csv": "9bfbd7b410ba08eb2a8009457747d52f44b2bcd01ecd4f207f126ae9ee109137",
+        "cal/integrated_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cal/sha256.json": "20d8b7368903dad0f34d5182edb4e1dc02bd5c38e229e3214291852e9982997a",
+        "cal/control_events.jsonl": "4c428095ebfe089ba970bcc515b5c43957d5ab33f882ee5aa88b30d30469e10b",
+        "cal/events.jsonl": "0f2ef2adea6e68eb40a81ee22a1f26cbdc8719d6b6cab00b2c5635442abbe49d",
+        "cal/refined_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cal/manifest.json": "b672502975cb09b621a48ded799af016dd57213e30212aae9b5172a780b511de",
+        "cal/actual_nf_config.json": "23d089b7336688d1d40f79a70dbade1abd25122717dd5ff6b22e8c33e50289de",
+        "cal/interventions.jsonl": "53aaadbde32dd84ab8ac366baa85fb301831f39f676e2db763320f216c6e812a",
+        "cal/lab_operator_key.hex": "72fb661dff2ccef1a046cdcbe89ec61d773d07dcb4b016d29ddcd153934bc179",
+        "cal/load_grants.jsonl": "d62c971a55edbbd45c4dec61fab774fc20beb8d328dc4a3d8a294501959b9982",
+        "cal/lab_control_key.hex": "0a03cb4b92b6370d01be5f6ce834cfdd6b0145943877dafc0129d6dbbf9b6754",
+        "cal/labels.csv": "8b221c767e62f1abb5b968a556b45cfd42c3462ac7a1c5d3c82880002387dc98",
+        "cal/resilient_predictions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "cal/features.csv": "70079cb4d054c4e9e23047a487398d858147fc8e8ba0040edd7ab887ba84e232"
+      },
+      "note": "Four statistical tests per variant; dependent windows do not establish an operational FPR guarantee. Carry is an ablation, not combined with persistence."
+    },
+    "previous_thresholds": {
+      "IF_SBI": 0.6984286171621538,
+      "IF_CONTEXT": 0.6998085343551438,
+      "IF_FULL": 0.6969763016969213,
+      "robust_tail": 11.12909753136382
+    },
+    "s4_error_rate_min": 0.32,
+    "s4_error_rate_max": 0.32,
+    "s4_alarm_windows": {
+      "PREVIOUS": 40,
+      "SPLIT": 40,
+      "PERSIST": 40,
+      "CARRY": 40
+    }
+  }
+]
