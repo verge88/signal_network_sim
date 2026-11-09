@@ -1,0 +1,26 @@
+[
+  {
+    "name": "calibrated-v2-5g-33201-42577623990.zip",
+    "size": 14949450,
+    "github_digest": "sha256:7d7e1569bcb3b7fdb4b8476789255929c949069f69b66db59f96cf6979ac28f1",
+    "local_digest": "sha256:7d7e1569bcb3b7fdb4b8476789255929c949069f69b66db59f96cf6979ac28f1",
+    "matches": true,
+    "all_audit_checks_pass": true
+  },
+  {
+    "name": "calibrated-v2-5g-33101-42577623990.zip",
+    "size": 15078768,
+    "github_digest": "sha256:23959954b696952fa79c8b41f7166175237a2ee8cf58e06756c2ddd507e0e7c6",
+    "local_digest": "sha256:23959954b696952fa79c8b41f7166175237a2ee8cf58e06756c2ddd507e0e7c6",
+    "matches": true,
+    "all_audit_checks_pass": true
+  },
+  {
+    "name": "calibrated-v2-5g-33301-42577623990.zip",
+    "size": 15017023,
+    "github_digest": "sha256:1c4ffa4b8866bb71846b825b79734c11264bbcb37057db77f5524ae80369aa0c",
+    "local_digest": "sha256:1c4ffa4b8866bb71846b825b79734c11264bbcb37057db77f5524ae80369aa0c",
+    "matches": true,
+    "all_audit_checks_pass": true
+  }
+]
