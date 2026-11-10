@@ -1,0 +1,23 @@
+[
+  {
+    "name": "ablation-5g-32-33101-late-42815497384",
+    "size": 113825563,
+    "digest": "sha256:921822844d2235f54196d10be180d30591d0e92f40d3be2a3adc6f557ee9c9ef",
+    "local_equals_ci": true,
+    "raw_audit_pass": true
+  },
+  {
+    "name": "ablation-5g-32-33301-late-42815497384",
+    "size": 113379662,
+    "digest": "sha256:ad6395a46cac1274ff9b398054d9369d533a3379dc6bac37c04280732414b0be",
+    "local_equals_ci": true,
+    "raw_audit_pass": true
+  },
+  {
+    "name": "ablation-5g-32-33201-late-42815497384",
+    "size": 113461966,
+    "digest": "sha256:8e1e8723b726e357a0c27bdab3ac13d311a1cf37cc8c000649a2daadf2bb330a",
+    "local_equals_ci": true,
+    "raw_audit_pass": true
+  }
+]

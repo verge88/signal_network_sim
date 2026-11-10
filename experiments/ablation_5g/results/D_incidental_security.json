@@ -1,0 +1,71 @@
+[
+  {
+    "seed": 64133,
+    "window": 1359,
+    "episode": "test-64133-nf32-D-1350",
+    "request_count": 45,
+    "signals": {
+      "carry": 0.0,
+      "permit_valid": false,
+      "persistence": 0.0,
+      "semantic": false,
+      "separate_tail": true
+    },
+    "outputs": {
+      "availability": true,
+      "security": true,
+      "state": "security"
+    },
+    "thresholds": {
+      "request_count": 37.0,
+      "error_count": 1.0,
+      "update_count": 1.0
+    }
+  },
+  {
+    "seed": 64233,
+    "window": 1653,
+    "episode": "test-64233-nf32-D-1650",
+    "request_count": 41,
+    "signals": {
+      "carry": 0.0,
+      "permit_valid": false,
+      "persistence": 0.0,
+      "semantic": false,
+      "separate_tail": true
+    },
+    "outputs": {
+      "availability": false,
+      "security": true,
+      "state": "security"
+    },
+    "thresholds": {
+      "request_count": 37.0,
+      "error_count": 1.0,
+      "update_count": 1.0
+    }
+  },
+  {
+    "seed": 64233,
+    "window": 1654,
+    "episode": "test-64233-nf32-D-1650",
+    "request_count": 47,
+    "signals": {
+      "carry": 0.0,
+      "permit_valid": false,
+      "persistence": 0.0,
+      "semantic": false,
+      "separate_tail": true
+    },
+    "outputs": {
+      "availability": false,
+      "security": true,
+      "state": "security"
+    },
+    "thresholds": {
+      "request_count": 37.0,
+      "error_count": 1.0,
+      "update_count": 1.0
+    }
+  }
+]
