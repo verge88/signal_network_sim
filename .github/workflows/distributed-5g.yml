@@ -1,0 +1,44 @@
+name: Distributed 5G zone hierarchy validation
+on:
+  push:
+    branches: ['codex/live-5g-validation-20261107']
+    paths: ['experiments/distributed_5g/**', '.github/workflows/distributed-5g.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  hierarchy:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r experiments/live_5g/requirements.txt
+      - run: python -m pytest experiments/distributed_5g experiments/accumulation_5g -q
+      - name: Retrieve immutable measured archives
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/verge88/signal_network_sim/actions/artifacts/13768450887/zip > calibration.zip
+          gh api repos/verge88/signal_network_sim/actions/artifacts/13785795564/zip > evidence.zip
+          python -c "import hashlib; assert hashlib.sha256(open('calibration.zip','rb').read()).hexdigest() == 'ad6395a46cac1274ff9b398054d9369d533a3379dc6bac37c04280732414b0be'"
+          python -c "import hashlib; assert hashlib.sha256(open('evidence.zip','rb').read()).hexdigest() == 'c76c4ed6a865dc5c37803dbc46e6cd05c62ebe803f398fe409dd2f1090910129'"
+      - name: Replay all 3600 windows through 37 independent processes
+        run: python -m experiments.distributed_5g.replay --calibration calibration.zip --evidence evidence.zip --out evidence --windows 3600
+      - name: Package public evidence without runtime keys
+        if: always()
+        run: |
+          mkdir -p public
+          git rev-parse HEAD > public/source_commit.txt
+          cp evidence/report.json evidence/zone_models.json public/ || true
+          cp evidence/decisions.jsonl public/ || true
+          cp evidence/deployment/*.log public/ || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: distributed-hierarchy-${{ github.run_id }}
+          path: public/
+          retention-days: 30

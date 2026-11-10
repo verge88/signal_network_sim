@@ -433,6 +433,8 @@ def run(args):
     if frozen is not None:
         manifest['extensions_sha256'] = hashlib.sha256((args.frozen/'extensions.json').read_bytes()).hexdigest()
     (args.out / 'manifest.json').write_text(json.dumps(manifest, indent=2))
+    observer_factory = getattr(args, 'distributed_observer_factory', None)
+    distributed_observer = None
     history = {slot: collections.deque(maxlen=600) for slot in profiles}
     previous = {slot: None for slot in profiles}
     last_heartbeat = {slot: started for slot in profiles}
@@ -448,6 +450,9 @@ def run(args):
     observer_bytes = observer_requests = actor_bytes = actor_requests = 0
     online_frames = []
     try:
+        if observer_factory is not None:
+            distributed_observer = observer_factory(dict(run_id=run_id, operator_key=operator_key.hex(),
+                control_key=control.key.hex(), extensions=extension_model))
         for window in range(args.windows):
             window_started = time.monotonic()
             if window % 300 == 40:
@@ -618,6 +623,8 @@ def run(args):
                         control_observation if pred.nf_id=='slot-4' else None,active_grant,now)
                     append_json(refined_file,dict(run_id=run_id,window_id=window,nf_id=pred.nf_id,
                         evaluation_time=now,decision_time=time.time(),**refined))
+            if distributed_observer is not None:
+                distributed_observer(window, rows, control_observation, active_grant)
             if window % 30 == 0:
                 print(f'{run_id}: completed window {window}/{args.windows}', flush=True)
             time.sleep(max(0, args.window_seconds - (time.monotonic() - window_started)))
