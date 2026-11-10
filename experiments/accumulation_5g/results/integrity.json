@@ -1,0 +1,23 @@
+{
+  "run": 42850952167,
+  "source_commit": "e71722bbfad443c6d816cb7aad92c544d4c072f4",
+  "compact_archives": [
+    {
+      "name": "accumulation-summary-33101-late-42850952167",
+      "digest": "sha256:b2696e5e060c4db2590472afcfb2c60ee3a4a4df54b574cf94529168495d4f7a",
+      "size": 25524
+    },
+    {
+      "name": "accumulation-summary-33301-late-42850952167",
+      "digest": "sha256:2e31fdec723c7e358b8e73499fef48a0b7a1ea12683d428ade0028b79c783727",
+      "size": 25590
+    },
+    {
+      "name": "accumulation-summary-33201-late-42850952167",
+      "digest": "sha256:b716dc328790acfd12afcfdc836ac320e3bfdcddab443b9f02dcd1d23fe1e06c",
+      "size": 25280
+    }
+  ],
+  "calibration_matches_local": true,
+  "CI_independent_replays": 3
+}

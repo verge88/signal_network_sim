@@ -1,0 +1,1056 @@
+{
+  "seed": 74133,
+  "source_commit": "e71722bbfad443c6d816cb7aad92c544d4c072f4",
+  "model": {
+    "created_at": 1794326750.7512662,
+    "version": 1,
+    "alpha_component": 0.00025,
+    "decay": 0.99,
+    "drift": 0.5,
+    "residual_clip": [
+      -1.0,
+      4.0
+    ],
+    "threshold": 21.905887084092953,
+    "feature_thresholds": {
+      "request_count": 49.0,
+      "error_count": 1.0,
+      "update_count": 1.0
+    },
+    "calibration_run": "test-64133-nf32",
+    "calibration_windows": 3130,
+    "calibration_rows": 100160,
+    "excluded_attack_windows": 470,
+    "source_hashes": {
+      "features.csv": "be495c9f2c2075acb1602bdde452ed96c91afcb9aaa87e3a4671bdfe072982dc",
+      "labels.csv": "218c56f767013b349695bcba24410e6a4ae526f9f87d939a58621bb752d507bb",
+      "load_grants.jsonl": "e8c7f877d52eff411e81808ea66fd3625eb7028704ccc2d96805f4e3419322bb",
+      "lab_operator_key.hex": "96911397626722db6a3f745133f0a5a10e286fb5be6273999be82fbd38477afb"
+    },
+    "disclosure": "Former ablation test data now used for calibration. Entire attack windows excluded. Accumulators reset across excluded gaps. Correlated windows do not establish an operational FPR guarantee."
+  },
+  "model_sha256": "c54ed9a98393bbb432b9f6bb8b561ff2dd58240df82e3986877c94f913cb31b1",
+  "independent_replay_pass": true,
+  "metrics": [
+    {
+      "method": "CARRY",
+      "n": 115200,
+      "tp": 280,
+      "fp": 782,
+      "tn": 113948,
+      "fn": 190,
+      "attack_prevalence": 0.004079861111111111,
+      "recall": 0.5957446808510638,
+      "fpr": 0.006816002789157152,
+      "precision": 0.263653483992467,
+      "average_precision": 0.15871946623191888,
+      "fpr_wilson_descriptive": [
+        0.006356146716417496,
+        0.007308883922196749
+      ],
+      "recall_wilson_descriptive": [
+        0.550775164614214,
+        0.6391617822793603
+      ]
+    },
+    {
+      "method": "ACCUM",
+      "n": 115200,
+      "tp": 333,
+      "fp": 310,
+      "tn": 114420,
+      "fn": 137,
+      "attack_prevalence": 0.004079861111111111,
+      "recall": 0.7085106382978723,
+      "fpr": 0.0027019959905865945,
+      "precision": 0.5178849144634525,
+      "average_precision": 0.3681162074224509,
+      "fpr_wilson_descriptive": [
+        0.0024178147239060604,
+        0.0030194778036399463
+      ],
+      "recall_wilson_descriptive": [
+        0.6658671681398187,
+        0.7477732939839654
+      ]
+    }
+  ],
+  "strata": [
+    {
+      "method": "CARRY",
+      "load_regime": "bursty_recovery",
+      "n": 28800,
+      "tp": 60,
+      "fp": 1,
+      "tn": 28659,
+      "fn": 80,
+      "attack_prevalence": 0.004861111111111111,
+      "recall": 0.42857142857142855,
+      "fpr": 3.4891835310537335e-05,
+      "precision": 0.9836065573770492,
+      "average_precision": 0.42432344522508453,
+      "fpr_wilson_descriptive": [
+        6.159292251925425e-06,
+        0.000197632611533411
+      ],
+      "recall_wilson_descriptive": [
+        0.3495844356842502,
+        0.5113735929399517
+      ]
+    },
+    {
+      "method": "CARRY",
+      "load_regime": "cyclic",
+      "n": 28800,
+      "tp": 70,
+      "fp": 0,
+      "tn": 28710,
+      "fn": 20,
+      "attack_prevalence": 0.003125,
+      "recall": 0.7777777777777778,
+      "fpr": 0.0,
+      "precision": 1.0,
+      "average_precision": 0.7784722222222222,
+      "fpr_wilson_descriptive": [
+        0.0,
+        0.0001337842178380509
+      ],
+      "recall_wilson_descriptive": [
+        0.6815268960895451,
+        0.8512866452636068
+      ]
+    },
+    {
+      "method": "CARRY",
+      "load_regime": "higher_load",
+      "n": 28800,
+      "tp": 80,
+      "fp": 780,
+      "tn": 27930,
+      "fn": 10,
+      "attack_prevalence": 0.003125,
+      "recall": 0.8888888888888888,
+      "fpr": 0.027168234064785787,
+      "precision": 0.09302325581395349,
+      "average_precision": 0.0830345607235142,
+      "fpr_wilson_descriptive": [
+        0.025350020104738746,
+        0.029112962880782085
+      ],
+      "recall_wilson_descriptive": [
+        0.8074221497873896,
+        0.9385168081070229
+      ]
+    },
+    {
+      "method": "CARRY",
+      "load_regime": "reference",
+      "n": 28800,
+      "tp": 70,
+      "fp": 1,
+      "tn": 28649,
+      "fn": 80,
+      "attack_prevalence": 0.005208333333333333,
+      "recall": 0.4666666666666667,
+      "fpr": 3.4904013961605584e-05,
+      "precision": 0.9859154929577465,
+      "average_precision": 0.4628716744913928,
+      "fpr_wilson_descriptive": [
+        6.1614421014243145e-06,
+        0.00019770158370225593
+      ],
+      "recall_wilson_descriptive": [
+        0.38866050759928206,
+        0.5463375086919231
+      ]
+    },
+    {
+      "method": "ACCUM",
+      "load_regime": "bursty_recovery",
+      "n": 28800,
+      "tp": 77,
+      "fp": 123,
+      "tn": 28537,
+      "fn": 63,
+      "attack_prevalence": 0.004861111111111111,
+      "recall": 0.55,
+      "fpr": 0.004291695743196092,
+      "precision": 0.385,
+      "average_precision": 0.21393750000000003,
+      "fpr_wilson_descriptive": [
+        0.0035984533207448375,
+        0.005117805425649067
+      ],
+      "recall_wilson_descriptive": [
+        0.4673531431737411,
+        0.6299762367893177
+      ]
+    },
+    {
+      "method": "ACCUM",
+      "load_regime": "cyclic",
+      "n": 28800,
+      "tp": 70,
+      "fp": 36,
+      "tn": 28674,
+      "fn": 20,
+      "attack_prevalence": 0.003125,
+      "recall": 0.7777777777777778,
+      "fpr": 0.0012539184952978057,
+      "precision": 0.660377358490566,
+      "average_precision": 0.5143212788259958,
+      "fpr_wilson_descriptive": [
+        0.0009059184905026187,
+        0.0017353672089207913
+      ],
+      "recall_wilson_descriptive": [
+        0.6815268960895451,
+        0.8512866452636068
+      ]
+    },
+    {
+      "method": "ACCUM",
+      "load_regime": "higher_load",
+      "n": 28800,
+      "tp": 80,
+      "fp": 84,
+      "tn": 28626,
+      "fn": 10,
+      "attack_prevalence": 0.003125,
+      "recall": 0.8888888888888888,
+      "fpr": 0.0029258098223615466,
+      "precision": 0.4878048780487805,
+      "average_precision": 0.4339515582655826,
+      "fpr_wilson_descriptive": [
+        0.0023640555575909794,
+        0.0036205654506129103
+      ],
+      "recall_wilson_descriptive": [
+        0.8074221497873896,
+        0.9385168081070229
+      ]
+    },
+    {
+      "method": "ACCUM",
+      "load_regime": "reference",
+      "n": 28800,
+      "tp": 106,
+      "fp": 67,
+      "tn": 28583,
+      "fn": 44,
+      "attack_prevalence": 0.005208333333333333,
+      "recall": 0.7066666666666667,
+      "fpr": 0.002338568935427574,
+      "precision": 0.6127167630057804,
+      "average_precision": 0.4345142903018626,
+      "fpr_wilson_descriptive": [
+        0.001842049693093108,
+        0.0029685254969312484
+      ],
+      "recall_wilson_descriptive": [
+        0.6293765082407161,
+        0.7736357907538123
+      ]
+    }
+  ],
+  "episodes": [
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-C-1560",
+      "scenario": "C",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.3778252601623535
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-C-2460",
+      "scenario": "C",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.29719114303588867
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-C-3360",
+      "scenario": "C",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.2820286750793457
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-C-360",
+      "scenario": "C",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.17204570770263672
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-D-1440",
+      "scenario": "D",
+      "variant": "standard",
+      "detected": false,
+      "attack_windows": 10,
+      "security_windows": 0,
+      "availability": true,
+      "delay_seconds": null
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-D-1950",
+      "scenario": "D",
+      "variant": "standard",
+      "detected": false,
+      "attack_windows": 10,
+      "security_windows": 0,
+      "availability": true,
+      "delay_seconds": null
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-D-3060",
+      "scenario": "D",
+      "variant": "standard",
+      "detected": false,
+      "attack_windows": 10,
+      "security_windows": 0,
+      "availability": true,
+      "delay_seconds": null
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-D-3150",
+      "scenario": "D",
+      "variant": "standard",
+      "detected": false,
+      "attack_windows": 10,
+      "security_windows": 0,
+      "availability": true,
+      "delay_seconds": null
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-F-1140",
+      "scenario": "F",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.2958219051361084
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-F-2340",
+      "scenario": "F",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.30807948112487793
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-F-2550",
+      "scenario": "F",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.2021350860595703
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-F-3450",
+      "scenario": "F",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.30437159538269043
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-G-1860",
+      "scenario": "G",
+      "variant": "fast",
+      "detected": false,
+      "attack_windows": 10,
+      "security_windows": 0,
+      "availability": false,
+      "delay_seconds": null
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-G-2850",
+      "scenario": "G",
+      "variant": "intermittent",
+      "detected": false,
+      "attack_windows": 60,
+      "security_windows": 0,
+      "availability": false,
+      "delay_seconds": null
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-G-540",
+      "scenario": "G",
+      "variant": "slow",
+      "detected": false,
+      "attack_windows": 60,
+      "security_windows": 0,
+      "availability": false,
+      "delay_seconds": null
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-G-60",
+      "scenario": "G",
+      "variant": "inside_permit",
+      "detected": false,
+      "attack_windows": 20,
+      "security_windows": 0,
+      "availability": false,
+      "delay_seconds": null
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-R-2040",
+      "scenario": "R",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.16368436813354492
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-R-2250",
+      "scenario": "R",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.41614794731140137
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-R-660",
+      "scenario": "R",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.23755741119384766
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-R-750",
+      "scenario": "R",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.2594478130340576
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S1-1350",
+      "scenario": "S1",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.3402707576751709
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S1-2760",
+      "scenario": "S1",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.25084710121154785
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S1-450",
+      "scenario": "S1",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.26441216468811035
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S1-960",
+      "scenario": "S1",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.30860447883605957
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S2-1260",
+      "scenario": "S2",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.3197476863861084
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S2-1650",
+      "scenario": "S2",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.340421199798584
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S2-2640",
+      "scenario": "S2",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.15120887756347656
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S2-3540",
+      "scenario": "S2",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.224761962890625
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S3-150",
+      "scenario": "S3",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.2225947380065918
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S3-2160",
+      "scenario": "S3",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.20908784866333008
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S3-2940",
+      "scenario": "S3",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.201735258102417
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S3-3240",
+      "scenario": "S3",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.22733545303344727
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S4-1050",
+      "scenario": "S4",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.33005809783935547
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S4-1740",
+      "scenario": "S4",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.25333642959594727
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S4-240",
+      "scenario": "S4",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.19694280624389648
+    },
+    {
+      "method": "CARRY",
+      "episode": "test-74133-nf32-S4-840",
+      "scenario": "S4",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.20846986770629883
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-C-1560",
+      "scenario": "C",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.3778252601623535
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-C-2460",
+      "scenario": "C",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.29719114303588867
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-C-3360",
+      "scenario": "C",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.2820286750793457
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-C-360",
+      "scenario": "C",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.17204570770263672
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-D-1440",
+      "scenario": "D",
+      "variant": "standard",
+      "detected": false,
+      "attack_windows": 10,
+      "security_windows": 0,
+      "availability": true,
+      "delay_seconds": null
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-D-1950",
+      "scenario": "D",
+      "variant": "standard",
+      "detected": false,
+      "attack_windows": 10,
+      "security_windows": 0,
+      "availability": true,
+      "delay_seconds": null
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-D-3060",
+      "scenario": "D",
+      "variant": "standard",
+      "detected": false,
+      "attack_windows": 10,
+      "security_windows": 0,
+      "availability": true,
+      "delay_seconds": null
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-D-3150",
+      "scenario": "D",
+      "variant": "standard",
+      "detected": false,
+      "attack_windows": 10,
+      "security_windows": 0,
+      "availability": true,
+      "delay_seconds": null
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-F-1140",
+      "scenario": "F",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.2958219051361084
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-F-2340",
+      "scenario": "F",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.30807948112487793
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-F-2550",
+      "scenario": "F",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.2021350860595703
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-F-3450",
+      "scenario": "F",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.30437159538269043
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-G-1860",
+      "scenario": "G",
+      "variant": "fast",
+      "detected": false,
+      "attack_windows": 10,
+      "security_windows": 0,
+      "availability": false,
+      "delay_seconds": null
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-G-2850",
+      "scenario": "G",
+      "variant": "intermittent",
+      "detected": true,
+      "attack_windows": 60,
+      "security_windows": 17,
+      "availability": false,
+      "delay_seconds": 38.27268695831299
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-G-540",
+      "scenario": "G",
+      "variant": "slow",
+      "detected": true,
+      "attack_windows": 60,
+      "security_windows": 36,
+      "availability": false,
+      "delay_seconds": 24.17734456062317
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-G-60",
+      "scenario": "G",
+      "variant": "inside_permit",
+      "detected": false,
+      "attack_windows": 20,
+      "security_windows": 0,
+      "availability": false,
+      "delay_seconds": null
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-R-2040",
+      "scenario": "R",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.16368436813354492
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-R-2250",
+      "scenario": "R",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.41614794731140137
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-R-660",
+      "scenario": "R",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.23755741119384766
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-R-750",
+      "scenario": "R",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": true,
+      "delay_seconds": 0.2594478130340576
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S1-1350",
+      "scenario": "S1",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.3402707576751709
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S1-2760",
+      "scenario": "S1",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.25084710121154785
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S1-450",
+      "scenario": "S1",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.26441216468811035
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S1-960",
+      "scenario": "S1",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.30860447883605957
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S2-1260",
+      "scenario": "S2",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.3197476863861084
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S2-1650",
+      "scenario": "S2",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.340421199798584
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S2-2640",
+      "scenario": "S2",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.15120887756347656
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S2-3540",
+      "scenario": "S2",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.224761962890625
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S3-150",
+      "scenario": "S3",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.2225947380065918
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S3-2160",
+      "scenario": "S3",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.20908784866333008
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S3-2940",
+      "scenario": "S3",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.201735258102417
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S3-3240",
+      "scenario": "S3",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.22733545303344727
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S4-1050",
+      "scenario": "S4",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.33005809783935547
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S4-1740",
+      "scenario": "S4",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.25333642959594727
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S4-240",
+      "scenario": "S4",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.19694280624389648
+    },
+    {
+      "method": "ACCUM",
+      "episode": "test-74133-nf32-S4-840",
+      "scenario": "S4",
+      "variant": "standard",
+      "detected": true,
+      "attack_windows": 10,
+      "security_windows": 10,
+      "availability": false,
+      "delay_seconds": 0.20846986770629883
+    }
+  ],
+  "limitations": [
+    "Replacement changes both load thresholds and trend, not solely temporal memory.",
+    "Peer baseline assumes a minority of abnormal NF and comparable peer workload.",
+    "Calibration used earlier test data and reset state across excluded windows.",
+    "Binary AP and window confidence intervals are descriptive; windows are dependent."
+  ]
+}

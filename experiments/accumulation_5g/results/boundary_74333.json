@@ -1,0 +1,234 @@
+[
+  {
+    "variant": "inside_permit",
+    "start": 60,
+    "before": {
+      "ACCUM": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "CARRY": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "PERSIST": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "SPLIT": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      }
+    },
+    "before_accumulation": {
+      "residual": 4.0,
+      "tail": false,
+      "value": 0.0
+    },
+    "first": {
+      "ACCUM": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "CARRY": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "PERSIST": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "SPLIT": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      }
+    },
+    "first_accumulation": {
+      "residual": 1.0,
+      "tail": false,
+      "value": 0.0
+    }
+  },
+  {
+    "variant": "slow",
+    "start": 150,
+    "before": {
+      "ACCUM": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "CARRY": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "PERSIST": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "SPLIT": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      }
+    },
+    "before_accumulation": {
+      "residual": 0.0,
+      "tail": false,
+      "value": 3.8810965
+    },
+    "first": {
+      "ACCUM": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "CARRY": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "PERSIST": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "SPLIT": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      }
+    },
+    "first_accumulation": {
+      "residual": 0.0,
+      "tail": false,
+      "value": 3.342285535
+    }
+  },
+  {
+    "variant": "intermittent",
+    "start": 240,
+    "before": {
+      "ACCUM": {
+        "availability": false,
+        "security": true,
+        "state": "security"
+      },
+      "CARRY": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "PERSIST": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "SPLIT": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      }
+    },
+    "before_accumulation": {
+      "residual": -2.0,
+      "tail": false,
+      "value": 64.65591120413897
+    },
+    "first": {
+      "ACCUM": {
+        "availability": false,
+        "security": true,
+        "state": "security"
+      },
+      "CARRY": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "PERSIST": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "SPLIT": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      }
+    },
+    "first_accumulation": {
+      "residual": 0.0,
+      "tail": false,
+      "value": 63.509352092097586
+    }
+  },
+  {
+    "variant": "fast",
+    "start": 2160,
+    "before": {
+      "ACCUM": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "CARRY": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "PERSIST": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "SPLIT": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      }
+    },
+    "before_accumulation": {
+      "residual": -8.0,
+      "tail": false,
+      "value": 0.0
+    },
+    "first": {
+      "ACCUM": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "CARRY": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "PERSIST": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      },
+      "SPLIT": {
+        "availability": false,
+        "security": false,
+        "state": "normal"
+      }
+    },
+    "first_accumulation": {
+      "residual": 2.0,
+      "tail": false,
+      "value": 0.0
+    }
+  }
+]
