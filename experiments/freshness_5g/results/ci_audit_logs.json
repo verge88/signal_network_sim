@@ -1,0 +1,56 @@
+[
+  {
+    "job_id": 129680365543,
+    "name": "live (32, early, 33101)",
+    "lines": [
+      "2026-11-10T06:54:35.0799327Z 45 passed in 6.26s",
+      "2026-11-10T07:57:56.3932161Z TypeError: '<=' not supported between instances of 'float' and 'Timestamp'",
+      "2026-11-10T07:57:56.3960914Z {\"robustness_audit_pass\": true, \"actors\": 32, \"metrics\": {\"PREVIOUS\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 270, \"security_fp\": 841, \"security_fn\": 200, \"availability_attack_windows\": 101, \"availability_normal_windows\": 1338, \"operational_tp\": 309, \"operational_normal_windows\": 2158, \"unknown_attack\": 17, \"unknown_normal\": 480}, \"SPLIT\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 264, \"security_fp\": 824, \"security_fn\": 206, \"availability_attack_windows\": 101, \"availability_normal_windows\": 1338, \"operational_tp\": 303, \"operational_normal_windows\": 2141, \"unknown_attack\": 17, \"unknown_normal\": 480}, \"PERSIST\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 269, \"security_fp\": 824, \"security_fn\": 201, \"availability_attack_windows\": 101, \"availability_normal_windows\": 1338, \"operational_tp\": 308, \"operational_normal_windows\": 2141, \"unknown_attack\": 17, \"unknown_normal\": 480}, \"CARRY\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 269, \"security_fp\": 824, \"security_fn\": 201, \"availability_attack_windows\": 101, \"availability_normal_windows\": 1338, \"operational_tp\": 308, \"operational_normal_windows\": 2141, \"unknown_attack\": 17, \"unknown_normal\": 480}}}"
+    ]
+  },
+  {
+    "job_id": 129680365728,
+    "name": "live (32, late, 33301)",
+    "lines": [
+      "2026-11-10T06:54:23.5525056Z 45 passed in 2.98s",
+      "2026-11-10T07:55:34.4343797Z TypeError: '<=' not supported between instances of 'float' and 'Timestamp'",
+      "2026-11-10T07:55:34.4378117Z {\"robustness_audit_pass\": true, \"actors\": 32, \"metrics\": {\"PREVIOUS\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 287, \"security_fp\": 914, \"security_fn\": 183, \"availability_attack_windows\": 54, \"availability_normal_windows\": 116, \"operational_tp\": 304, \"operational_normal_windows\": 1028, \"unknown_attack\": 22, \"unknown_normal\": 265}, \"SPLIT\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 280, \"security_fp\": 783, \"security_fn\": 190, \"availability_attack_windows\": 54, \"availability_normal_windows\": 116, \"operational_tp\": 298, \"operational_normal_windows\": 899, \"unknown_attack\": 22, \"unknown_normal\": 265}, \"PERSIST\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 284, \"security_fp\": 783, \"security_fn\": 186, \"availability_attack_windows\": 54, \"availability_normal_windows\": 116, \"operational_tp\": 302, \"operational_normal_windows\": 899, \"unknown_attack\": 22, \"unknown_normal\": 265}, \"CARRY\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 286, \"security_fp\": 796, \"security_fn\": 184, \"availability_attack_windows\": 54, \"availability_normal_windows\": 116, \"operational_tp\": 304, \"operational_normal_windows\": 911, \"unknown_attack\": 22, \"unknown_normal\": 265}}}"
+    ]
+  },
+  {
+    "job_id": 129680365848,
+    "name": "live (32, early, 33301)",
+    "lines": [
+      "2026-11-10T06:54:23.7810109Z 45 passed in 2.91s",
+      "2026-11-10T07:55:29.4957202Z TypeError: '<=' not supported between instances of 'float' and 'Timestamp'",
+      "2026-11-10T07:55:29.4971213Z {\"robustness_audit_pass\": true, \"actors\": 32, \"metrics\": {\"PREVIOUS\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 287, \"security_fp\": 914, \"security_fn\": 183, \"availability_attack_windows\": 54, \"availability_normal_windows\": 123, \"operational_tp\": 304, \"operational_normal_windows\": 1035, \"unknown_attack\": 22, \"unknown_normal\": 283}, \"SPLIT\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 280, \"security_fp\": 783, \"security_fn\": 190, \"availability_attack_windows\": 54, \"availability_normal_windows\": 123, \"operational_tp\": 298, \"operational_normal_windows\": 906, \"unknown_attack\": 22, \"unknown_normal\": 283}, \"PERSIST\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 284, \"security_fp\": 783, \"security_fn\": 186, \"availability_attack_windows\": 54, \"availability_normal_windows\": 123, \"operational_tp\": 302, \"operational_normal_windows\": 906, \"unknown_attack\": 22, \"unknown_normal\": 283}, \"CARRY\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 286, \"security_fp\": 796, \"security_fn\": 184, \"availability_attack_windows\": 54, \"availability_normal_windows\": 123, \"operational_tp\": 304, \"operational_normal_windows\": 918, \"unknown_attack\": 22, \"unknown_normal\": 283}}}"
+    ]
+  },
+  {
+    "job_id": 129680365860,
+    "name": "live (32, late, 33201)",
+    "lines": [
+      "2026-11-10T06:54:34.6139974Z 45 passed in 5.65s",
+      "2026-11-10T07:56:06.2379624Z TypeError: '<=' not supported between instances of 'float' and 'Timestamp'",
+      "2026-11-10T07:56:06.2391243Z {\"robustness_audit_pass\": true, \"actors\": 32, \"metrics\": {\"PREVIOUS\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 280, \"security_fp\": 819, \"security_fn\": 190, \"availability_attack_windows\": 56, \"availability_normal_windows\": 118, \"operational_tp\": 300, \"operational_normal_windows\": 937, \"unknown_attack\": 20, \"unknown_normal\": 265}, \"SPLIT\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 280, \"security_fp\": 804, \"security_fn\": 190, \"availability_attack_windows\": 56, \"availability_normal_windows\": 118, \"operational_tp\": 300, \"operational_normal_windows\": 922, \"unknown_attack\": 20, \"unknown_normal\": 265}, \"PERSIST\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 280, \"security_fp\": 804, \"security_fn\": 190, \"availability_attack_windows\": 56, \"availability_normal_windows\": 118, \"operational_tp\": 300, \"operational_normal_windows\": 922, \"unknown_attack\": 20, \"unknown_normal\": 265}, \"CARRY\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 280, \"security_fp\": 804, \"security_fn\": 190, \"availability_attack_windows\": 56, \"availability_normal_windows\": 118, \"operational_tp\": 300, \"operational_normal_windows\": 922, \"unknown_attack\": 20, \"unknown_normal\": 265}}}"
+    ]
+  },
+  {
+    "job_id": 129680365899,
+    "name": "live (32, early, 33201)",
+    "lines": [
+      "2026-11-10T06:54:37.0302376Z 45 passed in 6.10s",
+      "2026-11-10T07:56:25.8238775Z TypeError: '<=' not supported between instances of 'float' and 'Timestamp'",
+      "2026-11-10T07:56:25.8267665Z {\"robustness_audit_pass\": true, \"actors\": 32, \"metrics\": {\"PREVIOUS\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 259, \"security_fp\": 819, \"security_fn\": 211, \"availability_attack_windows\": 106, \"availability_normal_windows\": 1401, \"operational_tp\": 304, \"operational_normal_windows\": 2196, \"unknown_attack\": 16, \"unknown_normal\": 466}, \"SPLIT\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 259, \"security_fp\": 804, \"security_fn\": 211, \"availability_attack_windows\": 106, \"availability_normal_windows\": 1401, \"operational_tp\": 304, \"operational_normal_windows\": 2181, \"unknown_attack\": 16, \"unknown_normal\": 466}, \"PERSIST\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 259, \"security_fp\": 804, \"security_fn\": 211, \"availability_attack_windows\": 106, \"availability_normal_windows\": 1401, \"operational_tp\": 304, \"operational_normal_windows\": 2181, \"unknown_attack\": 16, \"unknown_normal\": 466}, \"CARRY\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 259, \"security_fp\": 804, \"security_fn\": 211, \"availability_attack_windows\": 106, \"availability_normal_windows\": 1401, \"operational_tp\": 304, \"operational_normal_windows\": 2181, \"unknown_attack\": 16, \"unknown_normal\": 466}}}"
+    ]
+  },
+  {
+    "job_id": 129680365968,
+    "name": "live (32, late, 33101)",
+    "lines": [
+      "2026-11-10T06:54:36.8069571Z 45 passed in 5.21s",
+      "2026-11-10T07:56:07.8894187Z TypeError: '<=' not supported between instances of 'float' and 'Timestamp'",
+      "2026-11-10T07:56:07.8917496Z {\"robustness_audit_pass\": true, \"actors\": 32, \"metrics\": {\"PREVIOUS\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 286, \"security_fp\": 841, \"security_fn\": 184, \"availability_attack_windows\": 55, \"availability_normal_windows\": 104, \"operational_tp\": 304, \"operational_normal_windows\": 945, \"unknown_attack\": 22, \"unknown_normal\": 275}, \"SPLIT\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 280, \"security_fp\": 824, \"security_fn\": 190, \"availability_attack_windows\": 55, \"availability_normal_windows\": 104, \"operational_tp\": 298, \"operational_normal_windows\": 928, \"unknown_attack\": 22, \"unknown_normal\": 275}, \"PERSIST\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 285, \"security_fp\": 824, \"security_fn\": 185, \"availability_attack_windows\": 55, \"availability_normal_windows\": 104, \"operational_tp\": 303, \"operational_normal_windows\": 928, \"unknown_attack\": 22, \"unknown_normal\": 275}, \"CARRY\": {\"attack_windows\": 470, \"normal_windows\": 114730, \"security_tp\": 285, \"security_fp\": 824, \"security_fn\": 185, \"availability_attack_windows\": 55, \"availability_normal_windows\": 104, \"operational_tp\": 303, \"operational_normal_windows\": 928, \"unknown_attack\": 22, \"unknown_normal\": 275}}}"
+    ]
+  }
+]

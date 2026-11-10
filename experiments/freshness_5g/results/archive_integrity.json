@@ -1,0 +1,50 @@
+[
+  {
+    "name": "freshness-5g-32-33201-early-42771575096.zip",
+    "size": 103825639,
+    "github_digest": "sha256:cb5392210b8c8b65d159f949b0567cc31a0fbb689820a545b6af2f957d65e9ac",
+    "local_digest": "sha256:cb5392210b8c8b65d159f949b0567cc31a0fbb689820a545b6af2f957d65e9ac",
+    "matches": true,
+    "local_replay_equals_ci": true
+  },
+  {
+    "name": "freshness-5g-32-33201-late-42771575096.zip",
+    "size": 103772440,
+    "github_digest": "sha256:d3674ce7dc0e352040c1e7c344707f3b55a407a441aabe94330a2881fae1ac71",
+    "local_digest": "sha256:d3674ce7dc0e352040c1e7c344707f3b55a407a441aabe94330a2881fae1ac71",
+    "matches": true,
+    "local_replay_equals_ci": true
+  },
+  {
+    "name": "freshness-5g-32-33301-late-42771575096.zip",
+    "size": 103028674,
+    "github_digest": "sha256:981aa460c34beca7eb34151128cea5de456581eae995e7983b793a09e8241793",
+    "local_digest": "sha256:981aa460c34beca7eb34151128cea5de456581eae995e7983b793a09e8241793",
+    "matches": true,
+    "local_replay_equals_ci": true
+  },
+  {
+    "name": "freshness-5g-32-33101-late-42771575096.zip",
+    "size": 103720255,
+    "github_digest": "sha256:46b6026997108d2eda840a59362fe47bb3322f5f6f8c9eceec5b39b157a5eb8e",
+    "local_digest": "sha256:46b6026997108d2eda840a59362fe47bb3322f5f6f8c9eceec5b39b157a5eb8e",
+    "matches": true,
+    "local_replay_equals_ci": true
+  },
+  {
+    "name": "freshness-5g-32-33301-early-42771575096.zip",
+    "size": 103136883,
+    "github_digest": "sha256:17bf04c97bf2c051b76423671baec8c06cb375bbf11a557df9cb61129a17d32b",
+    "local_digest": "sha256:17bf04c97bf2c051b76423671baec8c06cb375bbf11a557df9cb61129a17d32b",
+    "matches": true,
+    "local_replay_equals_ci": true
+  },
+  {
+    "name": "freshness-5g-32-33101-early-42771575096.zip",
+    "size": 103644597,
+    "github_digest": "sha256:3e53521b0e1e73fc7d482c171971c51e64f78d4d1376a700d2b074eafc32bedf",
+    "local_digest": "sha256:3e53521b0e1e73fc7d482c171971c51e64f78d4d1376a700d2b074eafc32bedf",
+    "matches": true,
+    "local_replay_equals_ci": true
+  }
+]

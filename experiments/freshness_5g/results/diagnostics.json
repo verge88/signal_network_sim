@@ -1,0 +1,4036 @@
+{
+  "runs": [
+    {
+      "run": "freshness-5g-32-33101-early-42771575096",
+      "mode": "early",
+      "source_seed": 33101,
+      "cases": [
+        {
+          "episode": {
+            "episode": "test-54133-nf32-C-1260",
+            "scenario": "C",
+            "method": "CARRY",
+            "ramp_step": null,
+            "permitted_windows": 0,
+            "security": false,
+            "availability": true,
+            "operational": true,
+            "security_delay": null,
+            "operational_delay": 0.35713863372802734,
+            "variant": "standard",
+            "load_regime": "higher_load",
+            "windows": 10
+          },
+          "rows": [
+            {
+              "window_id": 1260,
+              "request_count": 5,
+              "error_count": 0,
+              "original_age_ms": 312.1800422668457,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1261,
+              "request_count": 7,
+              "error_count": 0,
+              "original_age_ms": 312.8697872161865,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1262,
+              "request_count": 5,
+              "error_count": 0,
+              "original_age_ms": 297.6968288421631,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1263,
+              "request_count": 8,
+              "error_count": 0,
+              "original_age_ms": 255.20849227905273,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1264,
+              "request_count": 10,
+              "error_count": 0,
+              "original_age_ms": 292.2167778015137,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1265,
+              "request_count": 26,
+              "error_count": 0,
+              "original_age_ms": 295.0584888458252,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1266,
+              "request_count": 12,
+              "error_count": 0,
+              "original_age_ms": 347.1648693084717,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1267,
+              "request_count": 10,
+              "error_count": 0,
+              "original_age_ms": 327.9683589935303,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1268,
+              "request_count": 12,
+              "error_count": 0,
+              "original_age_ms": 322.8745460510254,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1269,
+              "request_count": 12,
+              "error_count": 0,
+              "original_age_ms": 301.1150360107422,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            }
+          ]
+        }
+      ],
+      "false_reason_counts": {
+        "higher_load": {
+          "tail": 824
+        }
+      },
+      "episode_boundary_states": [
+        {
+          "episode": "test-54133-nf32-C-1260",
+          "nf_id": "slot-4",
+          "start_window": 1260,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-C-1950",
+          "nf_id": "slot-4",
+          "start_window": 1950,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-C-2040",
+          "nf_id": "slot-4",
+          "start_window": 2040,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-C-2940",
+          "nf_id": "slot-4",
+          "start_window": 2940,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-D-2250",
+          "nf_id": "slot-4",
+          "start_window": 2250,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-D-240",
+          "nf_id": "slot-4",
+          "start_window": 240,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-D-2460",
+          "nf_id": "slot-4",
+          "start_window": 2460,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-D-3060",
+          "nf_id": "slot-4",
+          "start_window": 3060,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-F-1140",
+          "nf_id": "slot-4",
+          "start_window": 1140,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-F-2340",
+          "nf_id": "slot-4",
+          "start_window": 2340,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-F-3360",
+          "nf_id": "slot-4",
+          "start_window": 3360,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-F-360",
+          "nf_id": "slot-4",
+          "start_window": 360,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-G-150",
+          "nf_id": "slot-3",
+          "start_window": 150,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-G-2850",
+          "nf_id": "slot-3",
+          "start_window": 2850,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-G-450",
+          "nf_id": "slot-3",
+          "start_window": 450,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-G-60",
+          "nf_id": "slot-3",
+          "start_window": 60,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-R-1050",
+          "nf_id": "slot-4",
+          "start_window": 1050,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-R-1860",
+          "nf_id": "slot-4",
+          "start_window": 1860,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-R-840",
+          "nf_id": "slot-4",
+          "start_window": 840,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-R-960",
+          "nf_id": "slot-4",
+          "start_window": 960,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S1-1560",
+          "nf_id": "slot-0",
+          "start_window": 1560,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S1-1650",
+          "nf_id": "slot-0",
+          "start_window": 1650,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S1-3150",
+          "nf_id": "slot-0",
+          "start_window": 3150,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S1-750",
+          "nf_id": "slot-0",
+          "start_window": 750,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S2-1440",
+          "nf_id": "slot-1",
+          "start_window": 1440,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S2-2160",
+          "nf_id": "slot-1",
+          "start_window": 2160,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S2-2640",
+          "nf_id": "slot-1",
+          "start_window": 2640,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S2-3540",
+          "nf_id": "slot-1",
+          "start_window": 3540,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S3-1350",
+          "nf_id": "slot-2",
+          "start_window": 1350,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S3-1740",
+          "nf_id": "slot-2",
+          "start_window": 1740,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S3-2760",
+          "nf_id": "slot-2",
+          "start_window": 2760,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S3-3450",
+          "nf_id": "slot-2",
+          "start_window": 3450,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S4-2550",
+          "nf_id": "slot-3",
+          "start_window": 2550,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S4-3240",
+          "nf_id": "slot-3",
+          "start_window": 3240,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S4-540",
+          "nf_id": "slot-3",
+          "start_window": 540,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S4-660",
+          "nf_id": "slot-3",
+          "start_window": 660,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        }
+      ],
+      "normal_report_age_at_decision_end_p95_ms": 431.38067722320557,
+      "normal_reports_aging_after_return_by_decision_end": 1437,
+      "normal_evaluation_duration_p95_ms": 0.2384185791015625,
+      "normal_evaluation_duration_max_ms": 0.453948974609375
+    },
+    {
+      "run": "freshness-5g-32-33101-late-42771575096",
+      "mode": "late",
+      "source_seed": 33101,
+      "cases": [],
+      "false_reason_counts": {
+        "higher_load": {
+          "tail": 824
+        }
+      },
+      "episode_boundary_states": [
+        {
+          "episode": "test-54133-nf32-C-1260",
+          "nf_id": "slot-4",
+          "start_window": 1260,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-C-1950",
+          "nf_id": "slot-4",
+          "start_window": 1950,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-C-2040",
+          "nf_id": "slot-4",
+          "start_window": 2040,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-C-2940",
+          "nf_id": "slot-4",
+          "start_window": 2940,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-D-2250",
+          "nf_id": "slot-4",
+          "start_window": 2250,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-D-240",
+          "nf_id": "slot-4",
+          "start_window": 240,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-D-2460",
+          "nf_id": "slot-4",
+          "start_window": 2460,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-D-3060",
+          "nf_id": "slot-4",
+          "start_window": 3060,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-F-1140",
+          "nf_id": "slot-4",
+          "start_window": 1140,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-F-2340",
+          "nf_id": "slot-4",
+          "start_window": 2340,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-F-3360",
+          "nf_id": "slot-4",
+          "start_window": 3360,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-F-360",
+          "nf_id": "slot-4",
+          "start_window": 360,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-G-150",
+          "nf_id": "slot-3",
+          "start_window": 150,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-G-2850",
+          "nf_id": "slot-3",
+          "start_window": 2850,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-G-450",
+          "nf_id": "slot-3",
+          "start_window": 450,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-G-60",
+          "nf_id": "slot-3",
+          "start_window": 60,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-R-1050",
+          "nf_id": "slot-4",
+          "start_window": 1050,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-R-1860",
+          "nf_id": "slot-4",
+          "start_window": 1860,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-R-840",
+          "nf_id": "slot-4",
+          "start_window": 840,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-R-960",
+          "nf_id": "slot-4",
+          "start_window": 960,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S1-1560",
+          "nf_id": "slot-0",
+          "start_window": 1560,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S1-1650",
+          "nf_id": "slot-0",
+          "start_window": 1650,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S1-3150",
+          "nf_id": "slot-0",
+          "start_window": 3150,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S1-750",
+          "nf_id": "slot-0",
+          "start_window": 750,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S2-1440",
+          "nf_id": "slot-1",
+          "start_window": 1440,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S2-2160",
+          "nf_id": "slot-1",
+          "start_window": 2160,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S2-2640",
+          "nf_id": "slot-1",
+          "start_window": 2640,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S2-3540",
+          "nf_id": "slot-1",
+          "start_window": 3540,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S3-1350",
+          "nf_id": "slot-2",
+          "start_window": 1350,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S3-1740",
+          "nf_id": "slot-2",
+          "start_window": 1740,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S3-2760",
+          "nf_id": "slot-2",
+          "start_window": 2760,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S3-3450",
+          "nf_id": "slot-2",
+          "start_window": 3450,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S4-2550",
+          "nf_id": "slot-3",
+          "start_window": 2550,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S4-3240",
+          "nf_id": "slot-3",
+          "start_window": 3240,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S4-540",
+          "nf_id": "slot-3",
+          "start_window": 540,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54133-nf32-S4-660",
+          "nf_id": "slot-3",
+          "start_window": 660,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        }
+      ],
+      "normal_report_age_at_decision_end_p95_ms": 0.5477309226989745,
+      "normal_reports_aging_after_return_by_decision_end": 0,
+      "normal_evaluation_duration_p95_ms": 0.2672791481018066,
+      "normal_evaluation_duration_max_ms": 0.5078315734863281
+    },
+    {
+      "run": "freshness-5g-32-33201-early-42771575096",
+      "mode": "early",
+      "source_seed": 33201,
+      "cases": [
+        {
+          "episode": {
+            "episode": "test-54233-nf32-C-1740",
+            "scenario": "C",
+            "method": "CARRY",
+            "ramp_step": null,
+            "permitted_windows": 0,
+            "security": false,
+            "availability": true,
+            "operational": true,
+            "security_delay": null,
+            "operational_delay": 0.3342881202697754,
+            "variant": "standard",
+            "load_regime": "higher_load",
+            "windows": 10
+          },
+          "rows": [
+            {
+              "window_id": 1740,
+              "request_count": 8,
+              "error_count": 0,
+              "original_age_ms": 287.14537620544434,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1741,
+              "request_count": 6,
+              "error_count": 0,
+              "original_age_ms": 273.65684509277344,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1742,
+              "request_count": 9,
+              "error_count": 0,
+              "original_age_ms": 292.4323081970215,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1743,
+              "request_count": 5,
+              "error_count": 0,
+              "original_age_ms": 325.35815238952637,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1744,
+              "request_count": 6,
+              "error_count": 0,
+              "original_age_ms": 301.88727378845215,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1745,
+              "request_count": 12,
+              "error_count": 0,
+              "original_age_ms": 287.9359722137451,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1746,
+              "request_count": 12,
+              "error_count": 0,
+              "original_age_ms": 349.184513092041,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1747,
+              "request_count": 9,
+              "error_count": 0,
+              "original_age_ms": 305.50193786621094,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1748,
+              "request_count": 9,
+              "error_count": 0,
+              "original_age_ms": 274.9960422515869,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 1749,
+              "request_count": 7,
+              "error_count": 0,
+              "original_age_ms": 349.226713180542,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            }
+          ]
+        },
+        {
+          "episode": {
+            "episode": "test-54233-nf32-C-2460",
+            "scenario": "C",
+            "method": "CARRY",
+            "ramp_step": null,
+            "permitted_windows": 0,
+            "security": false,
+            "availability": true,
+            "operational": true,
+            "security_delay": null,
+            "operational_delay": 0.3295705318450928,
+            "variant": "standard",
+            "load_regime": "cyclic",
+            "windows": 10
+          },
+          "rows": [
+            {
+              "window_id": 2460,
+              "request_count": 10,
+              "error_count": 0,
+              "original_age_ms": 281.0366153717041,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 2461,
+              "request_count": 10,
+              "error_count": 0,
+              "original_age_ms": 276.42345428466797,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 2462,
+              "request_count": 10,
+              "error_count": 0,
+              "original_age_ms": 320.8646774291992,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 2463,
+              "request_count": 10,
+              "error_count": 0,
+              "original_age_ms": 340.1787281036377,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 2464,
+              "request_count": 11,
+              "error_count": 0,
+              "original_age_ms": 329.4713497161865,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 2465,
+              "request_count": 11,
+              "error_count": 0,
+              "original_age_ms": 324.8250484466553,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 2466,
+              "request_count": 11,
+              "error_count": 0,
+              "original_age_ms": 308.55846405029297,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 2467,
+              "request_count": 22,
+              "error_count": 0,
+              "original_age_ms": 297.4717617034912,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 2468,
+              "request_count": 11,
+              "error_count": 0,
+              "original_age_ms": 314.2564296722412,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            },
+            {
+              "window_id": 2469,
+              "request_count": 11,
+              "error_count": 0,
+              "original_age_ms": 297.3828315734863,
+              "delivered_missing": false,
+              "signals": {
+                "carry": 0.0,
+                "permit_valid": false,
+                "persistence": 0.0,
+                "semantic": false,
+                "separate_tail": false
+              },
+              "output": {
+                "availability": true,
+                "security": false,
+                "state": "availability"
+              }
+            }
+          ]
+        }
+      ],
+      "false_reason_counts": {
+        "higher_load": {
+          "tail": 804
+        }
+      },
+      "episode_boundary_states": [
+        {
+          "episode": "test-54233-nf32-C-1740",
+          "nf_id": "slot-4",
+          "start_window": 1740,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-C-2040",
+          "nf_id": "slot-4",
+          "start_window": 2040,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-C-2460",
+          "nf_id": "slot-4",
+          "start_window": 2460,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-C-3450",
+          "nf_id": "slot-4",
+          "start_window": 3450,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-D-1560",
+          "nf_id": "slot-4",
+          "start_window": 1560,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-D-2550",
+          "nf_id": "slot-4",
+          "start_window": 2550,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-D-2940",
+          "nf_id": "slot-4",
+          "start_window": 2940,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-D-3540",
+          "nf_id": "slot-4",
+          "start_window": 3540,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-F-1050",
+          "nf_id": "slot-4",
+          "start_window": 1050,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-F-1350",
+          "nf_id": "slot-4",
+          "start_window": 1350,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-F-2850",
+          "nf_id": "slot-4",
+          "start_window": 2850,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-F-540",
+          "nf_id": "slot-4",
+          "start_window": 540,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-G-150",
+          "nf_id": "slot-3",
+          "start_window": 150,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-G-1860",
+          "nf_id": "slot-3",
+          "start_window": 1860,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-G-2250",
+          "nf_id": "slot-3",
+          "start_window": 2250,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-G-60",
+          "nf_id": "slot-3",
+          "start_window": 60,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-R-1140",
+          "nf_id": "slot-4",
+          "start_window": 1140,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-R-1260",
+          "nf_id": "slot-4",
+          "start_window": 1260,
+          "before": {
+            "availability": true,
+            "security": false,
+            "state": "availability"
+          },
+          "first": {
+            "availability": true,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-R-1950",
+          "nf_id": "slot-4",
+          "start_window": 1950,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-R-3240",
+          "nf_id": "slot-4",
+          "start_window": 3240,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S1-2640",
+          "nf_id": "slot-0",
+          "start_window": 2640,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S1-3150",
+          "nf_id": "slot-0",
+          "start_window": 3150,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S1-3360",
+          "nf_id": "slot-0",
+          "start_window": 3360,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S1-660",
+          "nf_id": "slot-0",
+          "start_window": 660,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S2-1440",
+          "nf_id": "slot-1",
+          "start_window": 1440,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S2-1650",
+          "nf_id": "slot-1",
+          "start_window": 1650,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S2-3060",
+          "nf_id": "slot-1",
+          "start_window": 3060,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S2-450",
+          "nf_id": "slot-1",
+          "start_window": 450,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S3-2340",
+          "nf_id": "slot-2",
+          "start_window": 2340,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S3-2760",
+          "nf_id": "slot-2",
+          "start_window": 2760,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S3-750",
+          "nf_id": "slot-2",
+          "start_window": 750,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S3-960",
+          "nf_id": "slot-2",
+          "start_window": 960,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S4-2160",
+          "nf_id": "slot-3",
+          "start_window": 2160,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S4-240",
+          "nf_id": "slot-3",
+          "start_window": 240,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S4-360",
+          "nf_id": "slot-3",
+          "start_window": 360,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S4-840",
+          "nf_id": "slot-3",
+          "start_window": 840,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        }
+      ],
+      "normal_report_age_at_decision_end_p95_ms": 426.7287611961363,
+      "normal_reports_aging_after_return_by_decision_end": 1484,
+      "normal_evaluation_duration_p95_ms": 0.24200677871704096,
+      "normal_evaluation_duration_max_ms": 0.47016143798828125
+    },
+    {
+      "run": "freshness-5g-32-33201-late-42771575096",
+      "mode": "late",
+      "source_seed": 33201,
+      "cases": [],
+      "false_reason_counts": {
+        "higher_load": {
+          "tail": 804
+        }
+      },
+      "episode_boundary_states": [
+        {
+          "episode": "test-54233-nf32-C-1740",
+          "nf_id": "slot-4",
+          "start_window": 1740,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-C-2040",
+          "nf_id": "slot-4",
+          "start_window": 2040,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-C-2460",
+          "nf_id": "slot-4",
+          "start_window": 2460,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-C-3450",
+          "nf_id": "slot-4",
+          "start_window": 3450,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-D-1560",
+          "nf_id": "slot-4",
+          "start_window": 1560,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-D-2550",
+          "nf_id": "slot-4",
+          "start_window": 2550,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-D-2940",
+          "nf_id": "slot-4",
+          "start_window": 2940,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-D-3540",
+          "nf_id": "slot-4",
+          "start_window": 3540,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-F-1050",
+          "nf_id": "slot-4",
+          "start_window": 1050,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-F-1350",
+          "nf_id": "slot-4",
+          "start_window": 1350,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-F-2850",
+          "nf_id": "slot-4",
+          "start_window": 2850,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-F-540",
+          "nf_id": "slot-4",
+          "start_window": 540,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-G-150",
+          "nf_id": "slot-3",
+          "start_window": 150,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-G-1860",
+          "nf_id": "slot-3",
+          "start_window": 1860,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-G-2250",
+          "nf_id": "slot-3",
+          "start_window": 2250,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-G-60",
+          "nf_id": "slot-3",
+          "start_window": 60,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-R-1140",
+          "nf_id": "slot-4",
+          "start_window": 1140,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-R-1260",
+          "nf_id": "slot-4",
+          "start_window": 1260,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-R-1950",
+          "nf_id": "slot-4",
+          "start_window": 1950,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-R-3240",
+          "nf_id": "slot-4",
+          "start_window": 3240,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S1-2640",
+          "nf_id": "slot-0",
+          "start_window": 2640,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S1-3150",
+          "nf_id": "slot-0",
+          "start_window": 3150,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S1-3360",
+          "nf_id": "slot-0",
+          "start_window": 3360,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S1-660",
+          "nf_id": "slot-0",
+          "start_window": 660,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S2-1440",
+          "nf_id": "slot-1",
+          "start_window": 1440,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S2-1650",
+          "nf_id": "slot-1",
+          "start_window": 1650,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S2-3060",
+          "nf_id": "slot-1",
+          "start_window": 3060,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S2-450",
+          "nf_id": "slot-1",
+          "start_window": 450,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S3-2340",
+          "nf_id": "slot-2",
+          "start_window": 2340,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S3-2760",
+          "nf_id": "slot-2",
+          "start_window": 2760,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S3-750",
+          "nf_id": "slot-2",
+          "start_window": 750,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S3-960",
+          "nf_id": "slot-2",
+          "start_window": 960,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S4-2160",
+          "nf_id": "slot-3",
+          "start_window": 2160,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S4-240",
+          "nf_id": "slot-3",
+          "start_window": 240,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S4-360",
+          "nf_id": "slot-3",
+          "start_window": 360,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54233-nf32-S4-840",
+          "nf_id": "slot-3",
+          "start_window": 840,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        }
+      ],
+      "normal_report_age_at_decision_end_p95_ms": 0.4709839820861816,
+      "normal_reports_aging_after_return_by_decision_end": 0,
+      "normal_evaluation_duration_p95_ms": 0.2749085426330566,
+      "normal_evaluation_duration_max_ms": 0.8094310760498047
+    },
+    {
+      "run": "freshness-5g-32-33301-early-42771575096",
+      "mode": "early",
+      "source_seed": 33301,
+      "cases": [],
+      "false_reason_counts": {
+        "reference": {
+          "temporal_or_control": 3
+        },
+        "higher_load": {
+          "tail": 783,
+          "temporal_or_control": 7
+        },
+        "bursty_recovery": {
+          "temporal_or_control": 3
+        }
+      },
+      "episode_boundary_states": [
+        {
+          "episode": "test-54333-nf32-C-3360",
+          "nf_id": "slot-4",
+          "start_window": 3360,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-C-540",
+          "nf_id": "slot-4",
+          "start_window": 540,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-C-660",
+          "nf_id": "slot-4",
+          "start_window": 660,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-C-960",
+          "nf_id": "slot-4",
+          "start_window": 960,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-D-1050",
+          "nf_id": "slot-4",
+          "start_window": 1050,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-D-150",
+          "nf_id": "slot-4",
+          "start_window": 150,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-D-240",
+          "nf_id": "slot-4",
+          "start_window": 240,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-D-2850",
+          "nf_id": "slot-4",
+          "start_window": 2850,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-F-1260",
+          "nf_id": "slot-4",
+          "start_window": 1260,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-F-1560",
+          "nf_id": "slot-4",
+          "start_window": 1560,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-F-1860",
+          "nf_id": "slot-4",
+          "start_window": 1860,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-F-2640",
+          "nf_id": "slot-4",
+          "start_window": 2640,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-G-2250",
+          "nf_id": "slot-3",
+          "start_window": 2250,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-G-3240",
+          "nf_id": "slot-3",
+          "start_window": 3240,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-G-60",
+          "nf_id": "slot-3",
+          "start_window": 60,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-G-840",
+          "nf_id": "slot-3",
+          "start_window": 840,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-R-1140",
+          "nf_id": "slot-4",
+          "start_window": 1140,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-R-1440",
+          "nf_id": "slot-4",
+          "start_window": 1440,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-R-1950",
+          "nf_id": "slot-4",
+          "start_window": 1950,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-R-750",
+          "nf_id": "slot-4",
+          "start_window": 750,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S1-1350",
+          "nf_id": "slot-0",
+          "start_window": 1350,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S1-2040",
+          "nf_id": "slot-0",
+          "start_window": 2040,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S1-2340",
+          "nf_id": "slot-0",
+          "start_window": 2340,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S1-2550",
+          "nf_id": "slot-0",
+          "start_window": 2550,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S2-1740",
+          "nf_id": "slot-1",
+          "start_window": 1740,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S2-2160",
+          "nf_id": "slot-1",
+          "start_window": 2160,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S2-2760",
+          "nf_id": "slot-1",
+          "start_window": 2760,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S2-2940",
+          "nf_id": "slot-1",
+          "start_window": 2940,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S3-1650",
+          "nf_id": "slot-2",
+          "start_window": 1650,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S3-2460",
+          "nf_id": "slot-2",
+          "start_window": 2460,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S3-3150",
+          "nf_id": "slot-2",
+          "start_window": 3150,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S3-450",
+          "nf_id": "slot-2",
+          "start_window": 450,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S4-3060",
+          "nf_id": "slot-3",
+          "start_window": 3060,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S4-3450",
+          "nf_id": "slot-3",
+          "start_window": 3450,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S4-3540",
+          "nf_id": "slot-3",
+          "start_window": 3540,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S4-360",
+          "nf_id": "slot-3",
+          "start_window": 360,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        }
+      ],
+      "normal_report_age_at_decision_end_p95_ms": 216.7814850807189,
+      "normal_reports_aging_after_return_by_decision_end": 25,
+      "normal_evaluation_duration_p95_ms": 0.1049041748046875,
+      "normal_evaluation_duration_max_ms": 0.2532005310058594
+    },
+    {
+      "run": "freshness-5g-32-33301-late-42771575096",
+      "mode": "late",
+      "source_seed": 33301,
+      "cases": [],
+      "false_reason_counts": {
+        "reference": {
+          "temporal_or_control": 3
+        },
+        "higher_load": {
+          "tail": 783,
+          "temporal_or_control": 7
+        },
+        "bursty_recovery": {
+          "temporal_or_control": 3
+        }
+      },
+      "episode_boundary_states": [
+        {
+          "episode": "test-54333-nf32-C-3360",
+          "nf_id": "slot-4",
+          "start_window": 3360,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-C-540",
+          "nf_id": "slot-4",
+          "start_window": 540,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-C-660",
+          "nf_id": "slot-4",
+          "start_window": 660,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-C-960",
+          "nf_id": "slot-4",
+          "start_window": 960,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-D-1050",
+          "nf_id": "slot-4",
+          "start_window": 1050,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-D-150",
+          "nf_id": "slot-4",
+          "start_window": 150,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-D-240",
+          "nf_id": "slot-4",
+          "start_window": 240,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-D-2850",
+          "nf_id": "slot-4",
+          "start_window": 2850,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "unknown"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-F-1260",
+          "nf_id": "slot-4",
+          "start_window": 1260,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-F-1560",
+          "nf_id": "slot-4",
+          "start_window": 1560,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-F-1860",
+          "nf_id": "slot-4",
+          "start_window": 1860,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-F-2640",
+          "nf_id": "slot-4",
+          "start_window": 2640,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-G-2250",
+          "nf_id": "slot-3",
+          "start_window": 2250,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-G-3240",
+          "nf_id": "slot-3",
+          "start_window": 3240,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-G-60",
+          "nf_id": "slot-3",
+          "start_window": 60,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-G-840",
+          "nf_id": "slot-3",
+          "start_window": 840,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-R-1140",
+          "nf_id": "slot-4",
+          "start_window": 1140,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-R-1440",
+          "nf_id": "slot-4",
+          "start_window": 1440,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-R-1950",
+          "nf_id": "slot-4",
+          "start_window": 1950,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-R-750",
+          "nf_id": "slot-4",
+          "start_window": 750,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S1-1350",
+          "nf_id": "slot-0",
+          "start_window": 1350,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S1-2040",
+          "nf_id": "slot-0",
+          "start_window": 2040,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S1-2340",
+          "nf_id": "slot-0",
+          "start_window": 2340,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S1-2550",
+          "nf_id": "slot-0",
+          "start_window": 2550,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S2-1740",
+          "nf_id": "slot-1",
+          "start_window": 1740,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S2-2160",
+          "nf_id": "slot-1",
+          "start_window": 2160,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S2-2760",
+          "nf_id": "slot-1",
+          "start_window": 2760,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S2-2940",
+          "nf_id": "slot-1",
+          "start_window": 2940,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S3-1650",
+          "nf_id": "slot-2",
+          "start_window": 1650,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S3-2460",
+          "nf_id": "slot-2",
+          "start_window": 2460,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S3-3150",
+          "nf_id": "slot-2",
+          "start_window": 3150,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S3-450",
+          "nf_id": "slot-2",
+          "start_window": 450,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S4-3060",
+          "nf_id": "slot-3",
+          "start_window": 3060,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S4-3450",
+          "nf_id": "slot-3",
+          "start_window": 3450,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S4-3540",
+          "nf_id": "slot-3",
+          "start_window": 3540,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        },
+        {
+          "episode": "test-54333-nf32-S4-360",
+          "nf_id": "slot-3",
+          "start_window": 360,
+          "before": {
+            "availability": false,
+            "security": false,
+            "state": "normal"
+          },
+          "first": {
+            "availability": false,
+            "security": true,
+            "state": "security"
+          }
+        }
+      ],
+      "normal_report_age_at_decision_end_p95_ms": 0.270843505859375,
+      "normal_reports_aging_after_return_by_decision_end": 0,
+      "normal_evaluation_duration_p95_ms": 0.12636184692382812,
+      "normal_evaluation_duration_max_ms": 0.1723766326904297
+    }
+  ],
+  "paired_inputs": [
+    {
+      "source_seed": 33101,
+      "different_cells": 0,
+      "by_feature": {
+        "request_count": 0,
+        "error_rate": 0,
+        "update_count": 0,
+        "profile_policy_violation": 0,
+        "forbidden_operation": 0,
+        "route_mismatch": 0,
+        "report_mismatch": 0,
+        "auth_failure": 0
+      },
+      "first_ten_different_rows": []
+    },
+    {
+      "source_seed": 33201,
+      "different_cells": 0,
+      "by_feature": {
+        "request_count": 0,
+        "error_rate": 0,
+        "update_count": 0,
+        "profile_policy_violation": 0,
+        "forbidden_operation": 0,
+        "route_mismatch": 0,
+        "report_mismatch": 0,
+        "auth_failure": 0
+      },
+      "first_ten_different_rows": []
+    },
+    {
+      "source_seed": 33301,
+      "different_cells": 0,
+      "by_feature": {
+        "request_count": 0,
+        "error_rate": 0,
+        "update_count": 0,
+        "profile_policy_violation": 0,
+        "forbidden_operation": 0,
+        "route_mismatch": 0,
+        "report_mismatch": 0,
+        "auth_failure": 0
+      },
+      "first_ten_different_rows": []
+    }
+  ]
+}

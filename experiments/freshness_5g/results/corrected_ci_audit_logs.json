@@ -1,0 +1,50 @@
+[
+  {
+    "job_id": 129704623112,
+    "name": "replay (33101, early)",
+    "lines": [
+      "2026-11-10T07:59:34.3153929Z 46 passed in 5.64s",
+      "2026-11-10T08:00:25.7190501Z {\"freshness_audit_pass\": true, \"mode\": \"early\", \"timing\": {\"normal_control_windows\": 3440, \"normal_missing_original\": 288, \"normal_reports_fresh_at_return\": 3056, \"normal_reports_aging_after_return\": 1436, \"normal_reports_already_late_at_return\": 96, \"normal_reports_late_at_evaluation\": 1532, \"normal_report_age_p50_ms\": 246.3444471359253, \"normal_report_age_p95_ms\": 431.1837792396545, \"normal_post_return_wait_p50_ms\": 242.85447597503662, \"normal_post_return_wait_p95_ms\": 394.11190748214716}, \"outcomes\": {\"normal_post_return_expiry_at_most_point_one_percent\": false, \"C_F_R_each_four_security\": false, \"D_four_availability\": true}}"
+    ]
+  },
+  {
+    "job_id": 129704623481,
+    "name": "replay (33101, late)",
+    "lines": [
+      "2026-11-10T07:59:22.4765136Z 46 passed in 2.72s",
+      "2026-11-10T07:59:53.6626220Z {\"freshness_audit_pass\": true, \"mode\": \"late\", \"timing\": {\"normal_control_windows\": 3440, \"normal_missing_original\": 288, \"normal_reports_fresh_at_return\": 3056, \"normal_reports_aging_after_return\": 0, \"normal_reports_already_late_at_return\": 96, \"normal_reports_late_at_evaluation\": 96, \"normal_report_age_p50_ms\": 0.2148151397705078, \"normal_report_age_p95_ms\": 0.2843499183654778, \"normal_post_return_wait_p50_ms\": 0.07021427154541016, \"normal_post_return_wait_p95_ms\": 0.10308027267456042}, \"outcomes\": {\"normal_post_return_expiry_at_most_point_one_percent\": true, \"C_F_R_each_four_security\": true, \"D_four_availability\": true}}"
+    ]
+  },
+  {
+    "job_id": 129704623522,
+    "name": "replay (33201, late)",
+    "lines": [
+      "2026-11-10T07:59:34.5409737Z 46 passed in 6.32s",
+      "2026-11-10T08:00:24.8493176Z {\"freshness_audit_pass\": true, \"mode\": \"late\", \"timing\": {\"normal_control_windows\": 3440, \"normal_missing_original\": 288, \"normal_reports_fresh_at_return\": 3056, \"normal_reports_aging_after_return\": 0, \"normal_reports_already_late_at_return\": 96, \"normal_reports_late_at_evaluation\": 96, \"normal_report_age_p50_ms\": 0.17976760864257812, \"normal_report_age_p95_ms\": 0.22220611572265625, \"normal_post_return_wait_p50_ms\": 0.0553131103515625, \"normal_post_return_wait_p95_ms\": 0.08320808410644531}, \"outcomes\": {\"normal_post_return_expiry_at_most_point_one_percent\": true, \"C_F_R_each_four_security\": true, \"D_four_availability\": true}}"
+    ]
+  },
+  {
+    "job_id": 129704623538,
+    "name": "replay (33301, late)",
+    "lines": [
+      "2026-11-10T07:59:32.3076248Z 46 passed in 6.00s",
+      "2026-11-10T08:00:14.6546759Z {\"freshness_audit_pass\": true, \"mode\": \"late\", \"timing\": {\"normal_control_windows\": 3440, \"normal_missing_original\": 288, \"normal_reports_fresh_at_return\": 3056, \"normal_reports_aging_after_return\": 0, \"normal_reports_already_late_at_return\": 96, \"normal_reports_late_at_evaluation\": 96, \"normal_report_age_p50_ms\": 0.13184547424316406, \"normal_report_age_p95_ms\": 0.15401840209960938, \"normal_post_return_wait_p50_ms\": 0.037670135498046875, \"normal_post_return_wait_p95_ms\": 0.04935264587402344}, \"outcomes\": {\"normal_post_return_expiry_at_most_point_one_percent\": true, \"C_F_R_each_four_security\": true, \"D_four_availability\": true}}"
+    ]
+  },
+  {
+    "job_id": 129704623563,
+    "name": "replay (33301, early)",
+    "lines": [
+      "2026-11-10T07:59:25.1449595Z 46 passed in 3.57s",
+      "2026-11-10T07:59:59.7236087Z {\"freshness_audit_pass\": true, \"mode\": \"early\", \"timing\": {\"normal_control_windows\": 3440, \"normal_missing_original\": 288, \"normal_reports_fresh_at_return\": 3056, \"normal_reports_aging_after_return\": 25, \"normal_reports_already_late_at_return\": 96, \"normal_reports_late_at_evaluation\": 121, \"normal_report_age_p50_ms\": 120.8338737487793, \"normal_report_age_p95_ms\": 216.69015884399403, \"normal_post_return_wait_p50_ms\": 119.4385290145874, \"normal_post_return_wait_p95_ms\": 193.08477640151972}, \"outcomes\": {\"normal_post_return_expiry_at_most_point_one_percent\": false, \"C_F_R_each_four_security\": true, \"D_four_availability\": true}}"
+    ]
+  },
+  {
+    "job_id": 129704623813,
+    "name": "replay (33201, early)",
+    "lines": [
+      "2026-11-10T07:59:33.1506231Z 46 passed in 6.59s",
+      "2026-11-10T08:00:27.6457965Z {\"freshness_audit_pass\": true, \"mode\": \"early\", \"timing\": {\"normal_control_windows\": 3440, \"normal_missing_original\": 288, \"normal_reports_fresh_at_return\": 3056, \"normal_reports_aging_after_return\": 1484, \"normal_reports_already_late_at_return\": 96, \"normal_reports_late_at_evaluation\": 1580, \"normal_report_age_p50_ms\": 250.72133541107178, \"normal_report_age_p95_ms\": 426.52876377105696, \"normal_post_return_wait_p50_ms\": 245.67127227783203, \"normal_post_return_wait_p95_ms\": 393.4625387191772}, \"outcomes\": {\"normal_post_return_expiry_at_most_point_one_percent\": false, \"C_F_R_each_four_security\": false, \"D_four_availability\": true}}"
+    ]
+  }
+]

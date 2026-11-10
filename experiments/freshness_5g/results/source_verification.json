@@ -1,0 +1,65 @@
+{
+  "source_commit": "5e5767ea52a54743e1458eb270336754cf3dd2b6",
+  "verified_files": [
+    {
+      "path": "experiments/live_5g/collect.py",
+      "sha": "9dc76fdfa01e48eabfacdb8c1ea29f5481617937"
+    },
+    {
+      "path": "experiments/live_5g/evaluate.py",
+      "sha": "869b7abf56cefb9f46cae1587d0727838777a99b"
+    },
+    {
+      "path": "experiments/integrated_5g/audit.py",
+      "sha": "a05297d10f65e673e9dd2db1327f8843edf36c2b"
+    },
+    {
+      "path": "experiments/integrated_5g/control.py",
+      "sha": "5241b37a161b812fb6c94f53ba501f3d08b3764f"
+    },
+    {
+      "path": "experiments/resilient_5g/audit.py",
+      "sha": "13b9ccbf0c334435d27a85bb15f8419c1e31b32c"
+    },
+    {
+      "path": "experiments/resilient_5g/control.py",
+      "sha": "1651d85316e69e83c331bc8158affed239079549"
+    },
+    {
+      "path": "experiments/resilient_5g/detector.py",
+      "sha": "4bbe855f914c246479fdc7d59abe673c45cf864e"
+    },
+    {
+      "path": "experiments/calibrated_5g_v2/audit.py",
+      "sha": "066d64744ea7acc93b02a457a78e93ed2568964f"
+    },
+    {
+      "path": "experiments/calibrated_5g_v2/detector.py",
+      "sha": "b0d239ca683300ee686988431ccc51d16436e96c"
+    },
+    {
+      "path": "experiments/robustness_5g/audit.py",
+      "sha": "3d8e0a52d20928ebdaa868cd7b9b63038d3e1733"
+    },
+    {
+      "path": "experiments/robustness_5g/control.py",
+      "sha": "07a3e9fad367d48f0812207ecea579c72c41becb"
+    },
+    {
+      "path": "experiments/robustness_5g/design.py",
+      "sha": "43184b1192486ddfe2e93bc90bcfbea53a2b5eee"
+    },
+    {
+      "path": "experiments/robustness_5g/source_pins.json",
+      "sha": "501d808d4632456688b9c564922e5a15ccc438fb"
+    },
+    {
+      "path": "experiments/freshness_5g/acquisition.py",
+      "sha": "dd6d30d1012c3bfa719ed60c5e915db28b526cf1"
+    },
+    {
+      "path": "experiments/freshness_5g/collect.py",
+      "sha": "db412a7124264c0f38f1e5447eaf1ae8e5f6e10f"
+    }
+  ]
+}
