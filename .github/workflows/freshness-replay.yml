@@ -1,0 +1,48 @@
+name: Replay preserved 5G freshness evidence
+on:
+  push:
+    branches: ['codex/live-5g-validation-20261107']
+    paths: ['.github/workflows/freshness-replay.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  replay:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        source_seed: [33101,33201,33301]
+        acquisition: [early,late]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r experiments/live_5g/requirements.txt
+      - run: python -m pytest experiments/live_5g experiments/integrated_5g experiments/resilient_5g experiments/calibrated_5g experiments/calibrated_5g_v2 experiments/robustness_5g experiments/freshness_5g -q
+      - name: Retrieve preserved measured evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 42771575096 --repo verge88/signal_network_sim --name freshness-5g-32-${{ matrix.source_seed }}-${{ matrix.acquisition }}-42771575096 --dir evidence
+          test "$(cat evidence/source_commit.txt)" = '5e5767ea52a54743e1458eb270336754cf3dd2b6'
+      - name: Replay original evidence with numeric epoch timestamps
+        run: python -m experiments.freshness_5g.audit evidence
+      - name: Package corrected audit only
+        if: always()
+        run: |
+          mkdir -p summary
+          cp evidence/*_summary.json evidence/source_commit.txt evidence/frozen_origin.json evidence/replay_mismatches.json summary/
+          cp evidence/test/manifest.json summary/test_manifest.json
+          cp evidence/test/sha256.json summary/test_sha256.json
+          git rev-parse HEAD > summary/auditor_commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: freshness-replay-${{ matrix.source_seed }}-${{ matrix.acquisition }}-${{ github.run_id }}
+          path: summary/
+          retention-days: 30

@@ -8,6 +8,12 @@ import pandas as pd
 from experiments.robustness_5g.audit import run as replay
 
 
+def read_predictions(path):
+    # JSON contains epoch seconds; preserve those original numbers exactly.
+    # pandas.read_json otherwise infers decision_time as datetime64.
+    return pd.DataFrame([json.loads(line) for line in path.read_text().splitlines()])
+
+
 def run(root):
     replay(root)
     result=json.loads((root/'robustness_summary.json').read_text())
@@ -16,7 +22,7 @@ def run(root):
     f=pd.read_csv(root/'test/features.csv',float_precision='round_trip')
     labels=pd.read_csv(root/'test/labels.csv')
     online=pd.read_csv(root/'test/online_predictions.csv',float_precision='round_trip')
-    predictions=pd.read_json(root/'test/refined_predictions.jsonl',lines=True)
+    predictions=read_predictions(root/'test/refined_predictions.jsonl')
     decisions={r.window_id:r for r in predictions[predictions.nf_id=='slot-4'].itertuples()}
     labels4=labels[labels.nf_id=='slot-4'].set_index('window_id')
     ends=f.groupby('window_id').timestamp.max()
@@ -53,7 +59,8 @@ def run(root):
             before=pred_lookup[(start-1,nf)],first=pred_lookup[(start,nf)]))
     # Paired runners must execute the same realized statistical/semantic inputs.
     cols=['window_id','nf_id','request_count','error_rate','update_count','profile_policy_violation','forbidden_operation','route_mismatch','report_mismatch','auth_failure']
-    workload=f.sort_values(['window_id','nf_id'])[cols].to_csv(index=False,float_format='%.17g').encode()
+    # Canonical LF preserves the Linux CI hash when replayed on Windows.
+    workload=f.sort_values(['window_id','nf_id'])[cols].to_csv(index=False,float_format='%.17g',lineterminator='\n').encode()
     result.update(control_acquisition=mode,realized_workload_sha256=hashlib.sha256(workload).hexdigest(),
         timing=dict(normal_control_windows=int((labels4.attack==0).sum()),normal_missing_original=missing,
             normal_reports_fresh_at_return=arrived_fresh,normal_reports_aging_after_return=aged_after,
