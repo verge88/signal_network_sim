@@ -1,8 +1,10 @@
 """Generate per-host configs and run a multi-process local deployment."""
 import concurrent.futures
 import json
+import os
 from pathlib import Path
 import secrets
+import signal
 import subprocess
 import sys
 import time
@@ -69,14 +71,21 @@ class Deployment:
         self.sequence = {identity:0 for identity in self.source['urls']}
         self.logs = []
         self.launch_prefixes = launch_prefixes or {}
+        self.pid_files = {}
 
     def start(self, identity):
         log = (self.directory/(identity+'.log')).open('a')
         self.logs.append(log)
         command = [sys.executable, '-m', 'experiments.distributed_5g.node', '--config',
                    str(self.directory/(identity+'.json'))]
+        prefix = self.launch_prefixes.get(identity, ())
+        if prefix:
+            pid_file = self.directory.resolve() / (identity + '.pid')
+            pid_file.unlink(missing_ok=True)
+            self.pid_files[identity] = pid_file
+            command.extend(['--pid-file', str(pid_file)])
         self.processes[identity] = subprocess.Popen(
-            [*self.launch_prefixes.get(identity, ()), *command], stdout=log, stderr=subprocess.STDOUT)
+            [*prefix, *command], stdout=log, stderr=subprocess.STDOUT)
 
     def __enter__(self):
         try:
@@ -104,8 +113,22 @@ class Deployment:
 
     def stop(self, identity):
         process=self.processes[identity]
-        process.terminate()
-        process.wait(timeout=10)
+        pid_file = self.pid_files.get(identity)
+        if pid_file and pid_file.exists():
+            # sudo/ip may interpose a monitor instead of forwarding SIGTERM.
+            # Use the PID written by this node, not a PID from a network response.
+            pid = int(pid_file.read_text())
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+        else:
+            process.terminate()
+        try:
+            process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=5)
 
     def __exit__(self, *args):
         for identity, process in self.processes.items():

@@ -35,24 +35,30 @@ jobs:
           git rev-parse HEAD > public/source_commit.txt
       - name: Compare frozen data mining and zonal fusion on archived labels
         run: python -m experiments.distributed_5g.paired measured.zip zonal.zip public
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
         id: cache
         with:
           path: open5gs-2.7.6.tar.gz
           key: open5gs-d9d3abdd-ubuntu22-build-v1
       - if: steps.cache.outputs.cache-hit != 'true'
         run: bash experiments/live_5g/setup_open5gs.sh build
+      - if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: open5gs-2.7.6.tar.gz
+          key: open5gs-d9d3abdd-ubuntu22-build-v1
       - run: bash experiments/live_5g/setup_open5gs.sh runtime
       - name: Collect fresh normal SBI windows across five network namespaces
-        run: |
-          bash experiments/distributed_5g/namespace_smoke.sh --seed 86117 --out smoke --frozen frozen --zone-models zone_models.json --smoke-windows 24 --include-if-context
-          cp smoke/smoke_report.json smoke/manifest.json smoke/features.csv smoke/labels.csv smoke/online_predictions.csv smoke/distributed_predictions.jsonl public/
+        run: bash experiments/distributed_5g/namespace_smoke.sh --seed 86117 --out smoke --frozen frozen --zone-models zone_models.json --smoke-windows 24 --include-if-context
       - name: Collect diagnostics
         if: always()
         run: |
           mkdir -p public
           sudo journalctl --no-pager -u 'open5gs-*' > public/services.log
           if compgen -G 'smoke/hierarchy/*.log' > /dev/null; then cp smoke/hierarchy/*.log public/; fi
+          for file in smoke_report.json manifest.json features.csv labels.csv online_predictions.csv distributed_predictions.jsonl; do
+            if test -f "smoke/$file"; then cp "smoke/$file" public/; fi
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -214,7 +214,7 @@ class Node:
             self.save()
 
 
-def serve(config):
+def serve(config, pid_file=None):
     node = Node(config)
 
     class Handler(BaseHTTPRequestHandler):
@@ -250,6 +250,8 @@ def serve(config):
                 self.reply(404, {})
 
     server = HTTPServer((config['host'], config['port']), Handler)
+    if pid_file is not None:
+        pid_file.write_text(str(os.getpid()))
     server.timeout = .05
     while True:
         server.handle_request()
@@ -259,5 +261,6 @@ def serve(config):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=Path, required=True)
+    parser.add_argument('--pid-file', type=Path)
     args = parser.parse_args()
-    serve(json.loads(args.config.read_text()))
+    serve(json.loads(args.config.read_text()), args.pid_file)
