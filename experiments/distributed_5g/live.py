@@ -37,7 +37,12 @@ def main():
     parser.add_argument('--namespace-placement', type=Path)
     parser.add_argument('--include-if-context', action='store_true')
     parser.add_argument('--confirm-if-context', action='store_true')
+    parser.add_argument('--load-experiment', action='store_true')
     args=parser.parse_args()
+    if args.load_experiment:
+        from experiments.distributed_5g.load_trial import SEEDS
+        if args.seed not in SEEDS or args.smoke_windows != 180 or not args.confirm_if_context:
+            parser.error('Load experiment requires a registered seed, 180 windows and confirmation')
     if args.confirm_if_context and not args.include_if_context:
         parser.error('--confirm-if-context requires --include-if-context')
     if args.smoke_windows is not None and not 1 <= args.smoke_windows <= 600:
@@ -123,6 +128,9 @@ def main():
             zone_models_sha256=sha256(args.zone_models),
             scope='Fresh normal Open5GS SBI observations. Short engineering smoke on one physical runner.')
         (args.out/'smoke_report.json').write_text(json.dumps(report, indent=2))
+        if args.load_experiment:
+            report['scope'] = 'Fresh Open5GS SBI measurements with predeclared authorized workload changes on one physical runner.'
+            (args.out/'smoke_report.json').write_text(json.dumps(report, indent=2))
         print(json.dumps(report), flush=True)
 
 

@@ -1,4 +1,4 @@
-name: 5G frozen context confirmation
+name: 5G prospective workload confirmation
 on:
   push:
     branches: ['codex/5g-method-smoke']
@@ -10,6 +10,10 @@ jobs:
   context-confirmation:
     runs-on: ubuntu-22.04
     timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [87301, 87302, 87303]
     services:
       mongodb:
         image: mongo:7.0
@@ -47,21 +51,21 @@ jobs:
           key: open5gs-d9d3abdd-ubuntu22-build-v1
       - run: bash experiments/live_5g/setup_open5gs.sh runtime
       - name: Collect 180 fresh normal SBI windows across five network namespaces
-        run: bash experiments/distributed_5g/namespace_smoke.sh --seed 86241 --out smoke --frozen frozen --zone-models zone_models.json --smoke-windows 180 --include-if-context --confirm-if-context
+        run: bash experiments/distributed_5g/namespace_smoke.sh --seed ${{ matrix.seed }} --out smoke --frozen frozen --zone-models zone_models.json --smoke-windows 180 --include-if-context --confirm-if-context --load-experiment
       - name: Evaluate the frozen rule with labelled offline feature alterations
-        run: python -m experiments.distributed_5g.confirmation smoke frozen zone_models.json replay public
+        run: python -m experiments.distributed_5g.load_trial smoke public
       - name: Collect diagnostics
         if: always()
         run: |
           mkdir -p public
           sudo journalctl --no-pager -u 'open5gs-*' > public/services.log
           if compgen -G 'smoke/hierarchy/*.log' > /dev/null; then cp smoke/hierarchy/*.log public/; fi
-          for file in smoke_report.json manifest.json features.csv labels.csv online_predictions.csv distributed_predictions.jsonl; do
+          for file in smoke_report.json manifest.json features.csv labels.csv online_predictions.csv distributed_predictions.jsonl workload_events.jsonl; do
             if test -f "smoke/$file"; then cp "smoke/$file" public/; fi
           done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: 5g-context-confirmation-${{ github.run_id }}
+          name: 5g-load-confirmation-${{ matrix.seed }}-${{ github.run_id }}
           path: public/
           retention-days: 30

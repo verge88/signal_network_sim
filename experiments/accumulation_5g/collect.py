@@ -429,6 +429,7 @@ def run(args):
     manifest['control_acquisition'] = args.control_acquisition
     if smoke:
         manifest['normal_smoke'] = True
+    manifest['load_experiment'] = getattr(args, 'load_experiment', False)
     manifest['unchanged_freshness_limit_seconds'] = .25
     manifest['accumulation'] = json.loads((args.frozen/'accumulation.json').read_text())
     manifest['refinement'] = refinement
@@ -538,6 +539,12 @@ def run(args):
                 scenario = active[2] if is_target else 'N1'
                 # The policy allows NSSF discovery by these registered research clients.
                 count = normal_count(rng,index,window)
+                if getattr(args, 'load_experiment', False):
+                    from experiments.distributed_5g.load_trial import workload
+                    count, episode, pattern = workload(index, window, args.seed)
+                    with (args.out/'workload_events.jsonl').open('a') as schedule_file:
+                        append_json(schedule_file, dict(run_id=run_id, window_id=window, nf_id=slot,
+                            episode_id=episode, scenario=pattern, planned_requests=count, started=time.time()))
                 if scenario == 'S4':
                     count = 24
                 if scenario == 'F':
@@ -590,10 +597,14 @@ def run(args):
                 rows.append(row)
                 if slot == 'slot-4':
                     acquisition.at_slot(window, scenario)
-                labels_writer.writerow({'run_id': run_id, 'window_id': window, 'nf_id': slot,
+                label = {'run_id': run_id, 'window_id': window, 'nf_id': slot,
                     'attack': int(is_target), 'scenario': scenario, 'onset': onsets.get(scenario, ''),
                     'load_regime':regime(window),'variant':active[5] if is_target else 'normal',
-                    'episode_id': f'{run_id}-{scenario}-{active[0]}' if is_target else ''})
+                    'episode_id': f'{run_id}-{scenario}-{active[0]}' if is_target else ''}
+                if getattr(args, 'load_experiment', False):
+                    label.update(attack=int(bool(episode)), scenario=pattern, episode_id=episode,
+                                 variant='live_authorized_load_change', onset='')
+                labels_writer.writerow(label)
             features_writer.writerows(rows)
             feature_file.flush()
             label_file.flush()
