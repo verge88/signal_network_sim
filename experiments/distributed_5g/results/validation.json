@@ -1,0 +1,57 @@
+{
+  "source_commit": "50d592eca1225a2af95d73715862e18ba56a3867",
+  "workflow_run": 42976336013,
+  "job_id": 130376198548,
+  "artifact_id": 13836367435,
+  "artifact_sha256": "8aa7e697e674b68b22e9cf7980e653a93f0060ad6469101f651c4c67a6607f0b",
+  "workflow_url": "https://github.com/verge88/signal_network_sim/actions/runs/42976336013",
+  "ci_conclusion": "success",
+  "ci_transport_observations": {
+    "broken_pipe_responses": 3,
+    "all_windows_complete": true,
+    "note": "Three response writes encountered closed client connections at zone-0; the server continued and all windows completed with exact reference agreement."
+  },
+  "tests": {
+    "local": "6 passed in 6.07s",
+    "ci": "6 passed in 3.89s"
+  },
+  "ci": {
+    "windows": 3600,
+    "verified_nf_windows": 115200,
+    "exact_reference_match": true,
+    "elapsed_seconds": 913.791367691
+  },
+  "local_windows_after_fix": {
+    "windows": 500,
+    "verified_nf_windows": 16000,
+    "exact_reference_match": true,
+    "elapsed_seconds": 337.6400000001304
+  },
+  "deployment": {
+    "independent_processes": 37,
+    "leaves": 32,
+    "zones": 4,
+    "coordinators": 1
+  },
+  "all_3600_ci_decisions_equal_before_and_after_io_fix": true,
+  "all_500_local_decisions_equal_to_ci_excluding_deployment_epoch": true,
+  "canonical_full_ci_decisions_sha256": "668f2776218346dcc024a44141f08731379a1575ae62b26abfe827247716d2b4",
+  "original_local_failure": {
+    "completed_windows": 3404,
+    "completed_nf_windows": 108928,
+    "failed_window": 3404,
+    "cause": "Zone-2 process exited on Windows PermissionError WinError 5 during atomic state replacement",
+    "coordinator_result": "Zone-2 unavailable/unknown, incomplete window",
+    "resolution": "Retry Windows replacement errors 5/32/33 up to 21 attempts with 50ms intervals; never acknowledge before persistence; permanent error preserves previous committed state",
+    "full_windows_rerun_after_fix": false
+  },
+  "scope": "Single-host independent-process HTTP replays of archived measured 5G observations. No fresh acquisition or multi-host latency measurement.",
+  "metric_note": "Exact agreement is computational correctness, not attack-detection recall. Previous central-detector recall and FPR do not transfer to zonal topology.",
+  "limitations": [
+    "Static zone assignments",
+    "No automatic leader election or coordinator redundancy",
+    "Shared observation collector",
+    "Trusted leaf monitors and source",
+    "Cross-host confidentiality requires protected network or TLS proxy"
+  ]
+}

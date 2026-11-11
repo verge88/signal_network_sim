@@ -1,0 +1,96 @@
+{
+  "verified_nf_windows": 115200,
+  "windows": 3600,
+  "zones": 4,
+  "leaves": 32,
+  "processes": 37,
+  "exact_reference_match": true,
+  "elapsed_seconds": 913.791367691,
+  "models": {
+    "zone-0": {
+      "threshold": 34.20007509181876,
+      "feature_thresholds": {
+        "request_count": 49.0,
+        "error_count": 1.0,
+        "update_count": 1.0
+      },
+      "calibration_rows": 25040,
+      "calibration_run": "test-64333-nf32",
+      "members": [
+        "slot-0",
+        "slot-1",
+        "slot-2",
+        "slot-3",
+        "slot-4",
+        "slot-5",
+        "slot-6",
+        "slot-7"
+      ]
+    },
+    "zone-1": {
+      "threshold": 28.463432485568312,
+      "feature_thresholds": {
+        "request_count": 49.0,
+        "error_count": 1.0,
+        "update_count": 1.0
+      },
+      "calibration_rows": 25040,
+      "calibration_run": "test-64333-nf32",
+      "members": [
+        "slot-8",
+        "slot-9",
+        "slot-10",
+        "slot-11",
+        "slot-12",
+        "slot-13",
+        "slot-14",
+        "slot-15"
+      ]
+    },
+    "zone-2": {
+      "threshold": 37.66378095011944,
+      "feature_thresholds": {
+        "request_count": 49.0,
+        "error_count": 1.0,
+        "update_count": 1.0
+      },
+      "calibration_rows": 25040,
+      "calibration_run": "test-64333-nf32",
+      "members": [
+        "slot-16",
+        "slot-17",
+        "slot-18",
+        "slot-19",
+        "slot-20",
+        "slot-21",
+        "slot-22",
+        "slot-23"
+      ]
+    },
+    "zone-3": {
+      "threshold": 31.923516816766437,
+      "feature_thresholds": {
+        "request_count": 49.0,
+        "error_count": 1.0,
+        "update_count": 1.0
+      },
+      "calibration_rows": 25040,
+      "calibration_run": "test-64333-nf32",
+      "members": [
+        "slot-24",
+        "slot-25",
+        "slot-26",
+        "slot-27",
+        "slot-28",
+        "slot-29",
+        "slot-30",
+        "slot-31"
+      ]
+    }
+  },
+  "source_archives": {
+    "calibration.zip": "ad6395a46cac1274ff9b398054d9369d533a3379dc6bac37c04280732414b0be",
+    "evidence.zip": "c76c4ed6a865dc5c37803dbc46e6cd05c62ebe803f398fe409dd2f1090910129"
+  },
+  "scope": "Retrospective measured-data replay through actual HTTP processes. No new live 5G acquisition or multi-machine performance claim."
+}
