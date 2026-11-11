@@ -20,7 +20,7 @@ def get(url, path):
 
 def configure(directory, topology, models, source_run, operator_key, control_key, extensions,
               replay_mode=False, base_port=18800, *, hosts=None, include_if_context=False,
-              confirm_if_context=False):
+              confirm_if_context=False, recover_normal=False):
     directory = Path(directory).resolve()
     directory.mkdir(parents=True, exist_ok=True)
     if (directory/'source.json').exists():
@@ -43,7 +43,8 @@ def configure(directory, topology, models, source_run, operator_key, control_key
         configs[identity] = dict(id=identity, epoch=epoch, host=hosts[identity], port=base_port+index,
             state_file=str(directory/(identity+'-state.json')), incoming_keys={'source':source_keys[identity]},
             members=[], deadline_seconds=12 if identity=='root' else 8,
-            include_if_context=include_if_context, confirm_if_context=confirm_if_context)
+            include_if_context=include_if_context, confirm_if_context=confirm_if_context,
+            recover_normal=recover_normal)
     urls = {identity: f"http://{config['host']}:{config['port']}" for identity, config in configs.items()}
     configs['root'].update(role='root', members=list(topology), zone_members=topology)
     for zone, members in topology.items():

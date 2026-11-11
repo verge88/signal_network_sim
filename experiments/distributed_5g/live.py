@@ -38,6 +38,7 @@ def main():
     parser.add_argument('--include-if-context', action='store_true')
     parser.add_argument('--confirm-if-context', action='store_true')
     parser.add_argument('--load-experiment', action='store_true')
+    parser.add_argument('--recover-normal', action='store_true')
     args=parser.parse_args()
     if args.load_experiment:
         from experiments.distributed_5g.load_trial import SEEDS
@@ -67,7 +68,8 @@ def main():
     def factory(context):
         configure(args.out/'hierarchy',topology,models,context['run_id'],context['operator_key'],
                   context['control_key'],context['extensions'],False,args.base_port,
-                  hosts=hosts, include_if_context=args.include_if_context, confirm_if_context=args.confirm_if_context)
+                  hosts=hosts, include_if_context=args.include_if_context, confirm_if_context=args.confirm_if_context,
+                  recover_normal=args.recover_normal)
         deployment=Deployment(args.out/'hierarchy', prefixes)
         deployment.__enter__()
         holder['deployment']=deployment
@@ -102,7 +104,7 @@ def main():
                     if args.include_if_context:
                         assert decision['if_context_alarm'] == observations[identity]['if_context_alarm']
                         context_flag = 'if_context_confirmed' if args.confirm_if_context else 'if_context_alarm'
-                        assert decision['security'] == (decision['accum_security'] or decision[context_flag])
+                        assert decision.get('original_security', decision['security']) == (decision['accum_security'] or decision[context_flag])
                         alerts[hybrid_method] += int(decision['security'])
                     alerts['ACCUM'] += int(decision.get('accum_security', decision['security']))
             stream.write(json.dumps(result)+'\n')
@@ -129,6 +131,7 @@ def main():
             scope='Fresh normal Open5GS SBI observations. Short engineering smoke on one physical runner.')
         (args.out/'smoke_report.json').write_text(json.dumps(report, indent=2))
         if args.load_experiment:
+            report['recover_normal'] = args.recover_normal
             report['scope'] = 'Fresh Open5GS SBI measurements with predeclared authorized workload changes on one physical runner.'
             (args.out/'smoke_report.json').write_text(json.dumps(report, indent=2))
         print(json.dumps(report), flush=True)

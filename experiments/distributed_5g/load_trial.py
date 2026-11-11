@@ -7,12 +7,12 @@ import pandas as pd
 from experiments.distributed_5g.paired import BASELINES, summarize
 from experiments.live_5g.evaluate import KEYS, sha256
 
-SEEDS = (87301, 87302, 87303)
+SEEDS = (87301, 87302, 87303, 88401, 88402, 88403)
 FPR_INCREMENT_LIMIT = .005
 
 
 def workload(index, window, seed):
-    profile = SEEDS.index(seed)
+    profile = SEEDS.index(seed) % 3
     baseline = (2, 5, 2 + window % 12 // 3)[profile]
     for cycle, start in enumerate((24, 77, 130)):
         if start <= window < start + 24 and index % 8 == 5 + cycle:
@@ -39,12 +39,17 @@ def evaluate(capture, output):
     for row in map(json.loads, (capture/'distributed_predictions.jsonl').read_text().splitlines()):
         assert row['complete'] and len(row['decisions']) == 32
         for nf, flag in row['decisions'].items():
-            records.append(dict(run_id=manifest['run_id'], window_id=row['window'], nf_id=nf,
+            record = dict(run_id=manifest['run_id'], window_id=row['window'], nf_id=nf,
                 ACCUM=flag['accum_security'], ACCUM_OR_IF_CONTEXT=flag['accum_security'] or flag['if_context_alarm'],
-                ACCUM_CONFIRM_IF_CONTEXT=flag['security'], decision_time=row['decision_time']))
+                ACCUM_CONFIRM_IF_CONTEXT=flag.get('original_security', flag['security']), decision_time=row['decision_time'])
+            if 'original_security' in flag:
+                record['RECOVERY_HYBRID'] = flag['security']
+            records.append(record)
     paired = events.merge(baseline,on=KEYS,validate='one_to_one').merge(pd.DataFrame(records),on=KEYS,validate='one_to_one')
     assert len(paired) == 5760
     methods = (*BASELINES, 'ACCUM', 'ACCUM_OR_IF_CONTEXT', 'ACCUM_CONFIRM_IF_CONTEXT')
+    if 'RECOVERY_HYBRID' in paired:
+        methods = (*methods, 'RECOVERY_HYBRID')
     metrics, episodes = summarize(paired, methods, include_delay=True)
     for episode in episodes:
         rows = paired[(paired.episode_id==episode['episode']) & paired[episode['method']].astype(bool)]

@@ -14,6 +14,7 @@ from urllib.error import HTTPError
 from experiments.distributed_5g.protocol import canonical, post, sign, verify
 
 CONFIRMATION_FRACTION = 0.5
+RECOVERY_WINDOWS = 3
 
 
 class Node:
@@ -178,8 +179,28 @@ class Node:
                     decisions[identity].update(accum_security=bool(security),
                         if_context_alarm=context, if_context_confirmed=confirmed,
                         security=bool(security or use_context))
+                if self.config.get('recover_normal'):
+                    recovery = self.state.setdefault('recovery', {})
+                    prior = recovery.get(identity, dict(value=0., quiet=0))
+                    quiet = (complete and residuals[identity] <= 0 and not report['local_security']
+                             and not report['availability'] and not report['unknown'])
+                    previous_quiet = prior['quiet'] if prior.get('window') == window - 1 else 0
+                    streak = min(RECOVERY_WINDOWS, previous_quiet + 1) if quiet else 0
+                    recovered = advance(prior['value'], residuals[identity], report['allowed']) if complete else 0.
+                    reset = streak == RECOVERY_WINDOWS
+                    if reset:
+                        recovered = 0.
+                    recovery[identity] = dict(value=recovered, quiet=streak, window=window)
+                    threshold = self.config['model']['threshold']
+                    context = report.get('if_context_alarm', False)
+                    confirmed = context and (not self.config.get('confirm_if_context') or
+                                              recovered > CONFIRMATION_FRACTION * threshold)
+                    decisions[identity].update(original_security=decisions[identity]['security'],
+                        recovery_accumulated=recovered, recovery_quiet_windows=streak, recovery_reset=reset,
+                        security=bool(report['local_security'] or (complete and (recovered > threshold or confirmed))))
             for identity in missing:
                 self.state['accumulators'].pop(identity, None)
+                self.state.get('recovery', {}).pop(identity, None)
                 decisions[identity] = dict(security=False, availability=True, unknown=True, accumulated=None)
             self.emit(dict(kind='report', window=window, zone_id=self.config['id'], decisions=decisions,
                            missing=missing, complete=complete))

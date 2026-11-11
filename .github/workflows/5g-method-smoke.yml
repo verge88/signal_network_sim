@@ -1,4 +1,4 @@
-name: 5G prospective workload confirmation
+name: 5G prospective alarm recovery
 on:
   push:
     branches: ['codex/5g-method-smoke']
@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        seed: [87301, 87302, 87303]
+        seed: [88401, 88402, 88403]
     services:
       mongodb:
         image: mongo:7.0
@@ -50,9 +50,9 @@ jobs:
           path: open5gs-2.7.6.tar.gz
           key: open5gs-d9d3abdd-ubuntu22-build-v1
       - run: bash experiments/live_5g/setup_open5gs.sh runtime
-      - name: Collect 180 fresh normal SBI windows across five network namespaces
-        run: bash experiments/distributed_5g/namespace_smoke.sh --seed ${{ matrix.seed }} --out smoke --frozen frozen --zone-models zone_models.json --smoke-windows 180 --include-if-context --confirm-if-context --load-experiment
-      - name: Evaluate the frozen rule with labelled offline feature alterations
+      - name: Collect fresh bounded discovery workloads across five network namespaces
+        run: bash experiments/distributed_5g/namespace_smoke.sh --seed ${{ matrix.seed }} --out smoke --frozen frozen --zone-models zone_models.json --smoke-windows 180 --include-if-context --confirm-if-context --load-experiment --recover-normal
+      - name: Compare original and recovery detectors on identical observations
         run: python -m experiments.distributed_5g.load_trial smoke public
       - name: Collect diagnostics
         if: always()
@@ -66,6 +66,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: 5g-load-confirmation-${{ matrix.seed }}-${{ github.run_id }}
+          name: 5g-alarm-recovery-${{ matrix.seed }}-${{ github.run_id }}
           path: public/
           retention-days: 30

@@ -100,6 +100,33 @@ def test_lightweight_math_matches_reference():
     assert advance(10.,0.,False)==9.4
 
 
+def test_recovery_keeps_two_window_gap_and_survives_restart(tmp_path):
+    configuration(tmp_path, 19800)
+    config=json.loads((tmp_path/'zone-a.json').read_text())
+    config['recover_normal']=True
+    node=Node(config)
+    def step(window, elevated):
+        reports={nf:dict(nf_id=nf, request_count=14 if nf=='slot-0' and elevated else 10,
+            allowed=False,local_security=False,availability=False,unknown=False) for nf in config['members']}
+        entry = dict(reports=reports)
+        node.state['windows'][str(window)] = entry
+        node.close_window(window,entry)
+        result=node.state['outbox'][-1]['body']['decisions']['slot-0']
+        node.state['outbox'].clear()
+        node.save()
+        return result
+    assert step(0,True)['security']
+    assert step(1,False)['security']
+    step(2,False)
+    node=Node(config)
+    assert step(3,True)['recovery_quiet_windows']==0
+    step(4,False)
+    step(5,False)
+    recovered=step(6,False)
+    assert recovered['original_security'] and not recovered['security']
+    assert recovered['recovery_accumulated']==0 and recovered['recovery_reset']
+
+
 def test_windows_state_replacement_retries_without_false_ack(tmp_path, monkeypatch):
     from experiments.distributed_5g import node as module
     topology=configuration(tmp_path,19500)
