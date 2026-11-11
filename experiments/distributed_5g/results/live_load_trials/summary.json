@@ -1,0 +1,339 @@
+{
+  "source_commit": "878e8a0f397cdc9ee3d81f369281cc04b9c82b07",
+  "workflow_run": 43007809201,
+  "seeds": [
+    87301,
+    87302,
+    87303
+  ],
+  "nf_windows": 17280,
+  "metrics": [
+    {
+      "method": "rules",
+      "tp": 0,
+      "fp": 0,
+      "fn": 864,
+      "tn": 16416,
+      "episodes": 36,
+      "episodes_with_new_alarm": 0,
+      "recall": 0.0,
+      "fpr": 0.0
+    },
+    {
+      "method": "IF_SBI",
+      "tp": 194,
+      "fp": 51,
+      "fn": 670,
+      "tn": 16365,
+      "episodes": 36,
+      "episodes_with_new_alarm": 23,
+      "recall": 0.22453703703703703,
+      "fpr": 0.0031067251461988302
+    },
+    {
+      "method": "IF_CONTEXT",
+      "tp": 215,
+      "fp": 104,
+      "fn": 649,
+      "tn": 16312,
+      "episodes": 36,
+      "episodes_with_new_alarm": 25,
+      "recall": 0.2488425925925926,
+      "fpr": 0.006335282651072124
+    },
+    {
+      "method": "ACCUM",
+      "tp": 300,
+      "fp": 774,
+      "fn": 564,
+      "tn": 15642,
+      "episodes": 36,
+      "episodes_with_new_alarm": 27,
+      "recall": 0.3472222222222222,
+      "fpr": 0.047149122807017545
+    },
+    {
+      "method": "ACCUM_OR_IF_CONTEXT",
+      "tp": 351,
+      "fp": 818,
+      "fn": 513,
+      "tn": 15598,
+      "episodes": 36,
+      "episodes_with_new_alarm": 34,
+      "recall": 0.40625,
+      "fpr": 0.04982943469785575
+    },
+    {
+      "method": "ACCUM_CONFIRM_IF_CONTEXT",
+      "tp": 351,
+      "fp": 776,
+      "fn": 513,
+      "tn": 15640,
+      "episodes": 36,
+      "episodes_with_new_alarm": 34,
+      "recall": 0.40625,
+      "fpr": 0.047270955165692005
+    }
+  ],
+  "per_run_fpr_checks": [
+    {
+      "seed": 87301,
+      "fpr_increment": 0.0,
+      "fpr_increment_limit": 0.005,
+      "fpr_limit_met": true
+    },
+    {
+      "seed": 87303,
+      "fpr_increment": 0.0,
+      "fpr_increment_limit": 0.005,
+      "fpr_limit_met": true
+    },
+    {
+      "seed": 87302,
+      "fpr_increment": 0.0003654970760233883,
+      "fpr_increment_limit": 0.005,
+      "fpr_limit_met": true
+    }
+  ],
+  "verification": "All planned requests matched measured counts, live labels matched workload events, frozen scores reproduced, report metrics independently recomputed.",
+  "scope": "Three independent single-host Open5GS labs with five network namespaces each. Authorized discovery load changes, 36 episodes. No claim covering other threat families.",
+  "persistence_audit": [
+    {
+      "seed": 87301,
+      "accum_fp_after_episode": 258,
+      "hybrid_fp_after_episode": 258,
+      "episode_delays": [
+        {
+          "seed": 87301,
+          "episode": "zone-0-0-slow",
+          "ACCUM_new_alarm_seconds": 15.454829692840576,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 15.454829692840576
+        },
+        {
+          "seed": 87301,
+          "episode": "zone-0-1-fast",
+          "ACCUM_new_alarm_seconds": 10.858011960983276,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 9.257187604904175
+        },
+        {
+          "seed": 87301,
+          "episode": "zone-0-2-intermittent",
+          "ACCUM_new_alarm_seconds": null,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": null
+        },
+        {
+          "seed": 87301,
+          "episode": "zone-1-0-fast",
+          "ACCUM_new_alarm_seconds": 8.211769580841064,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 8.211769580841064
+        },
+        {
+          "seed": 87301,
+          "episode": "zone-1-1-intermittent",
+          "ACCUM_new_alarm_seconds": 20.232457399368286,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 20.232457399368286
+        },
+        {
+          "seed": 87301,
+          "episode": "zone-1-2-slow",
+          "ACCUM_new_alarm_seconds": 13.295423030853271,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 13.295423030853271
+        },
+        {
+          "seed": 87301,
+          "episode": "zone-2-0-intermittent",
+          "ACCUM_new_alarm_seconds": null,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 20.856223344802856
+        },
+        {
+          "seed": 87301,
+          "episode": "zone-2-1-slow",
+          "ACCUM_new_alarm_seconds": 16.192712545394897,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 16.192712545394897
+        },
+        {
+          "seed": 87301,
+          "episode": "zone-2-2-fast",
+          "ACCUM_new_alarm_seconds": 11.178763151168823,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 10.197204351425171
+        },
+        {
+          "seed": 87301,
+          "episode": "zone-3-0-slow",
+          "ACCUM_new_alarm_seconds": 14.145451784133911,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 14.145451784133911
+        },
+        {
+          "seed": 87301,
+          "episode": "zone-3-1-fast",
+          "ACCUM_new_alarm_seconds": 9.169515371322632,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 9.169515371322632
+        },
+        {
+          "seed": 87301,
+          "episode": "zone-3-2-intermittent",
+          "ACCUM_new_alarm_seconds": null,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 20.16322660446167
+        }
+      ]
+    },
+    {
+      "seed": 87302,
+      "accum_fp_after_episode": 258,
+      "hybrid_fp_after_episode": 260,
+      "episode_delays": [
+        {
+          "seed": 87302,
+          "episode": "zone-0-0-slow",
+          "ACCUM_new_alarm_seconds": 15.38205099105835,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 15.38205099105835
+        },
+        {
+          "seed": 87302,
+          "episode": "zone-0-1-fast",
+          "ACCUM_new_alarm_seconds": 10.87708067893982,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 4.353631019592285
+        },
+        {
+          "seed": 87302,
+          "episode": "zone-0-2-intermittent",
+          "ACCUM_new_alarm_seconds": null,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 20.865354299545288
+        },
+        {
+          "seed": 87302,
+          "episode": "zone-1-0-fast",
+          "ACCUM_new_alarm_seconds": 8.314894914627075,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 5.808400392532349
+        },
+        {
+          "seed": 87302,
+          "episode": "zone-1-1-intermittent",
+          "ACCUM_new_alarm_seconds": 20.319111585617065,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 12.294257402420044
+        },
+        {
+          "seed": 87302,
+          "episode": "zone-1-2-slow",
+          "ACCUM_new_alarm_seconds": 13.299262523651123,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 13.299262523651123
+        },
+        {
+          "seed": 87302,
+          "episode": "zone-2-0-intermittent",
+          "ACCUM_new_alarm_seconds": null,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 16.277392864227295
+        },
+        {
+          "seed": 87302,
+          "episode": "zone-2-1-slow",
+          "ACCUM_new_alarm_seconds": 16.274914026260376,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 16.274914026260376
+        },
+        {
+          "seed": 87302,
+          "episode": "zone-2-2-fast",
+          "ACCUM_new_alarm_seconds": 11.228009700775146,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 7.751907587051392
+        },
+        {
+          "seed": 87302,
+          "episode": "zone-3-0-slow",
+          "ACCUM_new_alarm_seconds": 14.21204423904419,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 14.21204423904419
+        },
+        {
+          "seed": 87302,
+          "episode": "zone-3-1-fast",
+          "ACCUM_new_alarm_seconds": 9.182260036468506,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 8.6893892288208
+        },
+        {
+          "seed": 87302,
+          "episode": "zone-3-2-intermittent",
+          "ACCUM_new_alarm_seconds": null,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 9.171039581298828
+        }
+      ]
+    },
+    {
+      "seed": 87303,
+      "accum_fp_after_episode": 258,
+      "hybrid_fp_after_episode": 258,
+      "episode_delays": [
+        {
+          "seed": 87303,
+          "episode": "zone-0-0-slow",
+          "ACCUM_new_alarm_seconds": 15.260920763015747,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 15.260920763015747
+        },
+        {
+          "seed": 87303,
+          "episode": "zone-0-1-fast",
+          "ACCUM_new_alarm_seconds": 10.419380187988281,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 4.291088581085205
+        },
+        {
+          "seed": 87303,
+          "episode": "zone-0-2-intermittent",
+          "ACCUM_new_alarm_seconds": null,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 12.74813723564148
+        },
+        {
+          "seed": 87303,
+          "episode": "zone-1-0-fast",
+          "ACCUM_new_alarm_seconds": 8.250773668289185,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 6.5815794467926025
+        },
+        {
+          "seed": 87303,
+          "episode": "zone-1-1-intermittent",
+          "ACCUM_new_alarm_seconds": 21.567336797714233,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 13.491928339004517
+        },
+        {
+          "seed": 87303,
+          "episode": "zone-1-2-slow",
+          "ACCUM_new_alarm_seconds": 13.32714295387268,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 13.32714295387268
+        },
+        {
+          "seed": 87303,
+          "episode": "zone-2-0-intermittent",
+          "ACCUM_new_alarm_seconds": null,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 21.657612323760986
+        },
+        {
+          "seed": 87303,
+          "episode": "zone-2-1-slow",
+          "ACCUM_new_alarm_seconds": 16.76290249824524,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 16.76290249824524
+        },
+        {
+          "seed": 87303,
+          "episode": "zone-2-2-fast",
+          "ACCUM_new_alarm_seconds": 11.73536467552185,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 7.30542254447937
+        },
+        {
+          "seed": 87303,
+          "episode": "zone-3-0-slow",
+          "ACCUM_new_alarm_seconds": 14.141371250152588,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 14.141371250152588
+        },
+        {
+          "seed": 87303,
+          "episode": "zone-3-1-fast",
+          "ACCUM_new_alarm_seconds": 9.762687921524048,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": 4.179525852203369
+        },
+        {
+          "seed": 87303,
+          "episode": "zone-3-2-intermittent",
+          "ACCUM_new_alarm_seconds": null,
+          "ACCUM_CONFIRM_IF_CONTEXT_new_alarm_seconds": null
+        }
+      ]
+    }
+  ]
+}

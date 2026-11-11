@@ -1,0 +1,84 @@
+{
+  "seed": 87301,
+  "run_id": "test-87301-nf32",
+  "metrics": [
+    {
+      "method": "rules",
+      "tp": 0,
+      "fp": 0,
+      "fn": 288,
+      "tn": 5472,
+      "recall": 0.0,
+      "fpr": 0.0,
+      "episodes": 12,
+      "episodes_with_alarm": 0,
+      "episodes_with_new_alarm": 0
+    },
+    {
+      "method": "IF_SBI",
+      "tp": 37,
+      "fp": 11,
+      "fn": 251,
+      "tn": 5461,
+      "recall": 0.1284722222222222,
+      "fpr": 0.002010233918128655,
+      "episodes": 12,
+      "episodes_with_alarm": 7,
+      "episodes_with_new_alarm": 7
+    },
+    {
+      "method": "IF_CONTEXT",
+      "tp": 43,
+      "fp": 23,
+      "fn": 245,
+      "tn": 5449,
+      "recall": 0.14930555555555555,
+      "fpr": 0.004203216374269006,
+      "episodes": 12,
+      "episodes_with_alarm": 7,
+      "episodes_with_new_alarm": 7
+    },
+    {
+      "method": "ACCUM",
+      "tp": 100,
+      "fp": 258,
+      "fn": 188,
+      "tn": 5214,
+      "recall": 0.3472222222222222,
+      "fpr": 0.047149122807017545,
+      "episodes": 12,
+      "episodes_with_alarm": 9,
+      "episodes_with_new_alarm": 9
+    },
+    {
+      "method": "ACCUM_OR_IF_CONTEXT",
+      "tp": 104,
+      "fp": 263,
+      "fn": 184,
+      "tn": 5209,
+      "recall": 0.3611111111111111,
+      "fpr": 0.04806286549707602,
+      "episodes": 12,
+      "episodes_with_alarm": 11,
+      "episodes_with_new_alarm": 11
+    },
+    {
+      "method": "ACCUM_CONFIRM_IF_CONTEXT",
+      "tp": 104,
+      "fp": 258,
+      "fn": 184,
+      "tn": 5214,
+      "recall": 0.3611111111111111,
+      "fpr": 0.047149122807017545,
+      "episodes": 12,
+      "episodes_with_alarm": 11,
+      "episodes_with_new_alarm": 11
+    }
+  ],
+  "fpr_increment_limit": 0.005,
+  "fpr_increment": 0.0,
+  "fpr_limit_met": true,
+  "features_sha256": "3fc70ec4d1890a97a0da59d9bb876cda322943a142d33612c80ac88a6eb8e8ea",
+  "workload_events_sha256": "a527fddb441e94c081a4f8ea0d81ab374915ee308a525476f73ac2b845da4db3",
+  "scope": "Prospective authorized NSSF discovery workload changes on an isolated Open5GS lab. No feature editing. Three baseline profiles. All 12 scheduled episodes retained."
+}
