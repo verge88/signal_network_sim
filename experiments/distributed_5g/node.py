@@ -83,8 +83,13 @@ class Node:
             self.state['witness'] = dict(issued=sorted(protocol.issued), seen=sorted(protocol.seen),
                                         high=protocol.high, last_fresh=protocol.last_fresh)
         allowed = permit_valid(body.get('grant'), bytes.fromhex(self.config['operator_key']), row['run_id'], row['nf_id'], row['timestamp'], row['request_count'])
-        return dict(kind='report', window=body['window'], nf_id=row['nf_id'], request_count=row['request_count'],
-                    allowed=allowed, local_security=bool(security), availability=availability, unknown=status=='unknown')
+        report = dict(kind='report', window=body['window'], nf_id=row['nf_id'], request_count=row['request_count'],
+                      allowed=allowed, local_security=bool(security), availability=availability, unknown=status=='unknown')
+        if self.config.get('include_if_context'):
+            if type(body.get('if_context_alarm')) is not bool:
+                raise ValueError('IF_CONTEXT decision is required for the hybrid detector')
+            report['if_context_alarm'] = body['if_context_alarm']
+        return report
 
     def receive(self, packet):
         before = copy.deepcopy(self.state)
@@ -133,6 +138,8 @@ class Node:
                     raise ValueError('Duplicate member report')
                 if role == 'zone' and body['nf_id'] != sender:
                     raise ValueError('Member identity mismatch')
+                if role == 'zone' and self.config.get('include_if_context') and type(body.get('if_context_alarm')) is not bool:
+                    raise ValueError('IF_CONTEXT decision is missing from the member report')
                 if role == 'root' and body['zone_id'] != sender:
                     raise ValueError('Zone identity mismatch')
                 if role == 'root' and set(body['decisions']) != set(self.config['zone_members'][sender]):
@@ -162,6 +169,10 @@ class Node:
                 security = report['local_security'] or (complete and value > self.config['model']['threshold'])
                 decisions[identity] = dict(security=bool(security), availability=report['availability'],
                     unknown=report['unknown'] or not complete, accumulated=value)
+                if self.config.get('include_if_context'):
+                    decisions[identity].update(accum_security=bool(security),
+                        if_context_alarm=report['if_context_alarm'],
+                        security=bool(security or report['if_context_alarm']))
             for identity in missing:
                 self.state['accumulators'].pop(identity, None)
                 decisions[identity] = dict(security=False, availability=True, unknown=True, accumulated=None)
@@ -230,7 +241,9 @@ def serve(config):
 
         def do_GET(self):
             if self.path == '/health':
-                self.reply(200, dict(id=config['id'], role=config['role'], pid=os.getpid(), pending=len(node.state['outbox'])))
+                namespace = Path('/proc/self/ns/net')
+                self.reply(200, dict(id=config['id'], role=config['role'], pid=os.getpid(),
+                    pending=len(node.state['outbox']), netns=namespace.stat().st_ino if namespace.exists() else None))
             elif self.path == '/latest' and config['role'] == 'root':
                 self.reply(200, node.state.get('latest', {}))
             else:

@@ -16,7 +16,8 @@ def get(url, path):
         return json.load(response)
 
 
-def configure(directory, topology, models, source_run, operator_key, control_key, extensions, replay_mode=False, base_port=18800):
+def configure(directory, topology, models, source_run, operator_key, control_key, extensions,
+              replay_mode=False, base_port=18800, *, hosts=None, include_if_context=False):
     directory = Path(directory).resolve()
     directory.mkdir(parents=True, exist_ok=True)
     if (directory/'source.json').exists():
@@ -27,19 +28,24 @@ def configure(directory, topology, models, source_run, operator_key, control_key
     identities = ['root'] + list(topology) + all_members
     if len(set(identities)) != len(identities):
         raise ValueError('Node identities must be unique')
+    hosts = {identity: '127.0.0.1' for identity in identities} if hosts is None else hosts
+    if set(hosts) != set(identities):
+        raise ValueError('Placement must cover exactly the configured nodes')
     epoch = secrets.token_hex(16)
     source_keys = {identity:secrets.token_hex(32) for identity in identities}
     configs = {}
     for index, identity in enumerate(identities):
-        configs[identity] = dict(id=identity, epoch=epoch, host='127.0.0.1', port=base_port+index,
+        configs[identity] = dict(id=identity, epoch=epoch, host=hosts[identity], port=base_port+index,
             state_file=str(directory/(identity+'-state.json')), incoming_keys={'source':source_keys[identity]},
-            members=[], deadline_seconds=12 if identity=='root' else 8)
+            members=[], deadline_seconds=12 if identity=='root' else 8,
+            include_if_context=include_if_context)
+    urls = {identity: f"http://{config['host']}:{config['port']}" for identity, config in configs.items()}
     configs['root'].update(role='root', members=list(topology), zone_members=topology)
     for zone, members in topology.items():
         zone_key = secrets.token_hex(32)
         configs['root']['incoming_keys'][zone] = zone_key
         configs[zone].update(role='zone', members=members, model=models[zone],
-            parent=dict(id='root', url=f"http://127.0.0.1:{configs['root']['port']}", key=zone_key))
+            parent=dict(id='root', url=urls['root'], key=zone_key))
         for identity in members:
             leaf_key = secrets.token_hex(32)
             configs[zone]['incoming_keys'][identity] = leaf_key
@@ -47,8 +53,8 @@ def configure(directory, topology, models, source_run, operator_key, control_key
                 operator_key=operator_key, control_key=control_key if identity=='slot-4' else None,
                 availability_seconds=extensions['availability_seconds'], extensions=extensions,
                 replay_mode=replay_mode,
-                parent=dict(id=zone,url=f"http://127.0.0.1:{configs[zone]['port']}",key=leaf_key))
-    source = dict(epoch=epoch, keys=source_keys, urls={identity:f"http://127.0.0.1:{config['port']}" for identity,config in configs.items()}, topology=topology)
+                parent=dict(id=zone,url=urls[zone],key=leaf_key))
+    source = dict(epoch=epoch, keys=source_keys, urls=urls, topology=topology)
     for identity, config in configs.items():
         (directory/(identity+'.json')).write_text(json.dumps(config,indent=2))
     (directory/'source.json').write_text(json.dumps(source,indent=2))
@@ -56,27 +62,37 @@ def configure(directory, topology, models, source_run, operator_key, control_key
 
 
 class Deployment:
-    def __init__(self, directory):
+    def __init__(self, directory, launch_prefixes=None):
         self.directory = Path(directory)
         self.source = json.loads((self.directory/'source.json').read_text())
         self.processes = {}
         self.sequence = {identity:0 for identity in self.source['urls']}
         self.logs = []
+        self.launch_prefixes = launch_prefixes or {}
 
     def start(self, identity):
         log = (self.directory/(identity+'.log')).open('a')
         self.logs.append(log)
-        self.processes[identity] = subprocess.Popen([sys.executable,'-m','experiments.distributed_5g.node','--config',str(self.directory/(identity+'.json'))],stdout=log,stderr=subprocess.STDOUT)
+        command = [sys.executable, '-m', 'experiments.distributed_5g.node', '--config',
+                   str(self.directory/(identity+'.json'))]
+        self.processes[identity] = subprocess.Popen(
+            [*self.launch_prefixes.get(identity, ()), *command], stdout=log, stderr=subprocess.STDOUT)
 
     def __enter__(self):
-        for identity in self.source['urls']:
-            self.start(identity)
+        try:
+            for identity in self.source['urls']:
+                self.start(identity)
+        except BaseException:
+            self.__exit__(None,None,None)
+            raise
         deadline = time.monotonic()+90
         pending = set(self.processes)
         while pending and time.monotonic()<deadline:
             for identity in list(pending):
                 try:
-                    get(self.source['urls'][identity],'/health')
+                    health = get(self.source['urls'][identity],'/health')
+                    if health['id'] != identity:
+                        raise RuntimeError(f'Wrong node at {self.source["urls"][identity]}')
                     pending.remove(identity)
                 except OSError:
                     pass

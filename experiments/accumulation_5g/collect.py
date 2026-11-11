@@ -358,7 +358,10 @@ def run(args):
     loopback_url(args.nrf)
     if args.actors < 6:
         raise ValueError('At least six logical NF slots are required')
-    schedule = attack_schedule(args.windows, args.seed)
+    smoke = getattr(args, 'normal_smoke', False)
+    if smoke and not 1 <= args.windows <= 29:
+        raise ValueError('Normal smoke acquisition supports 1 through 29 windows')
+    schedule = [] if smoke else attack_schedule(args.windows, args.seed)
     frozen = None
     if args.phase == 'test':
         if not args.frozen:
@@ -424,6 +427,8 @@ def run(args):
                 'route_observation': 'slot-2 forwards HTTP to a separate receiver process; other slots read cache state',
                 'frozen': str(args.frozen) if args.frozen else None}
     manifest['control_acquisition'] = args.control_acquisition
+    if smoke:
+        manifest['normal_smoke'] = True
     manifest['unchanged_freshness_limit_seconds'] = .25
     manifest['accumulation'] = json.loads((args.frozen/'accumulation.json').read_text())
     manifest['refinement'] = refinement
@@ -624,7 +629,7 @@ def run(args):
                     append_json(refined_file,dict(run_id=run_id,window_id=window,nf_id=pred.nf_id,
                         evaluation_time=now,decision_time=time.time(),**refined))
             if distributed_observer is not None:
-                distributed_observer(window, rows, control_observation, active_grant)
+                distributed_observer(window, rows, control_observation, active_grant, predictions)
             if window % 30 == 0:
                 print(f'{run_id}: completed window {window}/{args.windows}', flush=True)
             time.sleep(max(0, args.window_seconds - (time.monotonic() - window_started)))
