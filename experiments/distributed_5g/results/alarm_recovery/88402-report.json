@@ -1,0 +1,96 @@
+{
+  "seed": 88402,
+  "run_id": "test-88402-nf32",
+  "metrics": [
+    {
+      "method": "rules",
+      "tp": 0,
+      "fp": 0,
+      "fn": 288,
+      "tn": 5472,
+      "recall": 0.0,
+      "fpr": 0.0,
+      "episodes": 12,
+      "episodes_with_alarm": 0,
+      "episodes_with_new_alarm": 0
+    },
+    {
+      "method": "IF_SBI",
+      "tp": 9,
+      "fp": 0,
+      "fn": 279,
+      "tn": 5472,
+      "recall": 0.03125,
+      "fpr": 0.0,
+      "episodes": 12,
+      "episodes_with_alarm": 5,
+      "episodes_with_new_alarm": 5
+    },
+    {
+      "method": "IF_CONTEXT",
+      "tp": 8,
+      "fp": 1,
+      "fn": 280,
+      "tn": 5471,
+      "recall": 0.027777777777777776,
+      "fpr": 0.0001827485380116959,
+      "episodes": 12,
+      "episodes_with_alarm": 5,
+      "episodes_with_new_alarm": 5
+    },
+    {
+      "method": "ACCUM",
+      "tp": 100,
+      "fp": 258,
+      "fn": 188,
+      "tn": 5214,
+      "recall": 0.3472222222222222,
+      "fpr": 0.047149122807017545,
+      "episodes": 12,
+      "episodes_with_alarm": 9,
+      "episodes_with_new_alarm": 9
+    },
+    {
+      "method": "ACCUM_OR_IF_CONTEXT",
+      "tp": 100,
+      "fp": 259,
+      "fn": 188,
+      "tn": 5213,
+      "recall": 0.3472222222222222,
+      "fpr": 0.04733187134502924,
+      "episodes": 12,
+      "episodes_with_alarm": 9,
+      "episodes_with_new_alarm": 9
+    },
+    {
+      "method": "ACCUM_CONFIRM_IF_CONTEXT",
+      "tp": 100,
+      "fp": 258,
+      "fn": 188,
+      "tn": 5214,
+      "recall": 0.3472222222222222,
+      "fpr": 0.047149122807017545,
+      "episodes": 12,
+      "episodes_with_alarm": 9,
+      "episodes_with_new_alarm": 9
+    },
+    {
+      "method": "RECOVERY_HYBRID",
+      "tp": 100,
+      "fp": 16,
+      "fn": 188,
+      "tn": 5456,
+      "recall": 0.3472222222222222,
+      "fpr": 0.0029239766081871343,
+      "episodes": 12,
+      "episodes_with_alarm": 9,
+      "episodes_with_new_alarm": 9
+    }
+  ],
+  "fpr_increment_limit": 0.005,
+  "fpr_increment": 0.0,
+  "fpr_limit_met": true,
+  "features_sha256": "fb26348ad3f1ed13d8aefa37e56b2b4548ba435203493a8815a3acbf868a8ee4",
+  "workload_events_sha256": "e49f2cf0bacb3d1452ec2a8daeb4201c35bf83221cfeff37f811aa3f915cff0f",
+  "scope": "Prospective authorized NSSF discovery workload changes on an isolated Open5GS lab. No feature editing. Three baseline profiles. All 12 scheduled episodes retained."
+}

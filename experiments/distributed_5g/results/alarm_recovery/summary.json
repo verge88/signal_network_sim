@@ -1,0 +1,174 @@
+{
+  "source_commit": "20070a9bd9c23374ff9d4f84764c8a2b2fb82004",
+  "workflow_run": 43022102120,
+  "nf_windows": 17280,
+  "recovery_windows": 3,
+  "metrics": [
+    {
+      "method": "rules",
+      "tp": 0,
+      "fp": 0,
+      "fn": 864,
+      "tn": 16416,
+      "episodes": 36,
+      "episodes_with_new_alarm": 0,
+      "recall": 0.0,
+      "fpr": 0.0
+    },
+    {
+      "method": "IF_SBI",
+      "tp": 72,
+      "fp": 13,
+      "fn": 792,
+      "tn": 16403,
+      "episodes": 36,
+      "episodes_with_new_alarm": 13,
+      "recall": 0.08333333333333333,
+      "fpr": 0.0007919103313840156
+    },
+    {
+      "method": "IF_CONTEXT",
+      "tp": 73,
+      "fp": 22,
+      "fn": 791,
+      "tn": 16394,
+      "episodes": 36,
+      "episodes_with_new_alarm": 13,
+      "recall": 0.08449074074074074,
+      "fpr": 0.0013401559454191032
+    },
+    {
+      "method": "ACCUM",
+      "tp": 300,
+      "fp": 774,
+      "fn": 564,
+      "tn": 15642,
+      "episodes": 36,
+      "episodes_with_new_alarm": 27,
+      "recall": 0.3472222222222222,
+      "fpr": 0.047149122807017545
+    },
+    {
+      "method": "ACCUM_OR_IF_CONTEXT",
+      "tp": 307,
+      "fp": 785,
+      "fn": 557,
+      "tn": 15631,
+      "episodes": 36,
+      "episodes_with_new_alarm": 28,
+      "recall": 0.35532407407407407,
+      "fpr": 0.047819200779727095
+    },
+    {
+      "method": "ACCUM_CONFIRM_IF_CONTEXT",
+      "tp": 307,
+      "fp": 774,
+      "fn": 557,
+      "tn": 15642,
+      "episodes": 36,
+      "episodes_with_new_alarm": 28,
+      "recall": 0.35532407407407407,
+      "fpr": 0.047149122807017545
+    },
+    {
+      "method": "RECOVERY_HYBRID",
+      "tp": 307,
+      "fp": 48,
+      "fn": 557,
+      "tn": 16368,
+      "episodes": 36,
+      "episodes_with_new_alarm": 28,
+      "recall": 0.35532407407407407,
+      "fpr": 0.0029239766081871343
+    }
+  ],
+  "paired_checks": [
+    {
+      "seed": 88401,
+      "attack_window_predictions_identical": true,
+      "first_new_alarm_windows_identical": true,
+      "fragmented_episodes": {
+        "original": 0,
+        "recovery": 0
+      }
+    },
+    {
+      "seed": 88402,
+      "attack_window_predictions_identical": true,
+      "first_new_alarm_windows_identical": true,
+      "fragmented_episodes": {
+        "original": 0,
+        "recovery": 0
+      }
+    },
+    {
+      "seed": 88403,
+      "attack_window_predictions_identical": true,
+      "first_new_alarm_windows_identical": true,
+      "fragmented_episodes": {
+        "original": 4,
+        "recovery": 4
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 13856545087,
+      "name": "5g-alarm-recovery-88403-43022102120",
+      "size_in_bytes": 740961,
+      "url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13856545087",
+      "archive_download_url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13856545087/zip",
+      "expired": false,
+      "created_at": "2026-11-11T12:43:31Z",
+      "expires_at": "2026-12-11T12:43:30Z",
+      "updated_at": "2026-11-11T12:43:31Z",
+      "digest": "sha256:c81606474b9277013c70784732d64860f7be0f39314c28eb1e8c1ba5cde43e49",
+      "workflow_run": {
+        "id": 43022102120,
+        "repository_id": 1368354339,
+        "head_repository_id": 1368354339,
+        "head_branch": "codex/5g-method-smoke",
+        "head_sha": "20070a9bd9c23374ff9d4f84764c8a2b2fb82004"
+      }
+    },
+    {
+      "id": 13856365051,
+      "name": "5g-alarm-recovery-88402-43022102120",
+      "size_in_bytes": 744908,
+      "url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13856365051",
+      "archive_download_url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13856365051/zip",
+      "expired": false,
+      "created_at": "2026-11-11T12:43:12Z",
+      "expires_at": "2026-12-11T12:43:11Z",
+      "updated_at": "2026-11-11T12:43:12Z",
+      "digest": "sha256:6aef22454c0c39f9a740f001fd7913c07b2bc024a88e3304593f9606cd47f52c",
+      "workflow_run": {
+        "id": 43022102120,
+        "repository_id": 1368354339,
+        "head_repository_id": 1368354339,
+        "head_branch": "codex/5g-method-smoke",
+        "head_sha": "20070a9bd9c23374ff9d4f84764c8a2b2fb82004"
+      }
+    },
+    {
+      "id": 13855990730,
+      "name": "5g-alarm-recovery-88401-43022102120",
+      "size_in_bytes": 739558,
+      "url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13855990730",
+      "archive_download_url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13855990730/zip",
+      "expired": false,
+      "created_at": "2026-11-11T12:42:59Z",
+      "expires_at": "2026-12-11T12:42:58Z",
+      "updated_at": "2026-11-11T12:42:59Z",
+      "digest": "sha256:6982656f63c4361f67811281a9606cb158118679f07fb2c05f212252b6b115fd",
+      "workflow_run": {
+        "id": 43022102120,
+        "repository_id": 1368354339,
+        "head_repository_id": 1368354339,
+        "head_branch": "codex/5g-method-smoke",
+        "head_sha": "20070a9bd9c23374ff9d4f84764c8a2b2fb82004"
+      }
+    }
+  ],
+  "scope": "Three fresh single-host Open5GS labs, five network namespaces each. Predeclared bounded discovery-load changes. Intermittent gaps last two windows. Frozen models and confirmation threshold. Prior recall of 34/36 episodes was not reproduced: both original and recovery hybrid detected 28/36 here."
+}
