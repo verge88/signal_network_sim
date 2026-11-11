@@ -1,0 +1,632 @@
+{
+  "seed": 89503,
+  "run_id": "test-89503-nf32",
+  "source_commit": "3d5ff6fda05b8881e143246026be1b454625c24d",
+  "audit_pass": true,
+  "rows": 115200,
+  "metrics": [
+    {
+      "method": "rules",
+      "tp": 40,
+      "fp": 0,
+      "fn": 430,
+      "tn": 114730,
+      "recall": 0.0851063829787234,
+      "fpr": 0.0,
+      "episodes": 36,
+      "episodes_with_alarm": 4,
+      "episodes_with_new_alarm": 4,
+      "precision": 1.0,
+      "average_precision": 0.08883902186761229,
+      "ap_note": "Continuous anomaly margin"
+    },
+    {
+      "method": "IF_SBI",
+      "tp": 1,
+      "fp": 156,
+      "fn": 469,
+      "tn": 114574,
+      "recall": 0.002127659574468085,
+      "fpr": 0.0013597141113919637,
+      "episodes": 36,
+      "episodes_with_alarm": 1,
+      "episodes_with_new_alarm": 1,
+      "precision": 0.006369426751592357,
+      "average_precision": 0.006989130240808234,
+      "ap_note": "Continuous anomaly margin"
+    },
+    {
+      "method": "IF_CONTEXT",
+      "tp": 1,
+      "fp": 164,
+      "fn": 469,
+      "tn": 114566,
+      "recall": 0.002127659574468085,
+      "fpr": 0.0014294430401812952,
+      "episodes": 36,
+      "episodes_with_alarm": 1,
+      "episodes_with_new_alarm": 1,
+      "precision": 0.006060606060606061,
+      "average_precision": 0.0070361436006810335,
+      "ap_note": "Continuous anomaly margin"
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "tp": 321,
+      "fp": 104,
+      "fn": 149,
+      "tn": 114626,
+      "recall": 0.6829787234042554,
+      "fpr": 0.0009064760742613092,
+      "episodes": 36,
+      "episodes_with_alarm": 29,
+      "episodes_with_new_alarm": 29,
+      "precision": 0.7552941176470588,
+      "average_precision": null,
+      "ap_note": "No continuous score for stateful decision fusion; AP not fabricated from binary alarms."
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "tp": 321,
+      "fp": 645,
+      "fn": 149,
+      "tn": 114085,
+      "recall": 0.6829787234042554,
+      "fpr": 0.00562189488363985,
+      "episodes": 36,
+      "episodes_with_alarm": 29,
+      "episodes_with_new_alarm": 28,
+      "precision": 0.33229813664596275,
+      "average_precision": null,
+      "ap_note": "No continuous score for stateful decision fusion; AP not fabricated from binary alarms."
+    },
+    {
+      "method": "FULL_HYBRID",
+      "tp": 321,
+      "fp": 106,
+      "fn": 149,
+      "tn": 114624,
+      "recall": 0.6829787234042554,
+      "fpr": 0.0009239083064586421,
+      "episodes": 36,
+      "episodes_with_alarm": 29,
+      "episodes_with_new_alarm": 29,
+      "precision": 0.7517564402810304,
+      "average_precision": null,
+      "ap_note": "No continuous score for stateful decision fusion; AP not fabricated from binary alarms."
+    }
+  ],
+  "strata": [
+    {
+      "method": "rules",
+      "scenario": "C",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "D",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "F",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "G",
+      "variant": "fast",
+      "windows": 10,
+      "tp": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "G",
+      "variant": "inside_permit",
+      "windows": 20,
+      "tp": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "G",
+      "variant": "intermittent",
+      "windows": 60,
+      "tp": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "G",
+      "variant": "slow",
+      "windows": 60,
+      "tp": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "R",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "S1",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "rules",
+      "scenario": "S2",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "S3",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "S4",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "C",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "D",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "F",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "G",
+      "variant": "fast",
+      "windows": 10,
+      "tp": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "G",
+      "variant": "inside_permit",
+      "windows": 20,
+      "tp": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "G",
+      "variant": "intermittent",
+      "windows": 60,
+      "tp": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "G",
+      "variant": "slow",
+      "windows": 60,
+      "tp": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "R",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "S1",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "S2",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 1
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "S3",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "S4",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "C",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "D",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "F",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "G",
+      "variant": "fast",
+      "windows": 10,
+      "tp": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "G",
+      "variant": "inside_permit",
+      "windows": 20,
+      "tp": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "G",
+      "variant": "intermittent",
+      "windows": 60,
+      "tp": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "G",
+      "variant": "slow",
+      "windows": 60,
+      "tp": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "R",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "S1",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "S2",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 1
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "S3",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "S4",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "C",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "D",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "F",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "G",
+      "variant": "fast",
+      "windows": 10,
+      "tp": 0
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "G",
+      "variant": "inside_permit",
+      "windows": 20,
+      "tp": 0
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "G",
+      "variant": "intermittent",
+      "windows": 60,
+      "tp": 0
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "G",
+      "variant": "slow",
+      "windows": 60,
+      "tp": 41
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "R",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "S1",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "S2",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "S3",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "S4",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "C",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "D",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "F",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "G",
+      "variant": "fast",
+      "windows": 10,
+      "tp": 0
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "G",
+      "variant": "inside_permit",
+      "windows": 20,
+      "tp": 0
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "G",
+      "variant": "intermittent",
+      "windows": 60,
+      "tp": 0
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "G",
+      "variant": "slow",
+      "windows": 60,
+      "tp": 41
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "R",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "S1",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "S2",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "S3",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "S4",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "C",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "D",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 0
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "F",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "G",
+      "variant": "fast",
+      "windows": 10,
+      "tp": 0
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "G",
+      "variant": "inside_permit",
+      "windows": 20,
+      "tp": 0
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "G",
+      "variant": "intermittent",
+      "windows": 60,
+      "tp": 0
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "G",
+      "variant": "slow",
+      "windows": 60,
+      "tp": 41
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "R",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "S1",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "S2",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "S3",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "S4",
+      "variant": "standard",
+      "windows": 40,
+      "tp": 40
+    }
+  ],
+  "model_sha256": "d7990aa1745687e6cf317a24f944b25232ea9937c81864959078a4cb859a705f",
+  "zone_models_sha256": "28de25076d6956b6512e3796ae070e902a2f94015743f84bfc16fbe3aec2c287",
+  "data_mining_increment": {
+    "additional_tp": 0,
+    "additional_fp": 2
+  },
+  "availability_windows": 183,
+  "unknown_windows": 587,
+  "fpr_target": 0.001,
+  "fpr_target_met": true,
+  "overhead": {
+    "hierarchy_transport_median_seconds": 0.2395077159999346,
+    "hierarchy_transport_p95_seconds": 0.925479230949827,
+    "hierarchy_cpu_seconds": 602.65,
+    "hierarchy_sampled_peak_rss_bytes": 851505152,
+    "collector_cpu_seconds": 942.091234728,
+    "elapsed_seconds": 3728.0403735637665
+  },
+  "limitations": [
+    "32 logical NF: native NSSF and registered research clients; no UE/RAN/PDU or hardware attestation.",
+    "Four zones and coordinator use distinct network namespaces on one physical runner per repetition.",
+    "Unknown/control loss is not counted as a security detection.",
+    "New IF fitting; fixed earlier control and zone calibration retained. No test tuning.",
+    "Hierarchy arithmetic independently recomputed; local control protocol covered by regression tests, not an independent implementation in this audit.",
+    "Resource snapshots exclude core/receiver/observer processes; no causal monitor-off latency comparison.",
+    "Window metrics are dependent; three runs, not 345600 independent trials."
+  ]
+}

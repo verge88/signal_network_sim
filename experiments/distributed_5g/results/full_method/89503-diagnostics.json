@@ -1,0 +1,244 @@
+{
+  "normal_regimes": [
+    {
+      "load_regime": "bursty_recovery",
+      "method": "rules",
+      "normal_windows": 28710,
+      "fp": 0,
+      "fpr": 0.0
+    },
+    {
+      "load_regime": "bursty_recovery",
+      "method": "IF_SBI",
+      "normal_windows": 28710,
+      "fp": 17,
+      "fpr": 0.0005921281783350749
+    },
+    {
+      "load_regime": "bursty_recovery",
+      "method": "IF_CONTEXT",
+      "normal_windows": 28710,
+      "fp": 37,
+      "fpr": 0.0012887495646116335
+    },
+    {
+      "load_regime": "bursty_recovery",
+      "method": "FULL_HYBRID",
+      "normal_windows": 28710,
+      "fp": 29,
+      "fpr": 0.00101010101010101
+    },
+    {
+      "load_regime": "bursty_recovery",
+      "method": "ORIGINAL_HYBRID",
+      "normal_windows": 28710,
+      "fp": 345,
+      "fpr": 0.012016718913270637
+    },
+    {
+      "load_regime": "cyclic",
+      "method": "rules",
+      "normal_windows": 28610,
+      "fp": 0,
+      "fpr": 0.0
+    },
+    {
+      "load_regime": "cyclic",
+      "method": "IF_SBI",
+      "normal_windows": 28610,
+      "fp": 37,
+      "fpr": 0.00129325410695561
+    },
+    {
+      "load_regime": "cyclic",
+      "method": "IF_CONTEXT",
+      "normal_windows": 28610,
+      "fp": 36,
+      "fpr": 0.001258301293254107
+    },
+    {
+      "load_regime": "cyclic",
+      "method": "FULL_HYBRID",
+      "normal_windows": 28610,
+      "fp": 2,
+      "fpr": 6.990562740300595e-05
+    },
+    {
+      "load_regime": "cyclic",
+      "method": "ORIGINAL_HYBRID",
+      "normal_windows": 28610,
+      "fp": 49,
+      "fpr": 0.0017126878713736456
+    },
+    {
+      "load_regime": "higher_load",
+      "method": "rules",
+      "normal_windows": 28710,
+      "fp": 0,
+      "fpr": 0.0
+    },
+    {
+      "load_regime": "higher_load",
+      "method": "IF_SBI",
+      "normal_windows": 28710,
+      "fp": 61,
+      "fpr": 0.002124695228143504
+    },
+    {
+      "load_regime": "higher_load",
+      "method": "IF_CONTEXT",
+      "normal_windows": 28710,
+      "fp": 43,
+      "fpr": 0.0014977359804946011
+    },
+    {
+      "load_regime": "higher_load",
+      "method": "FULL_HYBRID",
+      "normal_windows": 28710,
+      "fp": 75,
+      "fpr": 0.002612330198537095
+    },
+    {
+      "load_regime": "higher_load",
+      "method": "ORIGINAL_HYBRID",
+      "normal_windows": 28710,
+      "fp": 245,
+      "fpr": 0.008533611981887844
+    },
+    {
+      "load_regime": "reference",
+      "method": "rules",
+      "normal_windows": 28700,
+      "fp": 0,
+      "fpr": 0.0
+    },
+    {
+      "load_regime": "reference",
+      "method": "IF_SBI",
+      "normal_windows": 28700,
+      "fp": 41,
+      "fpr": 0.0014285714285714286
+    },
+    {
+      "load_regime": "reference",
+      "method": "IF_CONTEXT",
+      "normal_windows": 28700,
+      "fp": 48,
+      "fpr": 0.0016724738675958188
+    },
+    {
+      "load_regime": "reference",
+      "method": "FULL_HYBRID",
+      "normal_windows": 28700,
+      "fp": 0,
+      "fpr": 0.0
+    },
+    {
+      "load_regime": "reference",
+      "method": "ORIGINAL_HYBRID",
+      "normal_windows": 28700,
+      "fp": 6,
+      "fpr": 0.00020905923344947735
+    }
+  ],
+  "positive_states": [
+    {
+      "scenario": "C",
+      "variant": "standard",
+      "windows": 40,
+      "security": 40,
+      "availability": 0,
+      "unknown": 0
+    },
+    {
+      "scenario": "D",
+      "variant": "standard",
+      "windows": 40,
+      "security": 0,
+      "availability": 19,
+      "unknown": 40
+    },
+    {
+      "scenario": "F",
+      "variant": "standard",
+      "windows": 40,
+      "security": 40,
+      "availability": 19,
+      "unknown": 0
+    },
+    {
+      "scenario": "G",
+      "variant": "fast",
+      "windows": 10,
+      "security": 0,
+      "availability": 0,
+      "unknown": 0
+    },
+    {
+      "scenario": "G",
+      "variant": "inside_permit",
+      "windows": 20,
+      "security": 0,
+      "availability": 0,
+      "unknown": 0
+    },
+    {
+      "scenario": "G",
+      "variant": "intermittent",
+      "windows": 60,
+      "security": 0,
+      "availability": 0,
+      "unknown": 0
+    },
+    {
+      "scenario": "G",
+      "variant": "slow",
+      "windows": 60,
+      "security": 41,
+      "availability": 0,
+      "unknown": 0
+    },
+    {
+      "scenario": "R",
+      "variant": "standard",
+      "windows": 40,
+      "security": 40,
+      "availability": 20,
+      "unknown": 40
+    },
+    {
+      "scenario": "S1",
+      "variant": "standard",
+      "windows": 40,
+      "security": 40,
+      "availability": 0,
+      "unknown": 0
+    },
+    {
+      "scenario": "S2",
+      "variant": "standard",
+      "windows": 40,
+      "security": 40,
+      "availability": 0,
+      "unknown": 0
+    },
+    {
+      "scenario": "S3",
+      "variant": "standard",
+      "windows": 40,
+      "security": 40,
+      "availability": 0,
+      "unknown": 0
+    },
+    {
+      "scenario": "S4",
+      "variant": "standard",
+      "windows": 40,
+      "security": 40,
+      "availability": 0,
+      "unknown": 0
+    }
+  ],
+  "source_labels_sha256": "9e723c58a1e5c76aa36ee23dc936c71c275a57e7dd8a41c505fec5a09d93fe5b",
+  "note": "Descriptive stratification after acquisition; no detector or labels modified."
+}

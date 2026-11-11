@@ -1,0 +1,821 @@
+{
+  "source_commit": "3d5ff6fda05b8881e143246026be1b454625c24d",
+  "runs": 3,
+  "nf_windows": 345600,
+  "metrics": [
+    {
+      "method": "rules",
+      "tp": 120,
+      "fp": 0,
+      "fn": 1290,
+      "tn": 344190,
+      "episodes": 108,
+      "episodes_with_alarm": 12,
+      "episodes_with_new_alarm": 12,
+      "recall": 0.0851063829787234,
+      "fpr": 0.0,
+      "precision": 1.0,
+      "episode_recall_new_alarm": 0.1111111111111111,
+      "per_run_average_precision": [
+        0.08883902186761229,
+        0.08883902186761229,
+        0.08883902186761229
+      ],
+      "per_run_recall": [
+        0.0851063829787234,
+        0.0851063829787234,
+        0.0851063829787234
+      ],
+      "per_run_fpr": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "detected_episode_delay_median_seconds": 0.24156332015991205,
+      "detected_episode_delay_max_seconds": 0.3800795078277588
+    },
+    {
+      "method": "IF_SBI",
+      "tp": 5,
+      "fp": 1015,
+      "fn": 1405,
+      "tn": 343175,
+      "episodes": 108,
+      "episodes_with_alarm": 5,
+      "episodes_with_new_alarm": 5,
+      "recall": 0.0035460992907801418,
+      "fpr": 0.0029489526133821436,
+      "precision": 0.004901960784313725,
+      "episode_recall_new_alarm": 0.046296296296296294,
+      "per_run_average_precision": [
+        0.00833067451026066,
+        0.0072215949203182596,
+        0.006989130240808234
+      ],
+      "per_run_recall": [
+        0.002127659574468085,
+        0.006382978723404255,
+        0.002127659574468085
+      ],
+      "per_run_fpr": [
+        0.0010807983962346378,
+        0.006406345332519829,
+        0.0013597141113919637
+      ],
+      "detected_episode_delay_median_seconds": 7.23805570602417,
+      "detected_episode_delay_max_seconds": 9.313546657562256
+    },
+    {
+      "method": "IF_CONTEXT",
+      "tp": 2,
+      "fp": 555,
+      "fn": 1408,
+      "tn": 343635,
+      "episodes": 108,
+      "episodes_with_alarm": 2,
+      "episodes_with_new_alarm": 2,
+      "recall": 0.0014184397163120568,
+      "fpr": 0.0016124814782532903,
+      "precision": 0.003590664272890485,
+      "episode_recall_new_alarm": 0.018518518518518517,
+      "per_run_average_precision": [
+        0.008334226651714781,
+        0.007649668020583308,
+        0.0070361436006810335
+      ],
+      "per_run_recall": [
+        0.002127659574468085,
+        0.0,
+        0.002127659574468085
+      ],
+      "per_run_fpr": [
+        0.002710712106685261,
+        0.0006972892878933148,
+        0.0014294430401812952
+      ],
+      "detected_episode_delay_median_seconds": 5.707391858100891,
+      "detected_episode_delay_max_seconds": 7.23805570602417
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "tp": 948,
+      "fp": 246,
+      "fn": 462,
+      "tn": 343944,
+      "episodes": 108,
+      "episodes_with_alarm": 87,
+      "episodes_with_new_alarm": 87,
+      "recall": 0.6723404255319149,
+      "fpr": 0.0007147215200906476,
+      "precision": 0.7939698492462312,
+      "episode_recall_new_alarm": 0.8055555555555556,
+      "per_run_average_precision": [
+        null,
+        null,
+        null
+      ],
+      "per_run_recall": [
+        0.6680851063829787,
+        0.6659574468085107,
+        0.6829787234042554
+      ],
+      "per_run_fpr": [
+        0.00047938638542665386,
+        0.0007583021005839798,
+        0.0009064760742613092
+      ],
+      "detected_episode_delay_median_seconds": 0.438265323638916,
+      "detected_episode_delay_max_seconds": 28.466495752334595
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "tp": 954,
+      "fp": 1641,
+      "fn": 456,
+      "tn": 342549,
+      "episodes": 108,
+      "episodes_with_alarm": 88,
+      "episodes_with_new_alarm": 87,
+      "recall": 0.676595744680851,
+      "fpr": 0.004767715505970539,
+      "precision": 0.3676300578034682,
+      "episode_recall_new_alarm": 0.8055555555555556,
+      "per_run_average_precision": [
+        null,
+        null,
+        null
+      ],
+      "per_run_recall": [
+        0.674468085106383,
+        0.6723404255319149,
+        0.6829787234042554
+      ],
+      "per_run_fpr": [
+        0.00349516255556524,
+        0.005186089078706529,
+        0.00562189488363985
+      ],
+      "detected_episode_delay_median_seconds": 0.438265323638916,
+      "detected_episode_delay_max_seconds": 57.08368682861328
+    },
+    {
+      "method": "FULL_HYBRID",
+      "tp": 948,
+      "fp": 252,
+      "fn": 462,
+      "tn": 343938,
+      "episodes": 108,
+      "episodes_with_alarm": 87,
+      "episodes_with_new_alarm": 87,
+      "recall": 0.6723404255319149,
+      "fpr": 0.0007321537522879804,
+      "precision": 0.79,
+      "episode_recall_new_alarm": 0.8055555555555556,
+      "per_run_average_precision": [
+        null,
+        null,
+        null
+      ],
+      "per_run_recall": [
+        0.6680851063829787,
+        0.6659574468085107,
+        0.6829787234042554
+      ],
+      "per_run_fpr": [
+        0.0005142508498213196,
+        0.0007583021005839798,
+        0.0009239083064586421
+      ],
+      "detected_episode_delay_median_seconds": 0.438265323638916,
+      "detected_episode_delay_max_seconds": 28.466495752334595
+    }
+  ],
+  "scenario_episodes": [
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "C",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "D",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "F",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "G",
+      "variant": "fast",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "G",
+      "variant": "inside_permit",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "G",
+      "variant": "intermittent",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "G",
+      "variant": "slow",
+      "episodes": 3,
+      "new_alarms": 3,
+      "alarm_present": 3
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "R",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "S1",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "S2",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "S3",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "FULL_HYBRID",
+      "scenario": "S4",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "C",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "D",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "F",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "G",
+      "variant": "fast",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "G",
+      "variant": "inside_permit",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "G",
+      "variant": "intermittent",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "G",
+      "variant": "slow",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "R",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "S1",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 1,
+      "alarm_present": 1
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "S2",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 1,
+      "alarm_present": 1
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "S3",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_CONTEXT",
+      "scenario": "S4",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "C",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 1,
+      "alarm_present": 1
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "D",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "F",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "G",
+      "variant": "fast",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "G",
+      "variant": "inside_permit",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "G",
+      "variant": "intermittent",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "G",
+      "variant": "slow",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "R",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "S1",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 1,
+      "alarm_present": 1
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "S2",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 2,
+      "alarm_present": 2
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "S3",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 1,
+      "alarm_present": 1
+    },
+    {
+      "method": "IF_SBI",
+      "scenario": "S4",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "C",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "D",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "F",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 11,
+      "alarm_present": 12
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "G",
+      "variant": "fast",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "G",
+      "variant": "inside_permit",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "G",
+      "variant": "intermittent",
+      "episodes": 3,
+      "new_alarms": 1,
+      "alarm_present": 1
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "G",
+      "variant": "slow",
+      "episodes": 3,
+      "new_alarms": 3,
+      "alarm_present": 3
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "R",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "S1",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "S2",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "S3",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "ORIGINAL_HYBRID",
+      "scenario": "S4",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "C",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "D",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "F",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "G",
+      "variant": "fast",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "G",
+      "variant": "inside_permit",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "G",
+      "variant": "intermittent",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "G",
+      "variant": "slow",
+      "episodes": 3,
+      "new_alarms": 3,
+      "alarm_present": 3
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "R",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "S1",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "S2",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "S3",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "WITHOUT_MINING",
+      "scenario": "S4",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "rules",
+      "scenario": "C",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "D",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "F",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "G",
+      "variant": "fast",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "G",
+      "variant": "inside_permit",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "G",
+      "variant": "intermittent",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "G",
+      "variant": "slow",
+      "episodes": 3,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "R",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "S1",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 12,
+      "alarm_present": 12
+    },
+    {
+      "method": "rules",
+      "scenario": "S2",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "S3",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    },
+    {
+      "method": "rules",
+      "scenario": "S4",
+      "variant": "standard",
+      "episodes": 12,
+      "new_alarms": 0,
+      "alarm_present": 0
+    }
+  ],
+  "data_mining_increment": {
+    "additional_tp": 0,
+    "additional_fp": 6
+  },
+  "per_run_overhead": [
+    {
+      "seed": 89501,
+      "hierarchy_transport_median_seconds": 0.11789847299996836,
+      "hierarchy_transport_p95_seconds": 0.6336553954500005,
+      "hierarchy_cpu_seconds": 678.17,
+      "hierarchy_sampled_peak_rss_bytes": 843677696,
+      "collector_cpu_seconds": 1070.3077829,
+      "elapsed_seconds": 3632.1217081546783
+    },
+    {
+      "seed": 89502,
+      "hierarchy_transport_median_seconds": 0.1066645565001636,
+      "hierarchy_transport_p95_seconds": 0.6204468891000374,
+      "hierarchy_cpu_seconds": 611.74,
+      "hierarchy_sampled_peak_rss_bytes": 843911168,
+      "collector_cpu_seconds": 1083.807144807,
+      "elapsed_seconds": 3617.407695055008
+    },
+    {
+      "seed": 89503,
+      "hierarchy_transport_median_seconds": 0.2395077159999346,
+      "hierarchy_transport_p95_seconds": 0.925479230949827,
+      "hierarchy_cpu_seconds": 602.65,
+      "hierarchy_sampled_peak_rss_bytes": 851505152,
+      "collector_cpu_seconds": 942.091234728,
+      "elapsed_seconds": 3728.0403735637665
+    }
+  ],
+  "availability_windows": 515,
+  "unknown_windows": 1515,
+  "fpr_target_met_all_runs": true,
+  "source_report_sha256": {
+    "89501": "77906defb730052d868b7b5f73ce6d30ae4ba2e03d23144cb98435d27d45b32d",
+    "89502": "45015f4e619b4ce292924076da4ca077eb143c23fdc5a10880d723d64d7be9b2",
+    "89503": "7a22f395dd9b304ec7f4960c5ed9a335d57cf89ddc90049fd308814d8a0dc8ac"
+  },
+  "limitations": [
+    "32 logical NF: native NSSF and registered research clients; no UE/RAN/PDU or hardware attestation.",
+    "Four zones and coordinator use distinct network namespaces on one physical runner per repetition.",
+    "Unknown/control loss is not counted as a security detection.",
+    "New IF fitting; fixed earlier control and zone calibration retained. No test tuning.",
+    "Hierarchy arithmetic independently recomputed; local control protocol covered by regression tests, not an independent implementation in this audit.",
+    "Resource snapshots exclude core/receiver/observer processes; no causal monitor-off latency comparison.",
+    "Window metrics are dependent; three runs, not 345600 independent trials."
+  ]
+}

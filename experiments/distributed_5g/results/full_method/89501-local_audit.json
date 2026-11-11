@@ -1,0 +1,11 @@
+{
+  "seed": 89501,
+  "artifact_sha256": "0ec49e421e3b307e1ce348c715f95f57e3581c2a0a8fdda7d890abbbbe04a5f8",
+  "inner_sha256": "b2d8e93861a29271e971cbfc334c1e7fd2ae1d7a1eddeef0c5b465be35b12f52",
+  "raw_event_bytes": 1190606663,
+  "full_audit_reproduced": true,
+  "training_sources_hashes_verified": true,
+  "fresh_fit_thresholds_reproduced": true,
+  "refit_predictions_checked": 1024,
+  "note": "Original audit arithmetic unchanged; only input reader streams raw events from ZIP to limit disk use."
+}

@@ -1,0 +1,13 @@
+scenario,variant,windows,security,availability,unknown
+C,standard,120,120,0,0
+D,standard,120,0,57,120
+F,standard,120,120,55,0
+G,fast,30,0,0,0
+G,inside_permit,60,0,0,0
+G,intermittent,180,0,0,0
+G,slow,180,108,0,0
+R,standard,120,120,55,120
+S1,standard,120,120,0,0
+S2,standard,120,120,0,0
+S3,standard,120,120,0,0
+S4,standard,120,120,0,0

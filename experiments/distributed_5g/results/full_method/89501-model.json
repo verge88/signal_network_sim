@@ -1,0 +1,171 @@
+{
+  "protocol_version": "live-5g-v2-tail",
+  "created_at": 1794420138.9836175,
+  "seed": 89501,
+  "alpha_target": 0.001,
+  "calibration_rows": 19200,
+  "training_rows": 19200,
+  "train_runs": [
+    "train-90501"
+  ],
+  "calibration_runs": [
+    "cal-91501"
+  ],
+  "features": {
+    "IF_SBI": [
+      "request_count",
+      "error_rate",
+      "update_count",
+      "interarrival_mean",
+      "request_count_10s",
+      "request_count_60s",
+      "error_rate_10s",
+      "error_rate_60s",
+      "latency_ms",
+      "heartbeat_age"
+    ],
+    "IF_CONTEXT": [
+      "request_count",
+      "error_rate",
+      "update_count",
+      "interarrival_mean",
+      "request_count_10s",
+      "request_count_60s",
+      "error_rate_10s",
+      "error_rate_60s",
+      "latency_ms",
+      "heartbeat_age",
+      "profile_changes",
+      "forbidden_operation",
+      "profile_policy_violation"
+    ],
+    "IF_FULL": [
+      "request_count",
+      "error_rate",
+      "update_count",
+      "interarrival_mean",
+      "request_count_10s",
+      "request_count_60s",
+      "error_rate_10s",
+      "error_rate_60s",
+      "latency_ms",
+      "heartbeat_age",
+      "profile_changes",
+      "forbidden_operation",
+      "profile_policy_violation",
+      "route_mismatch",
+      "report_mismatch",
+      "auth_failure"
+    ]
+  },
+  "forbidden_inputs": [
+    "attack",
+    "scenario",
+    "onset",
+    "episode_id",
+    "run_id",
+    "window_id",
+    "nf_id",
+    "timestamp"
+  ],
+  "tail_model": {
+    "features": [
+      "request_count",
+      "error_rate",
+      "update_count"
+    ],
+    "center": [
+      3.0,
+      0.0,
+      1.0
+    ],
+    "scale": [
+      1.4826,
+      0.07692307692307693,
+      1.0
+    ],
+    "resolution_floor": [
+      1.0,
+      0.07692307692307693,
+      1.0
+    ],
+    "score": "max(0, max_j((x_j - training_median_j) / scale_j))"
+  },
+  "development_disclosure": "Tail branch introduced after exploratory run 42368716451 missed S4. Original six methods are unchanged. New parameters use only fresh normal training/calibration; confirmation requires a new prospective test run.",
+  "thresholds": {
+    "IF_SBI": 0.7331909542998272,
+    "IF_CONTEXT": 0.7230268597433048,
+    "IF_FULL": 0.722850879952561,
+    "robust_tail": 6.7449075947659525
+  },
+  "threshold_sufficient": true,
+  "score_convention": "Anomaly margin; alarm iff score > 0, strict ties. Rule evidence has margin +1/-1.",
+  "rules": {
+    "baseline": "profile_policy_violation > 0 OR heartbeat_age > 30 seconds",
+    "hybrid_without_KIE": "IF_CONTEXT OR baseline OR forbidden_operation > 0 OR route_mismatch > 0",
+    "hybrid": "hybrid_without_KIE OR report_mismatch > 0 OR auth_failure > 0",
+    "hybrid_tail_without_KIE": "robust_tail OR baseline OR forbidden_operation > 0 OR route_mismatch > 0",
+    "hybrid_tail": "hybrid_tail_without_KIE OR report_mismatch > 0 OR auth_failure > 0"
+  },
+  "assumptions": [
+    "Fixed operator policy; trusted independent observer and control-channel verifier.",
+    "HMAC authenticates report origin, not the truth of a compromised actor's report.",
+    "A constant-in-training invariant is checked explicitly, not learned by Isolation Forest.",
+    "Correlated windows do not establish an exchangeability-based FPR guarantee.",
+    "No held-out test result is used for threshold selection."
+  ],
+  "sources": [
+    {
+      "path": "evidence/train/features.csv",
+      "sha256": "1b5f22e1dd32734b5ce170b4f1d5c82b95b7e37ea3b34dd01302226af2a6e748",
+      "rows": 19200
+    },
+    {
+      "path": "evidence/train/labels.csv",
+      "sha256": "ec6e45c75034ce77134cc36c2346e31b55849edacd577e4392fe5a58a9c541f9",
+      "rows": 19200
+    },
+    {
+      "path": "evidence/cal/features.csv",
+      "sha256": "6f66a0576a3bc917bbd8a2a56221b70187d25221e081017919fc498d84373fa5",
+      "rows": 19200
+    },
+    {
+      "path": "evidence/cal/labels.csv",
+      "sha256": "616537585e6e97dc3619033b6adb5d467bf351440330dec0c5ef20f9f7c2a03a",
+      "rows": 19200
+    }
+  ],
+  "implementation_sha256": {
+    "evaluate.py": "72864f45914654f096711dd465442d72c381c5f32b6ae439e83735d8d0033e01",
+    "PROTOCOL_RU.md": "3b627b77703b1358e3bbaa2a883895adfd54b537f692d1082192ac553fe4fa6a",
+    "overhead.py": "7fdaf1c5b78b57991511532ea180ac4111a4874096485616dec2f24fb3eccad2",
+    "test_collect.py": "cb8e671b09593d760bb672ba79bd7077a4b5c3dd27d28306f190e9fde341cb02",
+    "__init__.py": "bf340b6f98cff6b15f24b4294a4141deeefa24256bf7beed61b57932afecabfd",
+    "README.md": "5cdc91725e2d43b01f332038013a67a587bd366044ab9c0886b76c4f3db887c7",
+    "transport.py": "47696f71b82faf5a522638a34111565827fc8bd21f1ecfae0b910c546cdab848",
+    "RESULTS_RU.md": "19001f3e6a9131bd39d882947c2baa57fdfeb9dc20a860bd8df1c329bfa48df4",
+    "requirements.txt": "ba5e817be29bf48ad73c73399794f240aec139dfcee08e4e0b3d11c2db8705cd",
+    "collect.py": "c67471353f32cdf8f7d308a3300eebd8b9185e2724d43624e2e2f16ee181db40",
+    "setup_open5gs.sh": "4d207a4dc380c75695cd87efe95817015a7c284da1696de9c54b11440d641733",
+    "test_evaluate.py": "cc0e0b0fa862811c9cf1a626bfd36d149a087345cf8176ee457115b040804c8c"
+  },
+  "versions": {
+    "python": "3.11.18",
+    "numpy": "1.26.4",
+    "pandas": "2.2.3",
+    "sklearn": "1.5.2"
+  },
+  "calibration_alarm_rate": {
+    "IF_CONTEXT": 0.0009375,
+    "IF_FULL": 0.0009375,
+    "IF_SBI": 0.0009375,
+    "hybrid": 0.0009375,
+    "hybrid_tail": 0.0,
+    "hybrid_tail_without_KIE": 0.0,
+    "hybrid_without_KIE": 0.0009375,
+    "robust_tail": 0.0,
+    "rules": 0.0
+  },
+  "model_sha256": "8b31f7583542ab07d5b18fcd1cf189fcbeed87d45721ccb57e80d150ec34b673"
+}

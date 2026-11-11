@@ -1,0 +1,199 @@
+{
+  "run_id": 43070045549,
+  "source_commit": "3d5ff6fda05b8881e143246026be1b454625c24d",
+  "ci_jobs_all_success": true,
+  "local_audits": [
+    {
+      "seed": 89501,
+      "artifact_sha256": "0ec49e421e3b307e1ce348c715f95f57e3581c2a0a8fdda7d890abbbbe04a5f8",
+      "inner_sha256": "b2d8e93861a29271e971cbfc334c1e7fd2ae1d7a1eddeef0c5b465be35b12f52",
+      "raw_event_bytes": 1190606663,
+      "full_audit_reproduced": true,
+      "training_sources_hashes_verified": true,
+      "fresh_fit_thresholds_reproduced": true,
+      "refit_predictions_checked": 1024,
+      "note": "Original audit arithmetic unchanged; only input reader streams raw events from ZIP to limit disk use."
+    },
+    {
+      "seed": 89502,
+      "artifact_sha256": "e8f6987c27b8b9d4577734d614cbcf5e3d4f7e9069e98c83cf1643ee3a219aef",
+      "inner_sha256": "2b906bf50df8d1773ab5ad960201549163d13e9baf9b73ad014d9e331888b44a",
+      "raw_event_bytes": 1190882760,
+      "full_audit_reproduced": true,
+      "training_sources_hashes_verified": true,
+      "fresh_fit_thresholds_reproduced": true,
+      "refit_predictions_checked": 1024,
+      "note": "Original audit arithmetic unchanged; only input reader streams raw events from ZIP to limit disk use."
+    },
+    {
+      "seed": 89503,
+      "artifact_sha256": "6277ec941d5d3f7d0a2cfb4f0bb1ec138fba105b50037eeb94831dbb9c79decc",
+      "inner_sha256": "d92f7968b13d2e3ceba13f0d579c7f1bcdc3b990dbdf30b88d0f5ed6a6a9f55e",
+      "raw_event_bytes": 1194222499,
+      "full_audit_reproduced": true,
+      "training_sources_hashes_verified": true,
+      "fresh_fit_thresholds_reproduced": true,
+      "refit_predictions_checked": 1024,
+      "note": "Original audit arithmetic unchanged; only input reader streams raw events from ZIP to limit disk use."
+    }
+  ],
+  "transport_log_errors": {
+    "89501": {},
+    "89502": {},
+    "89503": {
+      "BrokenPipeError": 439
+    }
+  },
+  "local_tests": {
+    "source_commit": "3d5ff6fda05b8881e143246026be1b454625c24d",
+    "checks": [
+      {
+        "scope": [
+          "distributed_5g",
+          "accumulation_5g",
+          "live_5g"
+        ],
+        "passed": 32,
+        "seconds": 10.97
+      },
+      {
+        "scope": [
+          "integrated_5g",
+          "resilient_5g",
+          "freshness_5g"
+        ],
+        "passed": 12,
+        "seconds": 2.48
+      }
+    ],
+    "note": "Earlier restricted-environment attempts could not access temporary directories; successful checks used a fresh temporary path and local process permissions."
+  },
+  "artifacts": [
+    {
+      "id": 13886115411,
+      "node_id": "MDg6QXJ0aWZhY3QxMzg4NjExNTQxMQ==",
+      "name": "full-method-evidence-89503-43070045549",
+      "size_in_bytes": 124286701,
+      "url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13886115411",
+      "archive_download_url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13886115411/zip",
+      "expired": false,
+      "digest": "sha256:6277ec941d5d3f7d0a2cfb4f0bb1ec138fba105b50037eeb94831dbb9c79decc",
+      "created_at": "2026-11-11T19:06:11Z",
+      "updated_at": "2026-11-11T19:06:11Z",
+      "expires_at": "2026-12-11T19:06:07Z",
+      "workflow_run": {
+        "id": 43070045549,
+        "repository_id": 1368354339,
+        "head_repository_id": 1368354339,
+        "head_branch": "codex/full-method-20261111",
+        "head_sha": "3d5ff6fda05b8881e143246026be1b454625c24d"
+      }
+    },
+    {
+      "id": 13886070351,
+      "node_id": "MDg6QXJ0aWZhY3QxMzg4NjA3MDM1MQ==",
+      "name": "full-method-summary-89503-43070045549",
+      "size_in_bytes": 83737,
+      "url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13886070351",
+      "archive_download_url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13886070351/zip",
+      "expired": false,
+      "digest": "sha256:13b8230725768c6849ab70e5467948ddf219bac98c0fe40bc3300ee11d7b3024",
+      "created_at": "2026-11-11T19:06:06Z",
+      "updated_at": "2026-11-11T19:06:06Z",
+      "expires_at": "2026-12-11T19:06:05Z",
+      "workflow_run": {
+        "id": 43070045549,
+        "repository_id": 1368354339,
+        "head_repository_id": 1368354339,
+        "head_branch": "codex/full-method-20261111",
+        "head_sha": "3d5ff6fda05b8881e143246026be1b454625c24d"
+      }
+    },
+    {
+      "id": 13885876679,
+      "node_id": "MDg6QXJ0aWZhY3QxMzg4NTg3NjY3OQ==",
+      "name": "full-method-summary-89501-43070045549",
+      "size_in_bytes": 76591,
+      "url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13885876679",
+      "archive_download_url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13885876679/zip",
+      "expired": false,
+      "digest": "sha256:2e1e24cc36f9f396b96969d27992850b813e476db196b28ef1ca3f513f1f07cf",
+      "created_at": "2026-11-11T19:04:12Z",
+      "updated_at": "2026-11-11T19:04:12Z",
+      "expires_at": "2026-12-11T19:04:11Z",
+      "workflow_run": {
+        "id": 43070045549,
+        "repository_id": 1368354339,
+        "head_repository_id": 1368354339,
+        "head_branch": "codex/full-method-20261111",
+        "head_sha": "3d5ff6fda05b8881e143246026be1b454625c24d"
+      }
+    },
+    {
+      "id": 13885821788,
+      "node_id": "MDg6QXJ0aWZhY3QxMzg4NTgyMTc4OA==",
+      "name": "full-method-evidence-89501-43070045549",
+      "size_in_bytes": 124458021,
+      "url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13885821788",
+      "archive_download_url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13885821788/zip",
+      "expired": false,
+      "digest": "sha256:0ec49e421e3b307e1ce348c715f95f57e3581c2a0a8fdda7d890abbbbe04a5f8",
+      "created_at": "2026-11-11T19:04:17Z",
+      "updated_at": "2026-11-11T19:04:17Z",
+      "expires_at": "2026-12-11T19:04:12Z",
+      "workflow_run": {
+        "id": 43070045549,
+        "repository_id": 1368354339,
+        "head_repository_id": 1368354339,
+        "head_branch": "codex/full-method-20261111",
+        "head_sha": "3d5ff6fda05b8881e143246026be1b454625c24d"
+      }
+    },
+    {
+      "id": 13884619209,
+      "node_id": "MDg6QXJ0aWZhY3QxMzg4NDYxOTIwOQ==",
+      "name": "full-method-summary-89502-43070045549",
+      "size_in_bytes": 76342,
+      "url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13884619209",
+      "archive_download_url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13884619209/zip",
+      "expired": false,
+      "digest": "sha256:ae6177b003ab589b4f9d6837199335c3533160600d0788c13eac693f97291ef5",
+      "created_at": "2026-11-11T19:04:20Z",
+      "updated_at": "2026-11-11T19:04:20Z",
+      "expires_at": "2026-12-11T19:04:19Z",
+      "workflow_run": {
+        "id": 43070045549,
+        "repository_id": 1368354339,
+        "head_repository_id": 1368354339,
+        "head_branch": "codex/full-method-20261111",
+        "head_sha": "3d5ff6fda05b8881e143246026be1b454625c24d"
+      }
+    },
+    {
+      "id": 13884014668,
+      "node_id": "MDg6QXJ0aWZhY3QxMzg4NDAxNDY2OA==",
+      "name": "full-method-evidence-89502-43070045549",
+      "size_in_bytes": 124419142,
+      "url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13884014668",
+      "archive_download_url": "https://api.github.com/repos/verge88/signal_network_sim/actions/artifacts/13884014668/zip",
+      "expired": false,
+      "digest": "sha256:e8f6987c27b8b9d4577734d614cbcf5e3d4f7e9069e98c83cf1643ee3a219aef",
+      "created_at": "2026-11-11T19:04:25Z",
+      "updated_at": "2026-11-11T19:04:25Z",
+      "expires_at": "2026-12-11T19:04:20Z",
+      "workflow_run": {
+        "id": 43070045549,
+        "repository_id": 1368354339,
+        "head_repository_id": 1368354339,
+        "head_branch": "codex/full-method-20261111",
+        "head_sha": "3d5ff6fda05b8881e143246026be1b454625c24d"
+      }
+    }
+  ],
+  "analysis_file_sha256": {
+    "experiments\\distributed_5g\\summarize_full.py": "84ba09b95fa9e246324fa82b9e2c8cb394e26ee21f86d1423cb83152d1684492",
+    "experiments\\distributed_5g\\diagnose_full.py": "41abbd22bf8db99897e3c6f656cfe1b8721b700e29176ded73995cef067a27ed",
+    "experiments\\distributed_5g\\plot_full.py": "13d4c3af7035225ee17d52e2d07a2bd8667bf484babc4f019b7ea608c2c0357c",
+    "research_5g\\full_method_20261111\\verify_downloads.py": "af4928ecaa2040b42fe64ed2f870f28ecad19240bca08a8a40fdb5943348b2b9"
+  }
+}
