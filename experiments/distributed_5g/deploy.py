@@ -19,7 +19,8 @@ def get(url, path):
 
 
 def configure(directory, topology, models, source_run, operator_key, control_key, extensions,
-              replay_mode=False, base_port=18800, *, hosts=None, include_if_context=False):
+              replay_mode=False, base_port=18800, *, hosts=None, include_if_context=False,
+              confirm_if_context=False):
     directory = Path(directory).resolve()
     directory.mkdir(parents=True, exist_ok=True)
     if (directory/'source.json').exists():
@@ -33,6 +34,8 @@ def configure(directory, topology, models, source_run, operator_key, control_key
     hosts = {identity: '127.0.0.1' for identity in identities} if hosts is None else hosts
     if set(hosts) != set(identities):
         raise ValueError('Placement must cover exactly the configured nodes')
+    if confirm_if_context and not include_if_context:
+        raise ValueError('Confirmation requires IF_CONTEXT decisions')
     epoch = secrets.token_hex(16)
     source_keys = {identity:secrets.token_hex(32) for identity in identities}
     configs = {}
@@ -40,7 +43,7 @@ def configure(directory, topology, models, source_run, operator_key, control_key
         configs[identity] = dict(id=identity, epoch=epoch, host=hosts[identity], port=base_port+index,
             state_file=str(directory/(identity+'-state.json')), incoming_keys={'source':source_keys[identity]},
             members=[], deadline_seconds=12 if identity=='root' else 8,
-            include_if_context=include_if_context)
+            include_if_context=include_if_context, confirm_if_context=confirm_if_context)
     urls = {identity: f"http://{config['host']}:{config['port']}" for identity, config in configs.items()}
     configs['root'].update(role='root', members=list(topology), zone_members=topology)
     for zone, members in topology.items():

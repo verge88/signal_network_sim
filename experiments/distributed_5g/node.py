@@ -13,6 +13,8 @@ from experiments.distributed_5g.primitives import advance, peer_residuals, combi
 from urllib.error import HTTPError
 from experiments.distributed_5g.protocol import canonical, post, sign, verify
 
+CONFIRMATION_FRACTION = 0.5
+
 
 class Node:
     def __init__(self, config):
@@ -170,9 +172,12 @@ class Node:
                 decisions[identity] = dict(security=bool(security), availability=report['availability'],
                     unknown=report['unknown'] or not complete, accumulated=value)
                 if self.config.get('include_if_context'):
+                    context = report['if_context_alarm']
+                    confirmed = complete and context and value > CONFIRMATION_FRACTION * self.config['model']['threshold']
+                    use_context = confirmed if self.config.get('confirm_if_context') else context
                     decisions[identity].update(accum_security=bool(security),
-                        if_context_alarm=report['if_context_alarm'],
-                        security=bool(security or report['if_context_alarm']))
+                        if_context_alarm=context, if_context_confirmed=confirmed,
+                        security=bool(security or use_context))
             for identity in missing:
                 self.state['accumulators'].pop(identity, None)
                 decisions[identity] = dict(security=False, availability=True, unknown=True, accumulated=None)

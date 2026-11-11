@@ -359,8 +359,8 @@ def run(args):
     if args.actors < 6:
         raise ValueError('At least six logical NF slots are required')
     smoke = getattr(args, 'normal_smoke', False)
-    if smoke and not 1 <= args.windows <= 29:
-        raise ValueError('Normal smoke acquisition supports 1 through 29 windows')
+    if smoke and (not 1 <= args.windows <= 600 or not args.skip_native_restart):
+        raise ValueError('Normal acquisition requires 1 to 600 windows and no native restart')
     schedule = [] if smoke else attack_schedule(args.windows, args.seed)
     frozen = None
     if args.phase == 'test':

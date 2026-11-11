@@ -53,26 +53,8 @@ def run(evidence, deployment, output):
         pd.DataFrame(records), on=KEYS, validate='one_to_one')
     assert len(labels) == len(paired) == len(features) == len(records)
     paired['ACCUM_OR_IF_CONTEXT'] = paired.ACCUM | paired.IF_CONTEXT.astype(bool)
-    paired = paired.sort_values(['nf_id', 'window_id'])
+    totals, episode_rows = summarize(paired, (*BASELINES, 'ACCUM', 'ACCUM_OR_IF_CONTEXT'))
     truth = paired.attack.eq(1)
-    assert paired.loc[truth, 'episode_id'].ne('').all()
-    totals, episode_rows = [], []
-    for method in (*BASELINES, 'ACCUM', 'ACCUM_OR_IF_CONTEXT'):
-        alarm = paired[method].astype(bool)
-        prev = alarm.groupby(paired.nf_id).shift(fill_value=False)
-        adjacent = paired.groupby('nf_id').window_id.diff().eq(1)
-        rising = alarm & ~(prev & adjacent)
-        episodes = paired.loc[truth].assign(alarm=alarm[truth], rising=rising[truth])
-        for episode, rows in episodes.groupby('episode_id'):
-            episode_rows.append(dict(method=method, episode=episode, scenario=rows.scenario.iloc[0],
-                variant=rows.variant.iloc[0], alarm_present=bool(rows.alarm.any()),
-                new_alarm=bool(rows.rising.any())))
-        method_episodes = [row for row in episode_rows if row['method'] == method]
-        tp, fp = int((truth & alarm).sum()), int((~truth & alarm).sum())
-        totals.append(dict(method=method, tp=tp, fp=fp, fn=int(truth.sum())-tp, tn=int((~truth).sum())-fp,
-            recall=tp/int(truth.sum()), fpr=fp/int((~truth).sum()), episodes=len(method_episodes),
-            episodes_with_alarm=sum(row['alarm_present'] for row in method_episodes),
-            episodes_with_new_alarm=sum(row['new_alarm'] for row in method_episodes)))
     report = dict(run_id=manifest['run_id'], rows_per_method=len(paired), model_sha256=bundle['manifest']['model_sha256'],
         source_sha256=sha256(evidence), zonal_replay_sha256=sha256(deployment), frozen_score_replay_match=True,
         metrics=totals, additional_tp=int((truth & ~paired.ACCUM & paired.IF_CONTEXT.astype(bool)).sum()),
@@ -83,6 +65,35 @@ def run(evidence, deployment, output):
     (output/'paired_report.json').write_text(json.dumps(report, indent=2) + '\n')
     pd.DataFrame(episode_rows).to_csv(output/'paired_episodes.csv', index=False)
     print(json.dumps(report), flush=True)
+
+
+def summarize(paired, methods, *, include_delay=False):
+    paired = paired.sort_values(['nf_id', 'window_id'])
+    truth = paired.attack.eq(1)
+    assert paired.loc[truth, 'episode_id'].ne('').all()
+    totals, episode_rows = [], []
+    for method in methods:
+        alarm = paired[method].astype(bool)
+        prev = alarm.groupby(paired.nf_id).shift(fill_value=False)
+        adjacent = paired.groupby('nf_id').window_id.diff().eq(1)
+        rising = alarm & ~(prev & adjacent)
+        episodes = paired.loc[truth].assign(alarm=alarm[truth], rising=rising[truth])
+        for episode, rows in episodes.groupby('episode_id'):
+            result = dict(method=method, episode=episode, scenario=rows.scenario.iloc[0],
+                variant=rows.variant.iloc[0], alarm_present=bool(rows.alarm.any()),
+                new_alarm=bool(rows.rising.any()))
+            if include_delay:
+                hits = rows.loc[rows.rising, 'window_id']
+                result['new_alarm_delay_windows'] = int(hits.min() - rows.window_id.min()) if len(hits) else None
+            episode_rows.append(result)
+        method_episodes = [row for row in episode_rows if row['method'] == method]
+        tp, fp = int((truth & alarm).sum()), int((~truth & alarm).sum())
+        totals.append(dict(method=method, tp=tp, fp=fp, fn=int(truth.sum())-tp, tn=int((~truth).sum())-fp,
+            recall=tp/int(truth.sum()) if truth.any() else None,
+            fpr=fp/int((~truth).sum()) if (~truth).any() else None, episodes=len(method_episodes),
+            episodes_with_alarm=sum(row['alarm_present'] for row in method_episodes),
+            episodes_with_new_alarm=sum(row['new_alarm'] for row in method_episodes)))
+    return totals, episode_rows
 
 
 if __name__ == '__main__':

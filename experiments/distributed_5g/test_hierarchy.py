@@ -9,11 +9,11 @@ from experiments.distributed_5g.protocol import sign, post
 from experiments.distributed_5g.primitives import peer_residuals, advance
 
 
-def configuration(tmp_path, base_port=19300, *, include_if_context=False):
+def configuration(tmp_path, base_port=19300, *, include_if_context=False, confirm_if_context=False):
     topology={'zone-a':['slot-0','slot-1','slot-2'],'zone-b':['slot-3','slot-5','slot-6']}
     model=dict(threshold=2.,feature_thresholds=dict(request_count=49.,error_count=1.,update_count=1.))
     configure(tmp_path,topology,{z:model for z in topology},'fixture','11'*32,'22'*32,{'availability_seconds':6},True,base_port,
-              include_if_context=include_if_context)
+              include_if_context=include_if_context, confirm_if_context=confirm_if_context)
     for identity in ['root',*topology]:
         p=tmp_path/(identity+'.json');c=json.loads(p.read_text());c['deadline_seconds']=1 if identity=='root' else .4;p.write_text(json.dumps(c))
     return topology
@@ -63,6 +63,19 @@ def test_frozen_context_alarm_reaches_coordinator_without_accum_alarm(tmp_path):
     assert result['complete']
     assert {identity for identity, flags in result['decisions'].items() if flags['security']} == {'slot-1'}
     assert not result['decisions']['slot-1']['accum_security']
+
+
+def test_context_requires_subthreshold_zone_evidence(tmp_path):
+    topology = configuration(tmp_path, 19650, include_if_context=True, confirm_if_context=True)
+    rows = observations(topology)
+    for identity, observation in rows.items():
+        observation['if_context_alarm'] = identity in {'slot-0', 'slot-3'}
+    rows['slot-0']['row']['request_count'] = 12
+    with Deployment(tmp_path) as deployment:
+        result = deployment.window(0, rows)
+    assert result['complete']
+    assert {identity for identity, flags in result['decisions'].items() if flags['security']} == {'slot-0'}
+    assert not result['decisions']['slot-0']['accum_security']
 
 
 def test_authentication_idempotence_and_durable_replay_guard(tmp_path):

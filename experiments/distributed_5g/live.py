@@ -33,10 +33,15 @@ def main():
     parser.add_argument('--zone-models',type=Path,required=True)
     parser.add_argument('--nrf',default='http://127.0.0.10:7777')
     parser.add_argument('--base-port',type=int,default=18800)
-    parser.add_argument('--smoke-windows', type=int, choices=range(1, 30))
+    parser.add_argument('--smoke-windows', type=int, metavar='1..600')
     parser.add_argument('--namespace-placement', type=Path)
     parser.add_argument('--include-if-context', action='store_true')
+    parser.add_argument('--confirm-if-context', action='store_true')
     args=parser.parse_args()
+    if args.confirm_if_context and not args.include_if_context:
+        parser.error('--confirm-if-context requires --include-if-context')
+    if args.smoke_windows is not None and not 1 <= args.smoke_windows <= 600:
+        parser.error('--smoke-windows must be between 1 and 600')
     args.phase='test'
     args.normal_smoke = args.smoke_windows is not None
     args.windows = args.smoke_windows if args.normal_smoke else 3600
@@ -51,12 +56,13 @@ def main():
     holder={}
     hosts, prefixes = namespace_placement(args.namespace_placement, topology) if args.namespace_placement else (None, None)
     durations = []
-    alerts = dict.fromkeys(['rules', 'IF_SBI', 'IF_CONTEXT', 'ACCUM', 'ACCUM_OR_IF_CONTEXT'], 0)
+    hybrid_method = 'ACCUM_CONFIRM_IF_CONTEXT' if args.confirm_if_context else 'ACCUM_OR_IF_CONTEXT'
+    alerts = dict.fromkeys(['rules', 'IF_SBI', 'IF_CONTEXT', 'ACCUM', hybrid_method], 0)
 
     def factory(context):
         configure(args.out/'hierarchy',topology,models,context['run_id'],context['operator_key'],
                   context['control_key'],context['extensions'],False,args.base_port,
-                  hosts=hosts, include_if_context=args.include_if_context)
+                  hosts=hosts, include_if_context=args.include_if_context, confirm_if_context=args.confirm_if_context)
         deployment=Deployment(args.out/'hierarchy', prefixes)
         deployment.__enter__()
         holder['deployment']=deployment
@@ -90,8 +96,9 @@ def main():
                 for identity, decision in result['decisions'].items():
                     if args.include_if_context:
                         assert decision['if_context_alarm'] == observations[identity]['if_context_alarm']
-                        assert decision['security'] == (decision['accum_security'] or decision['if_context_alarm'])
-                        alerts['ACCUM_OR_IF_CONTEXT'] += int(decision['security'])
+                        context_flag = 'if_context_confirmed' if args.confirm_if_context else 'if_context_alarm'
+                        assert decision['security'] == (decision['accum_security'] or decision[context_flag])
+                        alerts[hybrid_method] += int(decision['security'])
                     alerts['ACCUM'] += int(decision.get('accum_security', decision['security']))
             stream.write(json.dumps(result)+'\n')
             stream.flush()
@@ -108,7 +115,7 @@ def main():
     if args.normal_smoke:
         assert len(durations) == args.windows
         if not args.include_if_context:
-            alerts.pop('ACCUM_OR_IF_CONTEXT')
+            alerts.pop(hybrid_method)
         report = dict(windows=args.windows, nf_windows=args.windows * args.actors, processes=37,
             network_namespaces=holder.get('namespaces'), alerts=alerts,
             transport_seconds=dict(median=statistics.median(durations), maximum=max(durations)),
