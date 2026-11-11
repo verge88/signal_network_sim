@@ -73,15 +73,14 @@ def main():
         deployment=Deployment(args.out/'hierarchy', prefixes)
         deployment.__enter__()
         holder['deployment']=deployment
-        if args.normal_smoke:
-            health = {identity: get(url, '/health') for identity, url in deployment.source['urls'].items()}
-            assert len({node['pid'] for node in health.values()}) == 37
-            if args.namespace_placement:
-                namespaces = {group: health[group]['netns'] for group in ['root', *topology]}
-                assert None not in namespaces.values() and len(set(namespaces.values())) == 5
-                assert Path('/proc/self/ns/net').stat().st_ino not in namespaces.values()
-                assert all(health[nf]['netns'] == namespaces[zone] for zone, members in topology.items() for nf in members)
-                holder['namespaces'] = namespaces
+        health = {identity: get(url, '/health') for identity, url in deployment.source['urls'].items()}
+        assert len({node['pid'] for node in health.values()}) == 37
+        if args.namespace_placement:
+            namespaces = {group: health[group]['netns'] for group in ['root', *topology]}
+            assert None not in namespaces.values() and len(set(namespaces.values())) == 5
+            assert Path('/proc/self/ns/net').stat().st_ino not in namespaces.values()
+            assert all(health[nf]['netns'] == namespaces[zone] for zone, members in topology.items() for nf in members)
+            holder['namespaces'] = namespaces
         stream=(args.out/'distributed_predictions.jsonl').open('w')
         holder['stream']=stream
 
@@ -95,18 +94,27 @@ def main():
             started = time.monotonic()
             result=deployment.window(window,observations)
             result['decision_time']=time.time()
-            if args.normal_smoke:
-                assert result['complete'] and set(result['decisions']) == set(observations)
-                durations.append(time.monotonic() - started)
-                for method in ('rules', 'IF_SBI', 'IF_CONTEXT'):
-                    alerts[method] += int(predictions.loc[predictions.method == method, 'alarm'].sum())
-                for identity, decision in result['decisions'].items():
-                    if args.include_if_context:
-                        assert decision['if_context_alarm'] == observations[identity]['if_context_alarm']
-                        context_flag = 'if_context_confirmed' if args.confirm_if_context else 'if_context_alarm'
-                        assert decision.get('original_security', decision['security']) == (decision['accum_security'] or decision[context_flag])
-                        alerts[hybrid_method] += int(decision['security'])
-                    alerts['ACCUM'] += int(decision.get('accum_security', decision['security']))
+            result['transport_seconds'] = time.monotonic() - started
+            if window % 30 == 0 or window == args.windows - 1:
+                import psutil
+                resources = []
+                for identity, node in health.items():
+                    process = psutil.Process(node['pid'])
+                    cpu = process.cpu_times()
+                    resources.append(dict(id=identity, cpu_seconds=cpu.user+cpu.system,
+                                          rss_bytes=process.memory_info().rss))
+                result['process_resources'] = resources
+            assert result['complete'] and set(result['decisions']) == set(observations)
+            durations.append(time.monotonic() - started)
+            for method in ('rules', 'IF_SBI', 'IF_CONTEXT'):
+                alerts[method] += int(predictions.loc[predictions.method == method, 'alarm'].sum())
+            for identity, decision in result['decisions'].items():
+                if args.include_if_context:
+                    assert decision['if_context_alarm'] == observations[identity]['if_context_alarm']
+                    context_flag = 'if_context_confirmed' if args.confirm_if_context else 'if_context_alarm'
+                    assert decision.get('original_security', decision['security']) == (decision['accum_security'] or decision[context_flag])
+                    alerts[hybrid_method] += int(decision['security'])
+                alerts['ACCUM'] += int(decision.get('accum_security', decision['security']))
             stream.write(json.dumps(result)+'\n')
             stream.flush()
         return observe
@@ -119,22 +127,22 @@ def main():
             holder['stream'].close()
         if 'deployment' in holder:
             holder['deployment'].__exit__(None,None,None)
-    if args.normal_smoke:
-        assert len(durations) == args.windows
-        if not args.include_if_context:
-            alerts.pop(hybrid_method)
-        report = dict(windows=args.windows, nf_windows=args.windows * args.actors, processes=37,
-            network_namespaces=holder.get('namespaces'), alerts=alerts,
-            transport_seconds=dict(median=statistics.median(durations), maximum=max(durations)),
-            manifest_sha256=sha256(args.out/'manifest.json'), model_sha256=sha256(args.frozen/'model.joblib'),
-            zone_models_sha256=sha256(args.zone_models),
-            scope='Fresh normal Open5GS SBI observations. Short engineering smoke on one physical runner.')
+    assert len(durations) == args.windows
+    if not args.include_if_context:
+        alerts.pop(hybrid_method)
+    report = dict(windows=args.windows, nf_windows=args.windows * args.actors, processes=37,
+        network_namespaces=holder.get('namespaces'), alerts=alerts,
+        transport_seconds=dict(median=statistics.median(durations), maximum=max(durations)),
+        manifest_sha256=sha256(args.out/'manifest.json'), model_sha256=sha256(args.frozen/'model.joblib'),
+        zone_models_sha256=sha256(args.zone_models),
+        scope=('Fresh normal Open5GS SBI observations. Short engineering smoke on one physical runner.'
+               if args.normal_smoke else 'Full prospective scenario schedule on one physical runner with five network namespaces.'))
+    (args.out/'smoke_report.json').write_text(json.dumps(report, indent=2))
+    if args.load_experiment:
+        report['recover_normal'] = args.recover_normal
+        report['scope'] = 'Fresh Open5GS SBI measurements with predeclared authorized workload changes on one physical runner.'
         (args.out/'smoke_report.json').write_text(json.dumps(report, indent=2))
-        if args.load_experiment:
-            report['recover_normal'] = args.recover_normal
-            report['scope'] = 'Fresh Open5GS SBI measurements with predeclared authorized workload changes on one physical runner.'
-            (args.out/'smoke_report.json').write_text(json.dumps(report, indent=2))
-        print(json.dumps(report), flush=True)
+    print(json.dumps(report), flush=True)
 
 
 if __name__=='__main__':

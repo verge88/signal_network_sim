@@ -87,7 +87,8 @@ class Node:
                                         high=protocol.high, last_fresh=protocol.last_fresh)
         allowed = permit_valid(body.get('grant'), bytes.fromhex(self.config['operator_key']), row['run_id'], row['nf_id'], row['timestamp'], row['request_count'])
         report = dict(kind='report', window=body['window'], nf_id=row['nf_id'], request_count=row['request_count'],
-                      allowed=allowed, local_security=bool(security), availability=availability, unknown=status=='unknown')
+                      allowed=allowed, local_security=bool(security), availability=availability, unknown=status=='unknown',
+                      evaluation_time=now)
         if self.config.get('include_if_context'):
             if type(body.get('if_context_alarm')) is not bool:
                 raise ValueError('IF_CONTEXT decision is required for the hybrid detector')
@@ -172,6 +173,8 @@ class Node:
                 security = report['local_security'] or (complete and value > self.config['model']['threshold'])
                 decisions[identity] = dict(security=bool(security), availability=report['availability'],
                     unknown=report['unknown'] or not complete, accumulated=value)
+                decisions[identity].update({name: report[name] for name in
+                    ('local_security', 'allowed', 'evaluation_time') if name in report})
                 if self.config.get('include_if_context'):
                     context = report['if_context_alarm']
                     confirmed = complete and context and value > CONFIRMATION_FRACTION * self.config['model']['threshold']
