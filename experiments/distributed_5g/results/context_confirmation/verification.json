@@ -1,0 +1,14 @@
+{
+  "source_commit": "8a1a1b100f238e6a61dc4346a257d9b73f326bd9",
+  "workflow_run": 42992944716,
+  "artifact_id": 13843421113,
+  "artifact_sha256": "d8c693f5641e8ea698bd7dab08cc01600abe0730e470d67f707155ac419f3e24",
+  "verified_live_decisions": 5760,
+  "fresh_live_attack_episodes": 0,
+  "offline_labelled_episodes": 12,
+  "normal_nf_windows": 5760,
+  "altered_nf_windows": 5760,
+  "physical_hosts": 1,
+  "actor_http2_requests": 31646,
+  "observer_http2_requests": 5760
+}

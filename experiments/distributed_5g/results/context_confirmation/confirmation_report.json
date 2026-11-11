@@ -1,0 +1,259 @@
+{
+  "run_id": "test-86241-nf32",
+  "seed": 86241,
+  "windows": 180,
+  "nf_windows": 5760,
+  "confirmation_fraction": 0.5,
+  "model_sha256": "1eba52a48ea58aa1f8c9613f03ee95378a3a0a13e1bce39be6c24e4d0384f968",
+  "zone_models_sha256": "28de25076d6956b6512e3796ae070e902a2f94015743f84bfc16fbe3aec2c287",
+  "fresh_features_sha256": "14eb2070d5b6256505a43cc0e09eecb800b6252e4289f5bb30b1818cf8fe17aa",
+  "episode_plan": [
+    {
+      "episode": "zone-0-0-slow_growth",
+      "pattern": "slow_growth",
+      "nf_id": "slot-1",
+      "zone": "zone-0",
+      "first_window": 24,
+      "last_window": 47
+    },
+    {
+      "episode": "zone-1-0-fast_growth",
+      "pattern": "fast_growth",
+      "nf_id": "slot-9",
+      "zone": "zone-1",
+      "first_window": 24,
+      "last_window": 47
+    },
+    {
+      "episode": "zone-2-0-intermittent_growth",
+      "pattern": "intermittent_growth",
+      "nf_id": "slot-17",
+      "zone": "zone-2",
+      "first_window": 24,
+      "last_window": 47
+    },
+    {
+      "episode": "zone-3-0-error_burst",
+      "pattern": "error_burst",
+      "nf_id": "slot-25",
+      "zone": "zone-3",
+      "first_window": 24,
+      "last_window": 47
+    },
+    {
+      "episode": "zone-0-1-fast_growth",
+      "pattern": "fast_growth",
+      "nf_id": "slot-2",
+      "zone": "zone-0",
+      "first_window": 77,
+      "last_window": 100
+    },
+    {
+      "episode": "zone-1-1-intermittent_growth",
+      "pattern": "intermittent_growth",
+      "nf_id": "slot-10",
+      "zone": "zone-1",
+      "first_window": 77,
+      "last_window": 100
+    },
+    {
+      "episode": "zone-2-1-error_burst",
+      "pattern": "error_burst",
+      "nf_id": "slot-18",
+      "zone": "zone-2",
+      "first_window": 77,
+      "last_window": 100
+    },
+    {
+      "episode": "zone-3-1-slow_growth",
+      "pattern": "slow_growth",
+      "nf_id": "slot-26",
+      "zone": "zone-3",
+      "first_window": 77,
+      "last_window": 100
+    },
+    {
+      "episode": "zone-0-2-intermittent_growth",
+      "pattern": "intermittent_growth",
+      "nf_id": "slot-3",
+      "zone": "zone-0",
+      "first_window": 130,
+      "last_window": 153
+    },
+    {
+      "episode": "zone-1-2-error_burst",
+      "pattern": "error_burst",
+      "nf_id": "slot-11",
+      "zone": "zone-1",
+      "first_window": 130,
+      "last_window": 153
+    },
+    {
+      "episode": "zone-2-2-slow_growth",
+      "pattern": "slow_growth",
+      "nf_id": "slot-19",
+      "zone": "zone-2",
+      "first_window": 130,
+      "last_window": 153
+    },
+    {
+      "episode": "zone-3-2-fast_growth",
+      "pattern": "fast_growth",
+      "nf_id": "slot-27",
+      "zone": "zone-3",
+      "first_window": 130,
+      "last_window": 153
+    }
+  ],
+  "metrics": {
+    "normal": [
+      {
+        "method": "rules",
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "tn": 5760,
+        "recall": null,
+        "fpr": 0.0,
+        "episodes": 0,
+        "episodes_with_alarm": 0,
+        "episodes_with_new_alarm": 0
+      },
+      {
+        "method": "IF_SBI",
+        "tp": 0,
+        "fp": 157,
+        "fn": 0,
+        "tn": 5603,
+        "recall": null,
+        "fpr": 0.027256944444444445,
+        "episodes": 0,
+        "episodes_with_alarm": 0,
+        "episodes_with_new_alarm": 0
+      },
+      {
+        "method": "IF_CONTEXT",
+        "tp": 0,
+        "fp": 342,
+        "fn": 0,
+        "tn": 5418,
+        "recall": null,
+        "fpr": 0.059375,
+        "episodes": 0,
+        "episodes_with_alarm": 0,
+        "episodes_with_new_alarm": 0
+      },
+      {
+        "method": "ACCUM",
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "tn": 5760,
+        "recall": null,
+        "fpr": 0.0,
+        "episodes": 0,
+        "episodes_with_alarm": 0,
+        "episodes_with_new_alarm": 0
+      },
+      {
+        "method": "ACCUM_OR_IF_CONTEXT",
+        "tp": 0,
+        "fp": 342,
+        "fn": 0,
+        "tn": 5418,
+        "recall": null,
+        "fpr": 0.059375,
+        "episodes": 0,
+        "episodes_with_alarm": 0,
+        "episodes_with_new_alarm": 0
+      },
+      {
+        "method": "ACCUM_CONFIRM_IF_CONTEXT",
+        "tp": 0,
+        "fp": 15,
+        "fn": 0,
+        "tn": 5745,
+        "recall": null,
+        "fpr": 0.0026041666666666665,
+        "episodes": 0,
+        "episodes_with_alarm": 0,
+        "episodes_with_new_alarm": 0
+      }
+    ],
+    "altered": [
+      {
+        "method": "rules",
+        "tp": 0,
+        "fp": 0,
+        "fn": 288,
+        "tn": 5472,
+        "recall": 0.0,
+        "fpr": 0.0,
+        "episodes": 12,
+        "episodes_with_alarm": 0,
+        "episodes_with_new_alarm": 0
+      },
+      {
+        "method": "IF_SBI",
+        "tp": 126,
+        "fp": 161,
+        "fn": 162,
+        "tn": 5311,
+        "recall": 0.4375,
+        "fpr": 0.02942251461988304,
+        "episodes": 12,
+        "episodes_with_alarm": 8,
+        "episodes_with_new_alarm": 6
+      },
+      {
+        "method": "IF_CONTEXT",
+        "tp": 143,
+        "fp": 357,
+        "fn": 145,
+        "tn": 5115,
+        "recall": 0.4965277777777778,
+        "fpr": 0.06524122807017543,
+        "episodes": 12,
+        "episodes_with_alarm": 11,
+        "episodes_with_new_alarm": 9
+      },
+      {
+        "method": "ACCUM",
+        "tp": 155,
+        "fp": 293,
+        "fn": 133,
+        "tn": 5179,
+        "recall": 0.5381944444444444,
+        "fpr": 0.0535453216374269,
+        "episodes": 12,
+        "episodes_with_alarm": 10,
+        "episodes_with_new_alarm": 10
+      },
+      {
+        "method": "ACCUM_OR_IF_CONTEXT",
+        "tp": 183,
+        "fp": 620,
+        "fn": 105,
+        "tn": 4852,
+        "recall": 0.6354166666666666,
+        "fpr": 0.11330409356725146,
+        "episodes": 12,
+        "episodes_with_alarm": 12,
+        "episodes_with_new_alarm": 10
+      },
+      {
+        "method": "ACCUM_CONFIRM_IF_CONTEXT",
+        "tp": 163,
+        "fp": 329,
+        "fn": 125,
+        "tn": 5143,
+        "recall": 0.5659722222222222,
+        "fpr": 0.060124269005847955,
+        "episodes": 12,
+        "episodes_with_alarm": 11,
+        "episodes_with_new_alarm": 11
+      }
+    ]
+  },
+  "scope": "Fresh normal Open5GS SBI measurements plus offline alterations to request/error counts and their rolling summaries. Two paired HTTP replays. Other measurements and signed control evidence are held fixed."
+}

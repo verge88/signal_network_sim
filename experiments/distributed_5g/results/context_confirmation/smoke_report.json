@@ -1,0 +1,27 @@
+{
+  "windows": 180,
+  "nf_windows": 5760,
+  "processes": 37,
+  "network_namespaces": {
+    "root": 4026532337,
+    "zone-0": 4026532400,
+    "zone-1": 4026532463,
+    "zone-2": 4026532526,
+    "zone-3": 4026532589
+  },
+  "alerts": {
+    "rules": 0,
+    "IF_SBI": 157,
+    "IF_CONTEXT": 342,
+    "ACCUM": 0,
+    "ACCUM_CONFIRM_IF_CONTEXT": 15
+  },
+  "transport_seconds": {
+    "median": 0.11604478099999938,
+    "maximum": 0.6356286619999878
+  },
+  "manifest_sha256": "7cc6763367d01a87eb8dcb71ef837e1930700308cfa035f55daa8fae95a7a4fb",
+  "model_sha256": "1eba52a48ea58aa1f8c9613f03ee95378a3a0a13e1bce39be6c24e4d0384f968",
+  "zone_models_sha256": "28de25076d6956b6512e3796ae070e902a2f94015743f84bfc16fbe3aec2c287",
+  "scope": "Fresh normal Open5GS SBI observations. Short engineering smoke on one physical runner."
+}
