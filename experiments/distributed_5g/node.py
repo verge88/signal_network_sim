@@ -33,7 +33,17 @@ class Node:
             stream.write(canonical(self.state))
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, self.path)
+        # Windows scanners/readers can briefly deny replacement of an existing
+        # state file. Retain atomic replacement and acknowledge only after it
+        # succeeds; permanent failures must still fail closed.
+        for attempt in range(21):
+            try:
+                os.replace(temporary, self.path)
+                break
+            except PermissionError as error:
+                if getattr(error, 'winerror', None) not in (5, 32, 33) or attempt == 20:
+                    raise
+                time.sleep(.05)
 
     def emit(self, body):
         self.state['sequence'] += 1

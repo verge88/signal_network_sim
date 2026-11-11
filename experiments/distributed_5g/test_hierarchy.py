@@ -72,3 +72,36 @@ def test_lightweight_math_matches_reference():
     rows=[dict(nf_id=str(i),request_count=i%5+1) for i in range(32)]
     assert peer_residuals(rows)==reference(rows)
     assert advance(10.,0.,False)==9.4
+
+
+def test_windows_state_replacement_retries_without_false_ack(tmp_path, monkeypatch):
+    from experiments.distributed_5g import node as module
+    topology=configuration(tmp_path,19500)
+    config=json.loads((tmp_path/'slot-0.json').read_text())
+    node=Node(config)
+    real_replace=module.os.replace
+    attempts=[]
+    def denied():
+        error=PermissionError('Injected Windows file sharing failure')
+        error.winerror=5
+        return error
+    def transient(source,target):
+        attempts.append(1)
+        if len(attempts)<3:raise denied()
+        return real_replace(source,target)
+    monkeypatch.setattr(module.os,'replace',transient)
+    monkeypatch.setattr(module.time,'sleep',lambda seconds:None)
+    body=dict(kind='observe',window=0,**observations(topology)['slot-0'])
+    packet=sign('source','slot-0',config['epoch'],1,body,config['incoming_keys']['source'])
+    assert node.receive(packet)['accepted'] and len(attempts)==3
+    persisted=json.loads(node.path.read_text())
+    assert persisted['high_water']==0 and len(persisted['outbox'])==1
+    def permanent(source,target):
+        attempts.append(1)
+        raise denied()
+    attempts.clear()
+    monkeypatch.setattr(module.os,'replace',permanent)
+    packet=sign('source','slot-0',config['epoch'],2,dict(body,window=1),config['incoming_keys']['source'])
+    with pytest.raises(PermissionError):node.receive(packet)
+    assert len(attempts)==21
+    assert node.state==persisted==json.loads(node.path.read_text())
