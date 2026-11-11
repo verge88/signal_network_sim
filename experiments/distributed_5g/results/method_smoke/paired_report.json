@@ -1,0 +1,76 @@
+{
+  "run_id": "test-74333-nf32",
+  "rows_per_method": 115200,
+  "model_sha256": "1eba52a48ea58aa1f8c9613f03ee95378a3a0a13e1bce39be6c24e4d0384f968",
+  "source_sha256": "c76c4ed6a865dc5c37803dbc46e6cd05c62ebe803f398fe409dd2f1090910129",
+  "zonal_replay_sha256": "8aa7e697e674b68b22e9cf7980e653a93f0060ad6469101f651c4c67a6607f0b",
+  "frozen_score_replay_match": true,
+  "metrics": [
+    {
+      "method": "rules",
+      "tp": 40,
+      "fp": 0,
+      "fn": 430,
+      "tn": 114730,
+      "recall": 0.0851063829787234,
+      "fpr": 0.0,
+      "episodes": 36,
+      "episodes_with_alarm": 4,
+      "episodes_with_new_alarm": 4
+    },
+    {
+      "method": "IF_SBI",
+      "tp": 57,
+      "fp": 3405,
+      "fn": 413,
+      "tn": 111325,
+      "recall": 0.12127659574468085,
+      "fpr": 0.02967837531595921,
+      "episodes": 36,
+      "episodes_with_alarm": 13,
+      "episodes_with_new_alarm": 13
+    },
+    {
+      "method": "IF_CONTEXT",
+      "tp": 57,
+      "fp": 3134,
+      "fn": 413,
+      "tn": 111596,
+      "recall": 0.12127659574468085,
+      "fpr": 0.027316307853220603,
+      "episodes": 36,
+      "episodes_with_alarm": 13,
+      "episodes_with_new_alarm": 13
+    },
+    {
+      "method": "ACCUM",
+      "tp": 375,
+      "fp": 559,
+      "fn": 95,
+      "tn": 114171,
+      "recall": 0.7978723404255319,
+      "fpr": 0.004872308899154537,
+      "episodes": 36,
+      "episodes_with_alarm": 30,
+      "episodes_with_new_alarm": 29
+    },
+    {
+      "method": "ACCUM_OR_IF_CONTEXT",
+      "tp": 377,
+      "fp": 3661,
+      "fn": 93,
+      "tn": 111069,
+      "recall": 0.8021276595744681,
+      "fpr": 0.03190970103721782,
+      "episodes": 36,
+      "episodes_with_alarm": 32,
+      "episodes_with_new_alarm": 29
+    }
+  ],
+  "additional_tp": 2,
+  "additional_fp": 3102,
+  "availability_rows": 163,
+  "unknown_rows": 464,
+  "scope": "Retrospective pairing on a previously analyzed acquisition; candidate OR fusion had no threshold tuning here.",
+  "timing": "Episode hit means an alarm was present; a new alarm requires a rising edge within the episode. No comparable live hybrid delay was recorded."
+}

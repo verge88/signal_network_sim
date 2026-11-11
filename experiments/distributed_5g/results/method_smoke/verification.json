@@ -1,0 +1,15 @@
+{
+  "source_commit": "afc61a69c2ae3cce5f37ad80079d4156a170446e",
+  "workflow_run": 42990858998,
+  "artifact_id": 13840719297,
+  "artifact_sha256": "aa0837d7172ffdac25e8fa6714f177ccad0b98e4aca4b75c3610a102859b7bab",
+  "run_id": "test-86117-nf32",
+  "actor_http2_requests": 4143,
+  "observer_http2_requests": 768,
+  "verified_hybrid_decisions": 768,
+  "archive_comparison_equal_on_windows_and_linux": true,
+  "first_workflow_run": 42989714486,
+  "first_failure": "Timeout while stopping the wrapped coordinator after collection",
+  "fresh_attack_episodes": 0,
+  "physical_hosts": 1
+}
