@@ -39,7 +39,7 @@ def main():
     parser.add_argument('--confirm-if-context', action='store_true')
     parser.add_argument('--confirmation-fraction', type=float, default=.5)
     parser.add_argument('--ml-method', default='IF_CONTEXT')
-    parser.add_argument('--ml-confirmation-mode', choices=['recovery','persistence'], default='recovery')
+    parser.add_argument('--ml-confirmation-mode', choices=['recovery','persistence','direct'], default='recovery')
     parser.add_argument('--ml-persistence-window', type=int, default=5)
     parser.add_argument('--ml-persistence-hits', type=int, default=3)
     parser.add_argument('--accumulator-multiplier', type=float, default=1.0)
