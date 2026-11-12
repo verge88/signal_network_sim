@@ -25,8 +25,8 @@ def lines(path):
             yield json.loads(line)
 
 
-def prepare(root, previous, seed):
-    manifest = fit(root/'train', root/'cal', root/'frozen', alpha=.001, seed=seed)
+def prepare(root, previous, seed, detector='iforest'):
+    manifest = fit(root/'train', root/'cal', root/'frozen', alpha=.001, seed=seed, detector=detector)
     assert manifest['threshold_sufficient']
     origin = {}
     for name in ('extensions.json', 'refinement.json', 'accumulation.json'):
@@ -34,7 +34,8 @@ def prepare(root, previous, seed):
         origin[name] = sha256(previous/name)
     (root/'frozen_origin.json').write_text(json.dumps(dict(
         fresh_data_mining=True, inherited_fixed_components=origin,
-        explanation='IF models fitted on fresh train and calibrated on separate fresh normal cal. '
+        detector=detector,
+        explanation='Selected anomaly detector fitted on fresh train and calibrated on separate fresh normal cal. '
                     'Control deadlines and accumulator parameters remain frozen from development; '
                     'zone models are separately hash-pinned before this experiment.'), indent=2))
 
@@ -158,7 +159,7 @@ def audit(root):
             episode['new_alarm_delay_seconds'] = float(hits.decision_timestamp.min()-hits.onset.min()) if len(hits) else None
         for (scenario,variant), group in part[part.attack == 1].groupby(['scenario','variant']):
             strata.append(dict(method=name,scenario=scenario,variant=variant,windows=len(group),tp=int(group[name].sum())))
-    report = dict(seed=manifest['seed'],run_id=manifest['run_id'],source_commit=(root/'source_commit.txt').read_text().strip(),
+    report = dict(seed=manifest['seed'],run_id=manifest['run_id'],detector=bundle['manifest'].get('detector','iforest'),source_commit=(root/'source_commit.txt').read_text().strip(),
         audit_pass=True,rows=len(paired),metrics=totals,strata=strata,
         model_sha256=sha256(root/'frozen/model.joblib'),zone_models_sha256=sha256(root/'zone_models.json'),
         data_mining_increment=dict(additional_tp=int((paired.attack.eq(1)&paired.FULL_HYBRID&~paired.WITHOUT_MINING).sum()),
@@ -173,7 +174,7 @@ def audit(root):
         limitations=['32 logical NF: native NSSF and registered research clients; no UE/RAN/PDU or hardware attestation.',
             'Four zones and coordinator use distinct network namespaces on one physical runner per repetition.',
             'Unknown/control loss is not counted as a security detection.',
-            'New IF fitting; fixed earlier control and zone calibration retained. No test tuning.',
+            'Fresh detector fitting; fixed earlier control and zone calibration retained. No test tuning.',
             'Hierarchy arithmetic independently recomputed; local control protocol covered by regression tests, not an independent implementation in this audit.',
             'Resource snapshots exclude core/receiver/observer processes; no causal monitor-off latency comparison.',
             'Window metrics are dependent; three runs, not 345600 independent trials.'])
@@ -193,5 +194,6 @@ if __name__ == '__main__':
     parser.add_argument('root',type=Path)
     parser.add_argument('--previous',type=Path)
     parser.add_argument('--seed',type=int)
+    parser.add_argument('--detector',choices=['iforest','ocsvm_rbf','lof','elliptic'],default='iforest')
     args=parser.parse_args()
-    prepare(args.root,args.previous,args.seed) if args.action=='prepare' else audit(args.root)
+    prepare(args.root,args.previous,args.seed,args.detector) if args.action=='prepare' else audit(args.root)
