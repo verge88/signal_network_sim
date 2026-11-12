@@ -1,0 +1,73 @@
+name: 5G supervised confirmation gate sweep
+
+on:
+  push:
+    branches: ['experiment/ml-detector-v2-20261112']
+    paths:
+      - '.github/workflows/ml-supervised-gate-sweep-5g.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  sweep:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - heldout: 89501
+            heldout_artifact: 13885821788
+            dev1: 89502
+            dev1_artifact: 13884014668
+            dev2: 89503
+            dev2_artifact: 13886115411
+          - heldout: 89502
+            heldout_artifact: 13884014668
+            dev1: 89501
+            dev1_artifact: 13885821788
+            dev2: 89503
+            dev2_artifact: 13886115411
+          - heldout: 89503
+            heldout_artifact: 13886115411
+            dev1: 89501
+            dev1_artifact: 13885821788
+            dev2: 89502
+            dev2_artifact: 13884014668
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install minimal analysis stack
+        run: python -m pip install numpy==1.26.4 pandas==2.2.3 scikit-learn==1.5.2
+      - name: Download historical evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for spec in \
+            "${{ matrix.heldout }}:${{ matrix.heldout_artifact }}" \
+            "${{ matrix.dev1 }}:${{ matrix.dev1_artifact }}" \
+            "${{ matrix.dev2 }}:${{ matrix.dev2_artifact }}"; do
+            seed="${spec%%:*}"
+            artifact="${spec##*:}"
+            mkdir -p "packed-${seed}" "evidence-${seed}"
+            gh api "repos/verge88/signal_network_sim/actions/artifacts/${artifact}/zip" > "packed-${seed}/artifact.zip"
+            unzip -q "packed-${seed}/artifact.zip" -d "packed-${seed}"
+            unzip -q "packed-${seed}/full-evidence.zip" -d "evidence-${seed}"
+          done
+      - name: Sweep frozen confirmation fractions
+        run: |
+          python -m experiments.distributed_5g.supervised_gate_sweep \
+            --heldout "evidence-${{ matrix.heldout }}" \
+            --development "evidence-${{ matrix.dev1 }}" "evidence-${{ matrix.dev2 }}" \
+            --output gate-summary \
+            --seed ${{ matrix.heldout }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: supervised-gate-${{ matrix.heldout }}-${{ github.run_id }}
+          path: gate-summary/report.json
+          retention-days: 30
