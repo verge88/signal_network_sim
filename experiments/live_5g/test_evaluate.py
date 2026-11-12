@@ -10,9 +10,9 @@ import numpy as np
 import pandas as pd
 
 try:
-    from .evaluate import FULL, KEYS, METHODS, TAIL_FEATURES, add_episode_metrics, aggregate, attach_online_decisions, conformal_threshold, fit, fit_tail_model, load_frozen, metrics, require_disjoint, score, score_frame, tail_scores
+    from .evaluate import FULL, KEYS, METHODS, TAIL_FEATURES, add_episode_metrics, aggregate, attach_online_decisions, conformal_threshold, fit, fit_supervised, fit_tail_model, load_frozen, metrics, require_disjoint, score, score_frame, tail_scores
 except ImportError:
-    from evaluate import FULL, KEYS, METHODS, TAIL_FEATURES, add_episode_metrics, aggregate, attach_online_decisions, conformal_threshold, fit, fit_tail_model, load_frozen, metrics, require_disjoint, score, score_frame, tail_scores
+    from evaluate import FULL, KEYS, METHODS, TAIL_FEATURES, add_episode_metrics, aggregate, attach_online_decisions, conformal_threshold, fit, fit_supervised, fit_tail_model, load_frozen, metrics, require_disjoint, score, score_frame, tail_scores
 
 
 def fixture(run, n=1000):
@@ -208,6 +208,28 @@ class ScientificContractTests(unittest.TestCase):
                     self.assertIsInstance(recorded["detector_parameters"], dict)
                     bundle = load_frozen(frozen)
                     self.assertEqual(bundle["manifest"]["detector"], detector)
+
+    def test_supervised_freeze_uses_historical_labels_and_fresh_normal_calibration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_fixture(root / "train", "fresh-train", 100)
+            write_fixture(root / "cal", "fresh-cal", 1000)
+            _, dev_labels = write_fixture(root / "development", "historical-test", 1000)
+            dev_features = pd.read_csv(root / "development" / "features.csv")
+            dev_labels.loc[:19, ["attack", "scenario", "onset", "episode_id"]] = [
+                1, "S4", float(dev_features.timestamp.iloc[0]), "historical-attack"]
+            dev_labels.to_csv(root / "development" / "labels.csv", index=False)
+            manifest = fit_supervised(root / "train", root / "cal",
+                                      [root / "development"], root / "frozen",
+                                      seed=89601)
+            self.assertEqual(manifest["detector"], "rf_supervised")
+            self.assertEqual(manifest["development_runs"], ["historical-test"])
+            self.assertEqual(manifest["train_runs"], ["fresh-train"])
+            self.assertEqual(manifest["calibration_runs"], ["fresh-cal"])
+            self.assertTrue(manifest["threshold_sufficient"])
+            bundle = load_frozen(root / "frozen")
+            self.assertEqual(bundle["manifest"]["supervised_provenance"]
+                             ["confirmation_fraction_selected_on_historical_development"], .80)
 
     def test_training_rejects_attack(self):
         with tempfile.TemporaryDirectory() as directory:
