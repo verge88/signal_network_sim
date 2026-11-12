@@ -2,14 +2,6 @@ name: 5G researched ML paired replay
 # EIF/kNN/ECOD candidates selected from external benchmark evidence.
 
 on:
-  push:
-    branches: ['experiment/ml-detector-v2-20261112']
-    paths:
-      - '.github/workflows/ml-detector-v2-replay-5g.yml'
-      - 'experiments/live_5g/evaluate.py'
-      - 'experiments/live_5g/requirements.txt'
-      - 'experiments/live_5g/test_evaluate.py'
-      - 'experiments/distributed_5g/model_replay.py'
   workflow_dispatch:
 
 permissions:
