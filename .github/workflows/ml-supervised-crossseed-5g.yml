@@ -1,4 +1,5 @@
 name: 5G supervised cross-seed FULL_HYBRID study
+# Development labels come only from other completed prospective seeds.
 
 on:
   push:
