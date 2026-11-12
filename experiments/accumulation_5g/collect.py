@@ -33,7 +33,7 @@ from experiments.live_5g.evaluate import load_frozen, score_frame
 from experiments.integrated_5g.control import combine
 from experiments.robustness_5g.control import Control
 from experiments.freshness_5g.acquisition import Acquisition
-from experiments.robustness_5g.design import attack_schedule, normal_count, growth_count, regime
+from experiments.robustness_5g.design import attack_schedule, normal_count, growth_count, regime, s5_members, s5_count
 from experiments.resilient_5g.detector import Engine
 from experiments.accumulation_5g.detector import Engine as RefinedEngine
 
@@ -521,8 +521,10 @@ def run(args):
                 elif current[2] == 'S3':
                     witness.update(slot, route='127.99.0.3')
                 onsets[current[2]] = begin
-                append_json(interventions, {'kind': 'attack_start', 'scenario': current[2], 'slot': slot, 'onset': begin,
-                                            'applied': time.time(), 'episode_id': f'{run_id}-{current[2]}-{current[0]}'})
+                append_json(interventions, {'kind': 'attack_start', 'scenario': current[2], 'slot': slot,
+                                            'members': [f'slot-{x}' for x in s5_members(current)] if current[2] == 'S5' else [slot],
+                                            'onset': begin, 'applied': time.time(),
+                                            'episode_id': f'{run_id}-{current[2]}-{current[0]}'})
             active = current
             old_port = control.ready['port']
             control.prepare(window, active[2] if active is not None and active[3] == 4 else 'N1')
@@ -535,7 +537,8 @@ def run(args):
             rows = []
             for index, (slot, expected) in enumerate(profiles.items()):
                 observed_events = []
-                is_target = active is not None and index == active[3]
+                is_target = active is not None and (index == active[3] or
+                    (active[2] == 'S5' and index in s5_members(active)))
                 scenario = active[2] if is_target else 'N1'
                 # The policy allows NSSF discovery by these registered research clients.
                 count = normal_count(rng,index,window)
@@ -551,6 +554,8 @@ def run(args):
                     count = 24  # Hidden state change during an overlapping load burst.
                 if scenario == 'G':
                     count = growth_count(active,window)
+                if scenario == 'S5':
+                    count = s5_count(active, window, regime(window), index)
                 benign_error = count >= 12 and rng.random() < .15
                 for number in range(count):
                     target_type = 'UDM' if scenario == 'S2' else 'NSSF'
