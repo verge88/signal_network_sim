@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score
 
-from experiments.live_5g.evaluate import KEYS, DETECTOR_CHOICES, fit, fit_supervised, fit_temporal_graph, load_frozen, score_frame, sha256, metrics
+from experiments.live_5g.evaluate import KEYS, DETECTOR_CHOICES, fit, fit_supervised, fit_temporal_graph, fit_temporal_graph_v2, load_frozen, score_frame, sha256, metrics
 from experiments.distributed_5g.paired import summarize
 from experiments.robustness_5g.design import attack_schedule, s5_members
 from experiments.resilient_5g.audit import mac
@@ -31,6 +31,9 @@ def prepare(root, previous, seed, detector='iforest', development=()):
     elif detector == 'temporal_graph':
         manifest = fit_temporal_graph(root/'train', root/'cal', root/'frozen', seed=seed,
                                       point_alpha=.001, graph_alpha=.005)
+    elif detector == 'temporal_graph_v2':
+        manifest = fit_temporal_graph_v2(root/'train', root/'cal', development, root/'frozen',
+                                         seed=seed, point_alpha=.001, graph_alpha=.005)
     else:
         manifest = fit(root/'train', root/'cal', root/'frozen', alpha=.001, seed=seed, detector=detector)
     assert manifest['threshold_sufficient']
@@ -59,7 +62,9 @@ def audit(root):
     ml_confirmation_mode = deployment.get('ml_confirmation_mode', 'recovery')
     ml_persistence_window = int(deployment.get('ml_persistence_window', 5))
     ml_persistence_hits = int(deployment.get('ml_persistence_hits', 3))
+    accumulator_multiplier = float(deployment.get('accumulator_multiplier', 1.0))
     assert 0 < confirmation_fraction <= 1
+    assert accumulator_multiplier > 0
     assert ml_confirmation_mode in ('recovery', 'persistence')
     assert 1 <= ml_persistence_hits <= ml_persistence_window
     assert manifest['complete'] and manifest['windows'] == 3600 and manifest['actors'] == 32
@@ -155,6 +160,8 @@ def audit(root):
                 ml = bool(context[row.run_id, window, identity])
                 assert decision['if_context_alarm'] == ml
                 without_ml = decision['local_security'] or recovery[identity] > model['threshold']
+                budgeted_without_ml = (decision['local_security'] or
+                                       recovery[identity] > accumulator_multiplier*model['threshold'])
                 if ml_confirmation_mode == 'persistence':
                     history = list(ml_history.get(identity, []))
                     history.append(ml)
@@ -162,14 +169,17 @@ def audit(root):
                     ml_history[identity] = history
                     confirmed = sum(history) >= ml_persistence_hits
                     assert bool(decision['if_context_confirmed']) == bool(confirmed)
-                    full = without_ml or confirmed
+                    full = budgeted_without_ml or confirmed
                 else:
                     confirmed = ml and recovery[identity] > confirmation_fraction*model['threshold']
                     assert bool(decision['if_context_confirmed']) == bool(confirmed)
-                    full = without_ml or confirmed
+                    full = budgeted_without_ml or confirmed
                 assert full == decision['security']
+                if 'budgeted_without_ml' in decision:
+                    assert bool(decision['budgeted_without_ml']) == bool(budgeted_without_ml)
                 records.append(dict(run_id=row.run_id, window_id=window, nf_id=identity,
                     FULL_HYBRID=bool(full), WITHOUT_MINING=bool(without_ml),
+                    BUDGETED_WITHOUT_MINING=bool(budgeted_without_ml),
                     ORIGINAL_HYBRID=decision['original_security'],
                     availability=decision['availability'], unknown=decision['unknown'],
                     decision_time=result['decision_time']))
@@ -180,7 +190,7 @@ def audit(root):
         baseline_methods.append(ml_method)
     baselines = online[online.method.isin(baseline_methods)].pivot(index=KEYS, columns='method', values='alarm').reset_index()
     paired = labels.merge(baselines,on=KEYS,validate='one_to_one').merge(distributed,on=KEYS,validate='one_to_one')
-    methods = tuple(baseline_methods + ['WITHOUT_MINING','ORIGINAL_HYBRID','FULL_HYBRID'])
+    methods = tuple(baseline_methods + ['WITHOUT_MINING','BUDGETED_WITHOUT_MINING','ORIGINAL_HYBRID','FULL_HYBRID'])
     totals, episodes = summarize(paired, methods, include_delay=True)
     strata = []
     for metric in totals:
@@ -200,10 +210,15 @@ def audit(root):
     report = dict(seed=manifest['seed'],run_id=manifest['run_id'],detector=bundle['manifest'].get('detector','iforest'),source_commit=(root/'source_commit.txt').read_text().strip(),
         audit_pass=True,rows=len(paired),metrics=totals,strata=strata,
         model_sha256=sha256(root/'frozen/model.joblib'),zone_models_sha256=sha256(root/'zone_models.json'),
-        data_mining_increment=dict(additional_tp=int((paired.attack.eq(1)&paired.FULL_HYBRID&~paired.WITHOUT_MINING).sum()),
-            additional_fp=int((paired.attack.eq(0)&paired.FULL_HYBRID&~paired.WITHOUT_MINING).sum())),
+        data_mining_increment=dict(
+            additional_tp_over_budgeted=int((paired.attack.eq(1)&paired.FULL_HYBRID&~paired.BUDGETED_WITHOUT_MINING).sum()),
+            additional_fp_over_budgeted=int((paired.attack.eq(0)&paired.FULL_HYBRID&~paired.BUDGETED_WITHOUT_MINING).sum())),
+        full_vs_original_without=dict(
+            tp_delta=int((paired.attack.eq(1)&paired.FULL_HYBRID).sum()-(paired.attack.eq(1)&paired.WITHOUT_MINING).sum()),
+            fp_delta=int((paired.attack.eq(0)&paired.FULL_HYBRID).sum()-(paired.attack.eq(0)&paired.WITHOUT_MINING).sum())),
         availability_windows=int(paired.availability.sum()),unknown_windows=int(paired.unknown.sum()),
         confirmation_fraction=confirmation_fraction,
+        accumulator_multiplier=accumulator_multiplier,
         ml_method=ml_method,
         ml_confirmation_mode=ml_confirmation_mode,
         ml_persistence_window=ml_persistence_window,
