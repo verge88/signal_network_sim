@@ -1,4 +1,5 @@
 name: Temporal graph V3 contract
+# Re-run after V3 provenance syntax hardening.
 
 on:
   push:
