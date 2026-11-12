@@ -22,7 +22,8 @@ def configure(directory, topology, models, source_run, operator_key, control_key
               replay_mode=False, base_port=18800, *, hosts=None, include_if_context=False,
               confirm_if_context=False, confirmation_fraction=0.5,
               ml_confirmation_mode='recovery', ml_persistence_window=5,
-              ml_persistence_hits=3, recover_normal=False):
+              ml_persistence_hits=3, accumulator_multiplier=1.0,
+              recover_normal=False):
     directory = Path(directory).resolve()
     directory.mkdir(parents=True, exist_ok=True)
     if (directory/'source.json').exists():
@@ -44,6 +45,8 @@ def configure(directory, topology, models, source_run, operator_key, control_key
         raise ValueError('Unknown ML confirmation mode')
     if not 1 <= ml_persistence_hits <= ml_persistence_window:
         raise ValueError('Persistence hits must be between 1 and window length')
+    if accumulator_multiplier <= 0:
+        raise ValueError('Accumulator multiplier must be positive')
     epoch = secrets.token_hex(16)
     source_keys = {identity:secrets.token_hex(32) for identity in identities}
     configs = {}
@@ -56,6 +59,7 @@ def configure(directory, topology, models, source_run, operator_key, control_key
             ml_confirmation_mode=ml_confirmation_mode,
             ml_persistence_window=ml_persistence_window,
             ml_persistence_hits=ml_persistence_hits,
+            accumulator_multiplier=accumulator_multiplier,
             recover_normal=recover_normal)
     urls = {identity: f"http://{config['host']}:{config['port']}" for identity, config in configs.items()}
     configs['root'].update(role='root', members=list(topology), zone_members=topology)
