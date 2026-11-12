@@ -65,7 +65,7 @@ def audit(root):
     accumulator_multiplier = float(deployment.get('accumulator_multiplier', 1.0))
     assert 0 < confirmation_fraction <= 1
     assert accumulator_multiplier > 0
-    assert ml_confirmation_mode in ('recovery', 'persistence')
+    assert ml_confirmation_mode in ('recovery', 'persistence', 'direct')
     assert 1 <= ml_persistence_hits <= ml_persistence_window
     assert manifest['complete'] and manifest['windows'] == 3600 and manifest['actors'] == 32
     assert manifest['schedule'] == [list(x) for x in attack_schedule(3600, manifest['seed'])]
@@ -168,12 +168,12 @@ def audit(root):
                     history = history[-ml_persistence_window:]
                     ml_history[identity] = history
                     confirmed = sum(history) >= ml_persistence_hits
-                    assert bool(decision['if_context_confirmed']) == bool(confirmed)
-                    full = budgeted_without_ml or confirmed
+                elif ml_confirmation_mode == 'direct':
+                    confirmed = ml
                 else:
                     confirmed = ml and recovery[identity] > confirmation_fraction*model['threshold']
-                    assert bool(decision['if_context_confirmed']) == bool(confirmed)
-                    full = budgeted_without_ml or confirmed
+                assert bool(decision['if_context_confirmed']) == bool(confirmed)
+                full = budgeted_without_ml or confirmed
                 assert full == decision['security']
                 if 'budgeted_without_ml' in decision:
                     assert bool(decision['budgeted_without_ml']) == bool(budgeted_without_ml)
