@@ -31,6 +31,7 @@ from pyod.models.knn import KNN
 from isotree import IsolationForest as ExtendedIsolationForest
 from dvmad import DVMAD
 from aderh import ADERH
+from experiments.distributed_5g.temporal_graph import TemporalGraphDetector, GRAPH_FEATURES
 
 KEYS = ["run_id", "window_id", "nf_id"]
 META = KEYS + ["timestamp"]
@@ -503,6 +504,64 @@ def fit_supervised(train_directory, cal_directory, development_directories, outp
     return manifest
 
 
+
+def fit_temporal_graph(train_directory, cal_directory, output, seed=7143,
+                       point_alpha=0.001, graph_alpha=0.005):
+    """Fit pointwise baselines plus a normal-only causal temporal-graph branch."""
+    manifest = fit(train_directory, cal_directory, output,
+                   alpha=point_alpha, seed=seed, detector="iforest")
+    out = Path(output)
+    bundle = joblib.load(out / "model.joblib")
+    train, train_labels, train_files = read_dataset(train_directory)
+    cal, cal_labels, cal_files = read_dataset(cal_directory)
+    require_disjoint(train, cal)
+    if train_labels.attack.any() or cal_labels.attack.any():
+        raise ValueError("Temporal-graph fitting and calibration must be normal-only")
+
+    graph = TemporalGraphDetector(seed=seed, n_estimators=256, max_samples=512, history=8)
+    graph.fit(train)
+    calibration_graph = graph.clean_copy()
+    calibration_scores = calibration_graph.decision_function(cal)
+    graph_threshold = conformal_threshold(calibration_scores, graph_alpha)
+
+    bundle["temporal_graph"] = graph.clean_copy()
+    bundle["thresholds"]["TG_CONTEXT"] = graph_threshold
+    bundle["ml_method"] = "TG_CONTEXT"
+    manifest["detector"] = "temporal_graph_iforest"
+    manifest["ml_method"] = "TG_CONTEXT"
+    manifest["temporal_graph"] = {
+        "estimator": "IsolationForest",
+        "graph_features": list(GRAPH_FEATURES),
+        "zone_partition": "slot index // 8; four complete 8-node peer graphs",
+        "history_windows": 8,
+        "n_estimators": 256,
+        "max_samples": min(512, len(train)),
+        "normal_only_fit": True,
+        "graph_alpha": graph_alpha,
+        "fusion_preregistered": "3 of last 5 TG_CONTEXT alarms per NF, independent of recovery accumulator",
+        "s5_not_used_for_fit_or_threshold": True,
+    }
+    manifest["thresholds"]["TG_CONTEXT"] = graph_threshold if math.isfinite(graph_threshold) else None
+    manifest["threshold_sufficient"] = bool(manifest["threshold_sufficient"] and math.isfinite(graph_threshold))
+    manifest["development_disclosure"] = (
+        "Temporal-graph representation and S5 scenario were frozen before prospective testing. "
+        "The graph estimator uses only fresh normal train and normal calibration; S5 labels are never used for fit or threshold."
+    )
+    manifest["sources"] = train_files + cal_files
+    bundle["manifest"] = manifest
+
+    calibration_bundle = copy.deepcopy(bundle)
+    calibration_bundle["temporal_graph"].reset()
+    cal_predictions = score_frame(calibration_bundle, cal)
+    manifest["calibration_alarm_rate"] = cal_predictions.groupby("method").alarm.mean().to_dict()
+    bundle["temporal_graph"].reset()
+    joblib.dump(bundle, out / "model.joblib")
+    manifest["model_sha256"] = sha256(out / "model.joblib")
+    dump_json(out / "manifest.json", manifest)
+    cal_predictions.to_csv(out / "calibration_predictions.csv", index=False)
+    return manifest
+
+
 def load_frozen(path):
     root = Path(path)
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
@@ -532,6 +591,11 @@ def score_frame(bundle, frame):
     margins["hybrid_without_KIE"] = np.maximum(margins["IF_CONTEXT"], np.where(non_kie, 1., -1.))
     margins["hybrid"] = np.maximum(margins["IF_CONTEXT"], np.where(kie, 1., -1.))
     methods = list(METHODS)
+    if "temporal_graph" in bundle:
+        threshold = bundle["thresholds"]["TG_CONTEXT"]
+        raw = bundle["temporal_graph"].decision_function(frame)
+        margins["TG_CONTEXT"] = raw - threshold if math.isfinite(threshold) else np.full(len(frame), -1.)
+        methods.append("TG_CONTEXT")
     if "tail_model" in bundle:
         threshold = bundle["thresholds"]["robust_tail"]
         margins["robust_tail"] = (tail_scores(bundle["tail_model"], frame) - threshold
