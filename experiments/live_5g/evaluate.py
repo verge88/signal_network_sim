@@ -32,6 +32,7 @@ from isotree import IsolationForest as ExtendedIsolationForest
 from dvmad import DVMAD
 from aderh import ADERH
 from experiments.distributed_5g.temporal_graph import TemporalGraphDetector, GRAPH_FEATURES
+from experiments.distributed_5g.temporal_graph_v2 import SupervisedTemporalGraphDetector, FEATURES as GRAPH_V2_FEATURES
 
 KEYS = ["run_id", "window_id", "nf_id"]
 META = KEYS + ["timestamp"]
@@ -45,7 +46,7 @@ TAIL_METHODS = ["robust_tail", "hybrid_tail_without_KIE", "hybrid_tail"]
 TAIL_FEATURES = ["request_count", "error_rate", "update_count"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
 PROTOCOL_VERSION = "live-5g-v2-tail"
-DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph")
+DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2")
 DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised"}
 
 
@@ -562,12 +563,89 @@ def fit_temporal_graph(train_directory, cal_directory, output, seed=7143,
     return manifest
 
 
+
+def fit_temporal_graph_v2(train_directory, cal_directory, development_directories, output,
+                          seed=7143, point_alpha=0.001, graph_alpha=0.005):
+    """Fit frozen supervised invariant temporal-graph detector from historical S5 evidence."""
+    manifest = fit(train_directory, cal_directory, output,
+                   alpha=point_alpha, seed=seed, detector="iforest")
+    out = Path(output)
+    bundle = joblib.load(out / "model.joblib")
+    train, train_labels, train_files = read_dataset(train_directory)
+    cal, cal_labels, cal_files = read_dataset(cal_directory)
+    if train_labels.attack.any() or cal_labels.attack.any():
+        raise ValueError("Fresh train/calibration must remain normal-only")
+
+    development = []
+    development_frames = []
+    development_files = []
+    for directory in development_directories:
+        frame, labels, files = read_dataset(directory)
+        development.append((frame, labels))
+        development_frames.append(frame)
+        development_files.extend(files)
+    if not development:
+        raise ValueError("Temporal graph v2 requires historical S5 development captures")
+    require_disjoint(train, cal, *development_frames)
+    if not any(labels.scenario.astype(str).eq("S5").any() for _, labels in development):
+        raise ValueError("Temporal graph v2 development contains no S5 examples")
+
+    graph = SupervisedTemporalGraphDetector(seed=seed, history=8)
+    graph.fit_development(development)
+    calibration_graph = graph.clean_copy()
+    calibration_scores = calibration_graph.decision_function(cal)
+    graph_threshold = conformal_threshold(calibration_scores, graph_alpha)
+
+    bundle["temporal_graph_v2"] = graph.clean_copy()
+    bundle["thresholds"]["TG_V2"] = graph_threshold
+    bundle["ml_method"] = "TG_V2"
+    manifest["detector"] = "temporal_graph_logistic_v2"
+    manifest["ml_method"] = "TG_V2"
+    manifest["development_runs"] = sorted({
+        str(run) for frame in development_frames for run in frame.run_id.unique().tolist()
+    })
+    manifest["temporal_graph_v2"] = {
+        "estimator": "StandardScaler + LogisticRegression",
+        "graph_features": list(GRAPH_V2_FEATURES),
+        "history_windows": 8,
+        "development_target": "S5 versus normal only; other attack families excluded from classifier fit",
+        "development_seeds": [89901, 89902, 89903],
+        "graph_alpha": graph_alpha,
+        "accumulator_multiplier": 1.20,
+        "fusion_preregistered": "7 of last 12 TG_V2 alarms OR recovery > 1.20 * zone threshold OR hard local security",
+        "heldout_test_used_for_fit_or_threshold": False,
+    }
+    manifest["thresholds"]["TG_V2"] = graph_threshold if math.isfinite(graph_threshold) else None
+    manifest["threshold_sufficient"] = bool(manifest["threshold_sufficient"] and math.isfinite(graph_threshold))
+    manifest["development_disclosure"] = (
+        "Invariant temporal-graph features, logistic classifier, graph alpha 0.005, "
+        "7/12 persistence and 1.20 accumulator multiplier were selected on historical "
+        "S5 development runs 89901-89903 and frozen before new prospective seeds. "
+        "The fresh held-out test is not used for fit, threshold or fusion selection."
+    )
+    manifest["sources"] = train_files + cal_files + development_files
+    bundle["manifest"] = manifest
+
+    calibration_bundle = copy.deepcopy(bundle)
+    calibration_bundle["temporal_graph_v2"].reset()
+    cal_predictions = score_frame(calibration_bundle, cal)
+    manifest["calibration_alarm_rate"] = cal_predictions.groupby("method").alarm.mean().to_dict()
+    bundle["temporal_graph_v2"].reset()
+    joblib.dump(bundle, out / "model.joblib")
+    manifest["model_sha256"] = sha256(out / "model.joblib")
+    dump_json(out / "manifest.json", manifest)
+    cal_predictions.to_csv(out / "calibration_predictions.csv", index=False)
+    return manifest
+
+
 def load_frozen(path):
     root = Path(path)
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
     if sha256(root / "model.joblib") != manifest["model_sha256"]:
         raise ValueError("Frozen model hash mismatch")
     bundle = joblib.load(root / "model.joblib")
+    if "temporal_graph_v2" in bundle:
+        bundle["temporal_graph_v2"].reset()
     if bundle["protocol_version"] not in ("live-5g-v1", PROTOCOL_VERSION):
         raise ValueError("Unsupported protocol version")
     bundle["manifest"] = manifest
@@ -596,6 +674,11 @@ def score_frame(bundle, frame):
         raw = bundle["temporal_graph"].decision_function(frame)
         margins["TG_CONTEXT"] = raw - threshold if math.isfinite(threshold) else np.full(len(frame), -1.)
         methods.append("TG_CONTEXT")
+    if "temporal_graph_v2" in bundle:
+        threshold = bundle["thresholds"]["TG_V2"]
+        raw = bundle["temporal_graph_v2"].decision_function(frame)
+        margins["TG_V2"] = raw - threshold if math.isfinite(threshold) else np.full(len(frame), -1.)
+        methods.append("TG_V2")
     if "tail_model" in bundle:
         threshold = bundle["thresholds"]["robust_tail"]
         margins["robust_tail"] = (tail_scores(bundle["tail_model"], frame) - threshold
