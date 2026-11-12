@@ -1,4 +1,5 @@
 name: S5 invariant temporal graph cross-seed screen
+# Development-only model/gate selection on archived S5 prospective evidence.
 
 on:
   push:
