@@ -494,6 +494,7 @@ def main():
         fit_parser.add_argument(f"--{arg}", required=True)
     fit_parser.add_argument("--alpha", type=float, default=.001)
     fit_parser.add_argument("--seed", type=int, default=7143)
+    fit_parser.add_argument("--detector", choices=DETECTOR_CHOICES, default="iforest")
     score_parser = commands.add_parser("score")
     for arg in ("frozen", "test", "out"):
         score_parser.add_argument(f"--{arg}", required=True)
@@ -504,7 +505,7 @@ def main():
     aggregate_parser.add_argument("--require-scenarios", nargs="+", choices=["S1", "S2", "S3", "S4"])
     args = parser.parse_args()
     if args.command == "fit":
-        result = fit(args.train, args.cal, args.out, args.alpha, args.seed)
+        result = fit(args.train, args.cal, args.out, args.alpha, args.seed, args.detector)
     elif args.command == "score":
         result = score(args.frozen, args.test, args.out)
     else:
