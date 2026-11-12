@@ -25,6 +25,9 @@ from sklearn.svm import OneClassSVM
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import average_precision_score
+from pyod.models.ecod import ECOD
+from pyod.models.knn import KNN
+from isotree import IsolationForest as ExtendedIsolationForest
 
 KEYS = ["run_id", "window_id", "nf_id"]
 META = KEYS + ["timestamp"]
@@ -38,7 +41,8 @@ TAIL_METHODS = ["robust_tail", "hybrid_tail_without_KIE", "hybrid_tail"]
 TAIL_FEATURES = ["request_count", "error_rate", "update_count"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
 PROTOCOL_VERSION = "live-5g-v2-tail"
-DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic")
+DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod")
+DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod"}
 
 
 def build_detector(detector, seed, train_rows):
@@ -57,6 +61,25 @@ def build_detector(detector, seed, train_rows):
         return make_pipeline(StandardScaler(),
                              EllipticEnvelope(contamination=0.1, support_fraction=None,
                                               random_state=seed))
+    if detector == "eif":
+        # Reference-style Extended Isolation Forest: hyperplane splits (ndim=2)
+        # on standardized numeric inputs. Thresholding is still done solely on
+        # the separate normal calibration split below.
+        return make_pipeline(
+            StandardScaler(),
+            ExtendedIsolationForest(
+                ntrees=256, sample_size=min(256, train_rows), ndim=2, max_depth=8,
+                missing_action="fail", coefs="uniform", standardize_data=False,
+                scoring_metric="depth", random_seed=seed, nthreads=1))
+    if detector == "knn":
+        # k-th-nearest-neighbor distance; larger means more anomalous.
+        return make_pipeline(
+            StandardScaler(),
+            KNN(contamination=0.1, n_neighbors=20, method="largest", n_jobs=1))
+    if detector == "ecod":
+        # ECOD is parameter-light and rank/tail based. Its built-in contamination
+        # threshold is ignored; our held-out normal calibration sets the alarm cut.
+        return ECOD(contamination=0.1, n_jobs=1)
     raise ValueError(f"Unknown detector {detector!r}; choose one of {DETECTOR_CHOICES}")
 
 
@@ -87,6 +110,13 @@ def json_safe_parameters(value):
         return {"estimator_class": f"{cls.__module__}.{cls.__name__}"}
     cls = value.__class__
     return {"python_class": f"{cls.__module__}.{cls.__name__}", "repr": repr(value)}
+
+
+def anomaly_scores(model, values, detector):
+    """Return scores with one convention: larger means more anomalous."""
+    if detector in DIRECT_ANOMALY_SCORE_DETECTORS:
+        return np.asarray(model.decision_function(values), dtype=float)
+    return -np.asarray(model.score_samples(values), dtype=float)
 
 
 def conformal_threshold(scores, alpha=0.001):
@@ -199,7 +229,7 @@ def fit(train_directory, cal_directory, output, alpha=0.001, seed=7143, detector
     for name, columns in MODEL_FEATURES.items():
         model = build_detector(detector, seed, len(train))
         model.fit(train[columns].to_numpy(dtype=float))
-        calibration_scores = -model.score_samples(cal[columns].to_numpy(dtype=float))
+        calibration_scores = anomaly_scores(model, cal[columns].to_numpy(dtype=float), detector)
         bundle["models"][name] = model
         bundle["thresholds"][name] = conformal_threshold(calibration_scores, alpha)
     bundle["tail_model"] = fit_tail_model(train)
@@ -233,7 +263,8 @@ def fit(train_directory, cal_directory, output, alpha=0.001, seed=7143, detector
         "sources": train_files + cal_files,
         "implementation_sha256": {p.name: sha256(p) for p in Path(__file__).parent.iterdir()
                                   if p.is_file() and p.suffix in (".py", ".md", ".txt", ".sh")},
-        "versions": {"python": platform.python_version(), "numpy": np.__version__, "pandas": pd.__version__, "sklearn": sklearn.__version__},
+        "versions": {"python": platform.python_version(), "numpy": np.__version__, "pandas": pd.__version__,
+                     "sklearn": sklearn.__version__},
     }
     bundle["manifest"] = manifest
     cal_predictions = score_frame(bundle, cal)
@@ -263,7 +294,9 @@ def score_frame(bundle, frame):
     margins = {}
     for name, columns in MODEL_FEATURES.items():
         threshold = bundle["thresholds"][name]
-        raw = -bundle["models"][name].score_samples(frame[columns].to_numpy(dtype=float))
+        raw = anomaly_scores(bundle["models"][name],
+                             frame[columns].to_numpy(dtype=float),
+                             bundle.get("detector", bundle.get("manifest", {}).get("detector", "iforest")))
         margins[name] = raw - threshold if math.isfinite(threshold) else np.full(len(frame), -1.)
     baseline = (frame.profile_policy_violation > 0) | (frame.heartbeat_age > 30)
     non_kie = baseline | (frame.forbidden_operation > 0) | (frame.route_mismatch > 0)
