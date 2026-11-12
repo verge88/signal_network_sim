@@ -19,6 +19,11 @@ import numpy as np
 import pandas as pd
 import sklearn
 from sklearn.ensemble import IsolationForest
+from sklearn.covariance import EllipticEnvelope
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.svm import OneClassSVM
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import average_precision_score
 
 KEYS = ["run_id", "window_id", "nf_id"]
@@ -33,6 +38,28 @@ TAIL_METHODS = ["robust_tail", "hybrid_tail_without_KIE", "hybrid_tail"]
 TAIL_FEATURES = ["request_count", "error_rate", "update_count"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
 PROTOCOL_VERSION = "live-5g-v2-tail"
+DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic")
+
+
+def build_detector(detector, seed, train_rows):
+    """Build an a-priori detector. Held-out attack data never selects parameters."""
+    if detector == "iforest":
+        return IsolationForest(n_estimators=256, max_samples=min(256, train_rows),
+                               contamination="auto", random_state=seed, n_jobs=1)
+    if detector == "ocsvm_rbf":
+        return make_pipeline(StandardScaler(),
+                             OneClassSVM(kernel="rbf", gamma="scale", nu=0.01, cache_size=1000))
+    if detector == "lof":
+        return make_pipeline(StandardScaler(),
+                             LocalOutlierFactor(n_neighbors=35, novelty=True,
+                                                contamination="auto", n_jobs=1))
+    if detector == "elliptic":
+        return make_pipeline(StandardScaler(),
+                             EllipticEnvelope(contamination=0.1, support_fraction=None,
+                                              random_state=seed))
+    raise ValueError(f"Unknown detector {detector!r}; choose one of {DETECTOR_CHOICES}")
+
+
 EPISODE_COLUMNS = ["run_id", "nf_id", "episode_id", "scenario", "method", "onset", "detected",
                    "first_alarm_at", "delay_seconds", "observed_until", "timing_source"]
 
@@ -138,7 +165,7 @@ def tail_scores(model, frame):
                                  np.asarray(model["scale"]), axis=1))
 
 
-def fit(train_directory, cal_directory, output, alpha=0.001, seed=7143):
+def fit(train_directory, cal_directory, output, alpha=0.001, seed=7143, detector="iforest"):
     train, train_labels, train_files = read_dataset(train_directory)
     cal, cal_labels, cal_files = read_dataset(cal_directory)
     require_disjoint(train, cal)
@@ -148,10 +175,12 @@ def fit(train_directory, cal_directory, output, alpha=0.001, seed=7143):
     out.mkdir(parents=True, exist_ok=True)
     if (out / "manifest.json").exists():
         raise ValueError("Frozen model already exists; choose a new output directory")
-    bundle = {"protocol_version": PROTOCOL_VERSION, "models": {}, "thresholds": {}, "alpha": alpha}
+    if detector not in DETECTOR_CHOICES:
+        raise ValueError(f"Unsupported detector: {detector}")
+    bundle = {"protocol_version": PROTOCOL_VERSION, "models": {}, "thresholds": {}, "alpha": alpha,
+              "detector": detector}
     for name, columns in MODEL_FEATURES.items():
-        model = IsolationForest(n_estimators=256, max_samples=min(256, len(train)),
-                                contamination="auto", random_state=seed, n_jobs=1)
+        model = build_detector(detector, seed, len(train))
         model.fit(train[columns].to_numpy(dtype=float))
         calibration_scores = -model.score_samples(cal[columns].to_numpy(dtype=float))
         bundle["models"][name] = model
@@ -160,6 +189,9 @@ def fit(train_directory, cal_directory, output, alpha=0.001, seed=7143):
     bundle["thresholds"]["robust_tail"] = conformal_threshold(tail_scores(bundle["tail_model"], cal), alpha)
     manifest = {
         "protocol_version": PROTOCOL_VERSION, "created_at": time.time(), "seed": seed,
+        "detector": detector,
+        "detector_parameters": model.get_params(deep=True),
+        "internal_method_alias_note": "IF_* method labels are retained only for compatibility with the frozen live hierarchy; the estimator class is given by detector.",
         "alpha_target": alpha, "calibration_rows": len(cal), "training_rows": len(train),
         "train_runs": sorted(train.run_id.unique().tolist()), "calibration_runs": sorted(cal.run_id.unique().tolist()),
         "features": MODEL_FEATURES, "forbidden_inputs": ["attack", "scenario", "onset", "episode_id"] + META,
@@ -177,7 +209,7 @@ def fit(train_directory, cal_directory, output, alpha=0.001, seed=7143):
                   "hybrid_tail": "hybrid_tail_without_KIE OR report_mismatch > 0 OR auth_failure > 0"},
         "assumptions": ["Fixed operator policy; trusted independent observer and control-channel verifier.",
                         "HMAC authenticates report origin, not the truth of a compromised actor's report.",
-                        "A constant-in-training invariant is checked explicitly, not learned by Isolation Forest.",
+                        "A constant-in-training invariant is checked explicitly, not delegated to the statistical detector.",
                         "Correlated windows do not establish an exchangeability-based FPR guarantee.",
                         "No held-out test result is used for threshold selection."],
         "sources": train_files + cal_files,
