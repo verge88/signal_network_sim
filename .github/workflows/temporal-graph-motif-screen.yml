@@ -1,0 +1,47 @@
+name: S5 temporal graph motif screen
+
+on:
+  push:
+    branches: ['experiment/temporal-graph-s5-20261112']
+    paths:
+      - '.github/workflows/temporal-graph-motif-screen.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  motif:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - seed: 89901
+            artifact: 13967200654
+          - seed: 89902
+            artifact: 13966557271
+          - seed: 89903
+            artifact: 13966467216
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==1.26.4 pandas==2.2.3 scikit-learn==1.5.2
+      - name: Download S5 evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir packed evidence
+          gh api repos/verge88/signal_network_sim/actions/artifacts/${{ matrix.artifact }}/zip > packed/artifact.zip
+          unzip -q packed/artifact.zip -d packed
+          unzip -q packed/full-evidence.zip -d evidence
+      - name: Run calibrated graph motif screen
+        run: python -m experiments.distributed_5g.temporal_graph_motif_replay --heldout evidence --output motif-summary --seed ${{ matrix.seed }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: graph-motif-${{ matrix.seed }}-${{ github.run_id }}
+          path: motif-summary/report.json
+          retention-days: 30
