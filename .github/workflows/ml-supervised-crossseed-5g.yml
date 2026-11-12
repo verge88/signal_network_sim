@@ -2,10 +2,6 @@ name: 5G supervised cross-seed FULL_HYBRID study
 # Development labels come only from other completed prospective seeds.
 
 on:
-  push:
-    branches: ['experiment/ml-detector-v2-20261112']
-    paths:
-      - '.github/workflows/ml-supervised-crossseed-5g.yml'
   workflow_dispatch:
 
 permissions:
