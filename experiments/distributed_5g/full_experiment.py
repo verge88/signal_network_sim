@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score
 
-from experiments.live_5g.evaluate import KEYS, DETECTOR_CHOICES, fit, load_frozen, score_frame, sha256, metrics
+from experiments.live_5g.evaluate import KEYS, DETECTOR_CHOICES, fit, fit_supervised, load_frozen, score_frame, sha256, metrics
 from experiments.distributed_5g.paired import summarize
 from experiments.robustness_5g.design import attack_schedule
 from experiments.resilient_5g.audit import mac
@@ -25,8 +25,11 @@ def lines(path):
             yield json.loads(line)
 
 
-def prepare(root, previous, seed, detector='iforest'):
-    manifest = fit(root/'train', root/'cal', root/'frozen', alpha=.001, seed=seed, detector=detector)
+def prepare(root, previous, seed, detector='iforest', development=()):
+    if detector == 'rf_supervised':
+        manifest = fit_supervised(root/'train', root/'cal', development, root/'frozen', alpha=.001, seed=seed)
+    else:
+        manifest = fit(root/'train', root/'cal', root/'frozen', alpha=.001, seed=seed, detector=detector)
     assert manifest['threshold_sufficient']
     origin = {}
     for name in ('extensions.json', 'refinement.json', 'accumulation.json'):
@@ -35,9 +38,11 @@ def prepare(root, previous, seed, detector='iforest'):
     (root/'frozen_origin.json').write_text(json.dumps(dict(
         fresh_data_mining=True, inherited_fixed_components=origin,
         detector=detector,
-        explanation='Selected anomaly detector fitted on fresh train and calibrated on separate fresh normal cal. '
-                    'Control deadlines and accumulator parameters remain frozen from development; '
-                    'zone models are separately hash-pinned before this experiment.'), indent=2))
+        development_runs=manifest.get('development_runs', []),
+        explanation=('Supervised forest fitted on historical development captures plus fresh normal train; '
+                     if detector == 'rf_supervised' else 'Selected anomaly detector fitted on fresh train. ') +
+                    'Threshold calibrated on separate fresh normal cal. Control deadlines, confirmation gate, '
+                    'and accumulator parameters are frozen before held-out testing; zone models are separately hash-pinned.'), indent=2))
 
 
 def audit(root):
@@ -54,7 +59,8 @@ def audit(root):
     assert features.groupby('window_id').size().eq(32).all()
     assert set(features.window_id) == set(range(3600))
     assert features.run_id.nunique() == 1 and features.run_id.iloc[0] == manifest['run_id']
-    assert manifest['run_id'] not in bundle['manifest']['train_runs'] + bundle['manifest']['calibration_runs']
+    assert manifest['run_id'] not in (bundle['manifest']['train_runs'] + bundle['manifest']['calibration_runs'] +
+                                      bundle['manifest'].get('development_runs', []))
     assert features.timestamp.min() > bundle['manifest']['created_at']
     for phase in ('train', 'cal'):
         fm = read(root/phase/'manifest.json')
@@ -195,5 +201,6 @@ if __name__ == '__main__':
     parser.add_argument('--previous',type=Path)
     parser.add_argument('--seed',type=int)
     parser.add_argument('--detector',choices=DETECTOR_CHOICES,default='iforest')
+    parser.add_argument('--development',type=Path,nargs='*',default=[])
     args=parser.parse_args()
-    prepare(args.root,args.previous,args.seed,args.detector) if args.action=='prepare' else audit(args.root)
+    prepare(args.root,args.previous,args.seed,args.detector,args.development) if args.action=='prepare' else audit(args.root)
