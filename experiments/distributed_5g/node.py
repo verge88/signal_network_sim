@@ -187,6 +187,8 @@ class Node:
                         histories[identity] = history
                         hits = int(self.config.get('ml_persistence_hits', 3))
                         confirmed = complete and sum(history) >= hits
+                    elif mode == 'direct':
+                        confirmed = complete and bool(context)
                     else:
                         confirmed = complete and context and value > self.config.get('confirmation_fraction', 0.5) * self.config['model']['threshold']
                     use_context = confirmed if self.config.get('confirm_if_context') else context
@@ -208,7 +210,8 @@ class Node:
                     recovery[identity] = dict(value=recovered, quiet=streak, window=window)
                     threshold = self.config['model']['threshold']
                     context = report.get('if_context_alarm', False)
-                    if self.config.get('ml_confirmation_mode', 'recovery') == 'persistence':
+                    mode = self.config.get('ml_confirmation_mode', 'recovery')
+                    if mode in ('persistence', 'direct'):
                         confirmed = bool(decisions[identity].get('if_context_confirmed', False))
                     else:
                         confirmed = context and (not self.config.get('confirm_if_context') or
