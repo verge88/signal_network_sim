@@ -57,7 +57,7 @@ def prepare(root, previous, seed, detector='iforest', development=(), reference_
             'Historical labeled development is used only for supervised detector fitting when declared; '
             'all operational thresholds are calibrated exclusively on normal calibration runs. '
             'Control deadlines, fusion parameters and accumulator parameters are frozen before held-out testing; '
-            'zone models are separately hash-pinned.'), indent=2))
+            'zone models are separately hash-pinned.')), indent=2))
 
 
 def audit(root):
