@@ -1,0 +1,70 @@
+name: 5G alternative ML paired replay
+
+on:
+  push:
+    branches: ['experiment/ml-detector-matrix-20261112']
+    paths:
+      - '.github/workflows/ml-detector-replay-5g.yml'
+      - 'experiments/live_5g/evaluate.py'
+      - 'experiments/distributed_5g/model_replay.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  replay:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - detector: ocsvm_rbf
+            seed: 89501
+            artifact: 13885821788
+          - detector: ocsvm_rbf
+            seed: 89502
+            artifact: 13884014668
+          - detector: ocsvm_rbf
+            seed: 89503
+            artifact: 13886115411
+          - detector: lof
+            seed: 89501
+            artifact: 13885821788
+          - detector: lof
+            seed: 89502
+            artifact: 13884014668
+          - detector: lof
+            seed: 89503
+            artifact: 13886115411
+          - detector: elliptic
+            seed: 89501
+            artifact: 13885821788
+          - detector: elliptic
+            seed: 89502
+            artifact: 13884014668
+          - detector: elliptic
+            seed: 89503
+            artifact: 13886115411
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r experiments/live_5g/requirements.txt
+      - name: Download archived prospective evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir packed evidence
+          gh api repos/verge88/signal_network_sim/actions/artifacts/${{ matrix.artifact }}/zip > packed/artifact.zip
+          unzip -q packed/artifact.zip -d packed
+          unzip -q packed/full-evidence.zip -d evidence
+      - name: Fit alternative detector and paired replay
+        run: python -m experiments.distributed_5g.model_replay evidence --detector ${{ matrix.detector }} --seed ${{ matrix.seed }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: replay-${{ matrix.detector }}-${{ matrix.seed }}-${{ github.run_id }}
+          path: evidence/alt_summary/report.json
+          retention-days: 30
