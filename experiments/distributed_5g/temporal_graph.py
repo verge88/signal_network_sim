@@ -5,7 +5,7 @@ zone. The detector uses only measured aggregate features and past/current peer
 relations; labels, scenario names, timestamps and run/window identifiers never
 enter the fitted estimator.
 """
-from collections import defaultdict, deque
+from collections import deque
 import copy
 
 import numpy as np
@@ -68,7 +68,7 @@ class TemporalGraphDetector:
         }
 
     def reset(self):
-        self.history = defaultdict(lambda: deque(maxlen=self.history_size))
+        self.history = {}
 
     @staticmethod
     def _prior(history, name, lag=1):
@@ -88,7 +88,7 @@ class TemporalGraphDetector:
         latency_deltas = {}
         interarrival_deltas = {}
         for nf, row in rows.items():
-            hist = self.history[nf]
+            hist = self.history.setdefault(nf, deque(maxlen=self.history_size))
             prior_count = self._prior(hist, "request_count")
             prior_latency = self._prior(hist, "latency_ms")
             prior_interarrival = self._prior(hist, "interarrival_mean")
@@ -104,7 +104,7 @@ class TemporalGraphDetector:
             peer_delta = np.asarray([deltas[p] for p in peers], dtype=float)
             peer_latency_delta = np.asarray([latency_deltas[p] for p in peers], dtype=float)
             peer_interarrival_delta = np.asarray([interarrival_deltas[p] for p in peers], dtype=float)
-            hist = self.history[nf]
+            hist = self.history.setdefault(nf, deque(maxlen=self.history_size))
             prior3 = self._prior(hist, "request_count", 3)
             self_mean5 = np.mean([float(item["request_count"]) for item in list(hist)[-5:]]) if hist else float(row.request_count)
             sign = self._sign(deltas[nf])
@@ -130,7 +130,7 @@ class TemporalGraphDetector:
             feature_rows.append((nf, vector))
 
         for nf, row in rows.items():
-            self.history[nf].append({
+            self.history.setdefault(nf, deque(maxlen=self.history_size)).append({
                 "request_count": float(row.request_count),
                 "latency_ms": float(row.latency_ms),
                 "interarrival_mean": float(row.interarrival_mean),
