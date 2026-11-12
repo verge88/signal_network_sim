@@ -124,8 +124,9 @@ def main():
             durations.append(time.monotonic() - started)
             for method in ('rules', 'IF_SBI', 'IF_CONTEXT'):
                 alerts[method] += int(predictions.loc[predictions.method == method, 'alarm'].sum())
-            if args.ml_method not in alerts:
-                alerts[args.ml_method] = int(predictions.loc[predictions.method == args.ml_method, 'alarm'].sum())
+            if args.ml_method not in ('rules', 'IF_SBI', 'IF_CONTEXT'):
+                alerts.setdefault(args.ml_method, 0)
+                alerts[args.ml_method] += int(predictions.loc[predictions.method == args.ml_method, 'alarm'].sum())
             for identity, decision in result['decisions'].items():
                 if args.include_if_context:
                     assert decision['if_context_alarm'] == observations[identity]['if_context_alarm']
