@@ -1,0 +1,12 @@
+Frozen S5 invariant temporal-graph v2 prospective confirmation
+development_seeds=89901,89902,89903
+prospective_seeds=90001,90002,90003
+model=StandardScaler+LogisticRegression(C=1,class_weight=balanced)
+graph_features=invariant_localized_synchrony_v2
+graph_alpha=0.005
+persistence=7_of_12
+accumulator_multiplier=1.20
+system_fpr_target=0.001
+selection_evidence=leave_one_seed_out_budgeted_fusion
+no_test_tuning=true
+workflow_commit=98ea1ecaf94aeadd31d990c6be759652fa363071
