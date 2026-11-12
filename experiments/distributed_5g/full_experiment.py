@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score
 
-from experiments.live_5g.evaluate import KEYS, fit, load_frozen, score_frame, sha256, metrics
+from experiments.live_5g.evaluate import KEYS, DETECTOR_CHOICES, fit, load_frozen, score_frame, sha256, metrics
 from experiments.distributed_5g.paired import summarize
 from experiments.robustness_5g.design import attack_schedule
 from experiments.resilient_5g.audit import mac
@@ -194,6 +194,6 @@ if __name__ == '__main__':
     parser.add_argument('root',type=Path)
     parser.add_argument('--previous',type=Path)
     parser.add_argument('--seed',type=int)
-    parser.add_argument('--detector',choices=['iforest','ocsvm_rbf','lof','elliptic'],default='iforest')
+    parser.add_argument('--detector',choices=DETECTOR_CHOICES,default='iforest')
     args=parser.parse_args()
     prepare(args.root,args.previous,args.seed,args.detector) if args.action=='prepare' else audit(args.root)
