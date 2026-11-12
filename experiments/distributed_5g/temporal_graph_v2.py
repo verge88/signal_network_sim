@@ -5,9 +5,13 @@ a small subset of peers becomes unusually synchronized relative to the rest of i
 zone over a short causal history. This distinguishes a localized three-node motif
 from legitimate zone-wide cyclic load changes.
 """
-from collections import defaultdict, deque
+from collections import deque
+import copy
 import numpy as np
 import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 FEATURES = (
     "top2_corr_mean",
@@ -51,7 +55,7 @@ class LocalSynchronyTransformer:
         self.reset()
 
     def reset(self):
-        self.count_history=defaultdict(lambda: deque(maxlen=self.history_size+1))
+        self.count_history={}
 
     def _features_for_window(self, part):
         if len(part)!=32 or part.nf_id.nunique()!=32:
@@ -59,7 +63,7 @@ class LocalSynchronyTransformer:
         rows={str(r.nf_id):r for r in part.itertuples(index=False)}
         # Append current counts before forming causal histories; every vector ends at t.
         for nf,row in rows.items():
-            self.count_history[nf].append(float(row.request_count))
+            self.count_history.setdefault(nf, deque(maxlen=self.history_size+1)).append(float(row.request_count))
 
         deltas={}
         for nf,h in self.count_history.items():
@@ -123,20 +127,80 @@ class LocalSynchronyTransformer:
             ],dtype=float)
         return result
 
-    def transform(self, frame):
+    def _transform_single_run(self, frame, reset):
         frame=pd.DataFrame(frame).copy()
         required={"run_id","window_id","nf_id","request_count"}
         missing=required-set(frame)
         if missing:
             raise ValueError(f"Missing columns: {sorted(missing)}")
-        self.reset()
-        output=np.zeros((len(frame),len(FEATURES)),dtype=float)
-        for _,run in frame.groupby("run_id",sort=False):
+        if frame.run_id.nunique()!=1:
+            raise ValueError("Online temporal graph transform requires one acquisition run")
+        if reset:
             self.reset()
-            for _,part in run.groupby("window_id",sort=False):
-                features=self._features_for_window(part)
-                for idx,row in part.iterrows():
-                    output[frame.index.get_loc(idx)]=features[str(row.nf_id)]
+        output=np.zeros((len(frame),len(FEATURES)),dtype=float)
+        positions={idx:pos for pos,idx in enumerate(frame.index)}
+        for _,part in frame.groupby("window_id",sort=False):
+            features=self._features_for_window(part)
+            for idx,row in part.iterrows():
+                output[positions[idx]]=features[str(row.nf_id)]
         if not np.isfinite(output).all():
             raise ValueError("Nonfinite graph feature")
         return output
+
+    def transform(self, frame):
+        """Offline transform; every acquisition run starts with clean history."""
+        frame=pd.DataFrame(frame).copy()
+        parts=[]
+        for _,run in frame.groupby("run_id",sort=False):
+            parts.append(self._transform_single_run(run, reset=True))
+        return np.vstack(parts) if parts else np.empty((0,len(FEATURES)))
+
+    def transform_online(self, frame):
+        """Causal transform preserving history across successive windows."""
+        return self._transform_single_run(frame, reset=False)
+
+
+class SupervisedTemporalGraphDetector:
+    """Logistic S5 detector on invariant temporal-graph features."""
+
+    def __init__(self, seed=7143, history=8):
+        self.seed=int(seed)
+        self.history_size=int(history)
+        self.transformer=LocalSynchronyTransformer(history=history)
+        self.model=make_pipeline(
+            StandardScaler(),
+            LogisticRegression(C=1.0,class_weight="balanced",max_iter=1000,
+                               random_state=self.seed))
+
+    def get_params(self, deep=True):
+        return {"seed":self.seed,"history":self.history_size,
+                "estimator":"StandardScaler + LogisticRegression",
+                "C":1.0,"class_weight":"balanced","features":list(FEATURES)}
+
+    def fit_development(self, datasets):
+        xs=[]; ys=[]
+        for frame,labels in datasets:
+            graph=LocalSynchronyTransformer(self.history_size).transform(frame)
+            attack=labels.attack.astype(bool).to_numpy()
+            s5=labels.scenario.astype(str).eq("S5").to_numpy()
+            keep=s5 | ~attack
+            xs.append(graph[keep])
+            ys.append(s5[keep].astype(int))
+        x=np.vstack(xs); y=np.concatenate(ys)
+        if not y.any() or y.all():
+            raise ValueError("Temporal graph development requires S5 and normal examples")
+        self.model.fit(x,y)
+        self.reset()
+        return self
+
+    def reset(self):
+        self.transformer.reset()
+
+    def decision_function(self, frame):
+        graph=self.transformer.transform_online(frame)
+        return self.model.predict_proba(graph)[:,1]
+
+    def clean_copy(self):
+        clone=copy.deepcopy(self)
+        clone.reset()
+        return clone
