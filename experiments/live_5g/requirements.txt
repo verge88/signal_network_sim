@@ -2,7 +2,7 @@ numpy==1.26.4
 pandas==2.2.3
 scipy==1.14.1
 scikit-learn==1.5.2
-joblib==1.4.2
+joblib==1.5.2
 h2==4.1.0
 PyYAML==6.0.2
 psutil==6.1.1
