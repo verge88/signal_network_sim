@@ -1,0 +1,8 @@
+Preregistered S5 temporal-graph prospective confirmation
+scenario=S5 coordinated low-and-slow temporal/relational drift
+model=normal-only temporal graph IsolationForest
+graph_alpha=0.005
+fusion=3_of_5_per_nf
+fpr_target=0.001
+seeds=89901,89902,89903
+no_test_tuning=true
