@@ -1,10 +1,13 @@
 import copy
+import tempfile
+from pathlib import Path
 
+import joblib
 import numpy as np
 import pandas as pd
 
 from experiments.distributed_5g.temporal_graph import TemporalGraphDetector
-from experiments.distributed_5g.temporal_graph_v2 import LocalSynchronyTransformer, FEATURES as V2_FEATURES
+from experiments.distributed_5g.temporal_graph_v2 import LocalSynchronyTransformer, SupervisedTemporalGraphDetector, FEATURES as V2_FEATURES
 from experiments.robustness_5g.design import attack_schedule, s5_members, s5_count
 
 
@@ -89,3 +92,42 @@ def test_invariant_graph_distinguishes_localized_from_global_synchrony():
     local_triangle=float(np.mean(local_features[idx,names["triangle_contrast"]]))
     assert local_contrast > global_contrast + .20
     assert local_triangle > global_triangle + .20
+
+
+def test_v2_transform_batch_matches_online_windows():
+    test=frame(18,"v2-test")
+    batch=LocalSynchronyTransformer(history=8).transform(test)
+    online=LocalSynchronyTransformer(history=8)
+    parts=[]
+    for _,part in test.groupby("window_id",sort=False):
+        parts.append(online.transform_online(part))
+    assert np.allclose(batch,np.vstack(parts),rtol=0,atol=1e-12)
+
+
+def test_v2_supervised_detector_roundtrips_with_clean_state():
+    dev=frame(24,"dev")
+    labels=pd.DataFrame({
+        "attack":np.zeros(len(dev),dtype=int),
+        "scenario":["N1"]*len(dev),
+    })
+    mask=dev.window_id.between(10,19) & dev.nf_id.isin(["slot-1","slot-2","slot-3"])
+    labels.loc[mask,"attack"]=1
+    labels.loc[mask,"scenario"]="S5"
+    detector=SupervisedTemporalGraphDetector(seed=123,history=8)
+    detector.fit_development([(dev,labels)])
+
+    test=frame(16,"heldout")
+    batch=detector.clean_copy().decision_function(test)
+    online=detector.clean_copy()
+    parts=[]
+    for _,part in test.groupby("window_id",sort=False):
+        parts.append(online.decision_function(part))
+    assert np.allclose(batch,np.concatenate(parts),rtol=0,atol=1e-12)
+
+    with tempfile.TemporaryDirectory() as directory:
+        path=Path(directory)/"model.joblib"
+        clean=detector.clean_copy()
+        joblib.dump(clean,path)
+        loaded=joblib.load(path)
+        loaded.reset()
+        assert np.allclose(batch,loaded.decision_function(test),rtol=0,atol=1e-12)
