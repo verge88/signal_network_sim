@@ -1,0 +1,134 @@
+name: 5G supervised RF prospective full hybrid
+
+on:
+  push:
+    branches: ['experiment/ml-detector-v2-20261112']
+    paths:
+      - '.github/triggers/ml-supervised-prospective-5g'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  prospective-rf:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [89601, 89602, 89603]
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports: ['27017:27017']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install experiment stack
+        env:
+          NO_LONG_DOUBLE: '1'
+        run: python -m pip install -r experiments/live_5g/requirements.txt
+      - name: Scientific contract tests
+        run: python -m pytest experiments/distributed_5g experiments/accumulation_5g experiments/live_5g -q
+
+      - name: Retrieve frozen non-ML inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/verge88/signal_network_sim/actions/artifacts/13785795564/zip > measured.zip
+          gh api repos/verge88/signal_network_sim/actions/artifacts/13836367435/zip > zonal.zip
+          echo 'c76c4ed6a865dc5c37803dbc46e6cd05c62ebe803f398fe409dd2f1090910129  measured.zip' | sha256sum -c
+          echo '8aa7e697e674b68b22e9cf7980e653a93f0060ad6469101f651c4c67a6607f0b  zonal.zip' | sha256sum -c
+          unzip -q measured.zip 'frozen/model.joblib' 'frozen/manifest.json' 'frozen/accumulation.json' 'frozen/extensions.json' 'frozen/refinement.json'
+          unzip -q zonal.zip zone_models.json
+
+      - name: Retrieve historical labeled development captures
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p historical
+          for spec in "89501:13885821788" "89502:13884014668" "89503:13886115411"; do
+            seed="${spec%%:*}"
+            artifact="${spec##*:}"
+            mkdir -p "historical/${seed}" "development/${seed}"
+            gh api "repos/verge88/signal_network_sim/actions/artifacts/${artifact}/zip" > "historical/${seed}/artifact.zip"
+            unzip -q "historical/${seed}/artifact.zip" -d "historical/${seed}"
+            unzip -q "historical/${seed}/full-evidence.zip" \
+              'test/features.csv' 'test/labels.csv' -d "development/${seed}"
+          done
+
+      - uses: actions/cache/restore@v4
+        id: cache
+        with:
+          path: open5gs-2.7.6.tar.gz
+          key: open5gs-d9d3abdd-ubuntu22-build-v1
+      - if: steps.cache.outputs.cache-hit != 'true'
+        run: bash experiments/live_5g/setup_open5gs.sh build
+      - if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: open5gs-2.7.6.tar.gz
+          key: open5gs-d9d3abdd-ubuntu22-build-v1
+      - run: bash experiments/live_5g/setup_open5gs.sh runtime
+
+      - name: Collect fresh normal train and calibration
+        run: |
+          mkdir -p evidence
+          git rev-parse HEAD > evidence/source_commit.txt
+          cp zone_models.json evidence/zone_models.json
+          python -m experiments.live_5g.collect --phase train --seed $(( ${{ matrix.seed }} + 1000 )) \
+            --out evidence/train --windows 600 --actors 32
+          python -m experiments.live_5g.collect --phase cal --seed $(( ${{ matrix.seed }} + 2000 )) \
+            --out evidence/cal --windows 600 --actors 32
+
+      - name: Fit historical supervised RF and freeze fresh threshold
+        run: |
+          python -m experiments.distributed_5g.full_experiment prepare evidence \
+            --previous frozen --seed ${{ matrix.seed }} --detector rf_supervised \
+            --development development/89501/test development/89502/test development/89503/test
+
+      - name: Run fresh held-out test with frozen 0.80 confirmation
+        run: |
+          bash experiments/distributed_5g/namespace_smoke.sh \
+            --seed ${{ matrix.seed }} --out evidence/test --frozen evidence/frozen \
+            --zone-models evidence/zone_models.json --include-if-context --confirm-if-context \
+            --confirmation-fraction 0.80 --recover-normal
+
+      - name: Audit prospective evidence
+        run: python -m experiments.distributed_5g.full_experiment audit evidence
+
+      - name: Collect diagnostics and reproducibility evidence
+        if: always()
+        run: |
+          mkdir -p evidence/summary
+          sudo journalctl --no-pager -u 'open5gs-*' > evidence/summary/services.log
+          cp evidence/source_commit.txt evidence/summary/ || true
+          cp evidence/frozen/manifest.json evidence/summary/model_manifest.json || true
+          if test -d evidence/test/hierarchy; then cp evidence/test/hierarchy/*.log evidence/summary/ || true; fi
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile
+          root=Path('evidence')
+          with zipfile.ZipFile('full-evidence.zip','w',zipfile.ZIP_DEFLATED) as archive:
+              for p in root.rglob('*'):
+                  if p.is_file() and 'hierarchy' not in p.parts and (not p.name.endswith('.hex') or p.name == 'lab_operator_key.hex'):
+                      archive.write(p,p.relative_to(root))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: supervised-rf-summary-${{ matrix.seed }}-${{ github.run_id }}
+          path: evidence/summary/
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: supervised-rf-evidence-${{ matrix.seed }}-${{ github.run_id }}
+          path: full-evidence.zip
+          retention-days: 30
