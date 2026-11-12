@@ -1,0 +1,9 @@
+Prospective supervised RF FULL_HYBRID confirmation
+frozen_at_commit=f2ec72b99d296e431669f5f388c34ef4f1f919bc
+model=RandomForestClassifier
+historical_development_seeds=89501,89502,89503
+fresh_test_seeds=89601,89602,89603
+confirmation_fraction=0.80
+fpr_target=0.001
+selection_basis=historical_leave-one-seed-out_gate_sweep
+no_test_tuning=true
