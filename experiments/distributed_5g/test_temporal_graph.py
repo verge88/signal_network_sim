@@ -1,0 +1,55 @@
+import copy
+
+import numpy as np
+import pandas as pd
+
+from experiments.distributed_5g.temporal_graph import TemporalGraphDetector
+from experiments.robustness_5g.design import attack_schedule, s5_members, s5_count
+
+
+def frame(windows=16, run_id="normal"):
+    rows=[]
+    for w in range(windows):
+        for slot in range(32):
+            count=2 + ((w + slot * 3) % 5)
+            rows.append(dict(
+                run_id=run_id, window_id=w, nf_id=f"slot-{slot}", timestamp=float(w),
+                request_count=float(count),
+                interarrival_mean=1.0/max(1,count),
+                latency_ms=1.0 + (slot % 4) * .1,
+                error_rate=0.0,
+            ))
+    return pd.DataFrame(rows)
+
+
+def test_temporal_graph_batch_matches_online_window_scoring():
+    train=frame(24, "train")
+    detector=TemporalGraphDetector(seed=123, max_samples=128).fit(train)
+
+    batch=detector.clean_copy()
+    batch_score=batch.decision_function(frame(18, "test"))
+
+    online=detector.clean_copy()
+    parts=[]
+    test=frame(18, "test")
+    for _, part in test.groupby("window_id", sort=False):
+        parts.append(online.decision_function(part))
+    online_score=np.concatenate(parts)
+    assert np.allclose(batch_score, online_score, rtol=0, atol=1e-12)
+
+
+def test_s5_is_multi_node_non_overlapping_preregistered_lab_scenario():
+    schedule=attack_schedule(3600, 89901)
+    s5=[entry for entry in schedule if entry[2] == "S5"]
+    assert len(s5) == 4
+    assert all(end-start == 30 for start,end,*_ in s5)
+    for entry in s5:
+        members=s5_members(entry)
+        assert len(members) == 3
+        assert len({m//8 for m in members}) == 1
+        for w in range(entry[0], entry[1]):
+            counts=[s5_count(entry,w,"reference",m) for m in members]
+            assert all(2 <= value <= 5 for value in counts)
+    for i,left in enumerate(schedule):
+        for right in schedule[i+1:]:
+            assert left[1] <= right[0] or right[1] <= left[0]
