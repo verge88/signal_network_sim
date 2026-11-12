@@ -38,6 +38,10 @@ def main():
     parser.add_argument('--include-if-context', action='store_true')
     parser.add_argument('--confirm-if-context', action='store_true')
     parser.add_argument('--confirmation-fraction', type=float, default=.5)
+    parser.add_argument('--ml-method', default='IF_CONTEXT')
+    parser.add_argument('--ml-confirmation-mode', choices=['recovery','persistence'], default='recovery')
+    parser.add_argument('--ml-persistence-window', type=int, default=5)
+    parser.add_argument('--ml-persistence-hits', type=int, default=3)
     parser.add_argument('--load-experiment', action='store_true')
     parser.add_argument('--recover-normal', action='store_true')
     args=parser.parse_args()
@@ -49,6 +53,8 @@ def main():
         parser.error('--confirm-if-context requires --include-if-context')
     if not 0 < args.confirmation_fraction <= 1:
         parser.error('--confirmation-fraction must be in (0,1]')
+    if not 1 <= args.ml_persistence_hits <= args.ml_persistence_window:
+        parser.error('--ml-persistence-hits must be between 1 and --ml-persistence-window')
     if args.smoke_windows is not None and not 1 <= args.smoke_windows <= 600:
         parser.error('--smoke-windows must be between 1 and 600')
     args.phase='test'
@@ -72,7 +78,11 @@ def main():
         configure(args.out/'hierarchy',topology,models,context['run_id'],context['operator_key'],
                   context['control_key'],context['extensions'],False,args.base_port,
                   hosts=hosts, include_if_context=args.include_if_context, confirm_if_context=args.confirm_if_context,
-                  confirmation_fraction=args.confirmation_fraction, recover_normal=args.recover_normal)
+                  confirmation_fraction=args.confirmation_fraction,
+                  ml_confirmation_mode=args.ml_confirmation_mode,
+                  ml_persistence_window=args.ml_persistence_window,
+                  ml_persistence_hits=args.ml_persistence_hits,
+                  recover_normal=args.recover_normal)
         deployment=Deployment(args.out/'hierarchy', prefixes)
         deployment.__enter__()
         holder['deployment']=deployment
@@ -91,7 +101,10 @@ def main():
             observations={row['nf_id']:dict(row=row,control=control if row['nf_id']=='slot-4' else None,
                 grant=grant,evaluation_time=time.time()) for row in rows}
             if args.include_if_context:
-                flags = predictions[predictions.method == 'IF_CONTEXT'].set_index('nf_id').alarm
+                selected = predictions[predictions.method == args.ml_method]
+                if len(selected) != len(rows):
+                    raise RuntimeError(f'ML method {args.ml_method!r} missing from online predictions')
+                flags = selected.set_index('nf_id').alarm
                 for identity, observation in observations.items():
                     observation['if_context_alarm'] = bool(flags.loc[identity])
             started = time.monotonic()
@@ -111,6 +124,8 @@ def main():
             durations.append(time.monotonic() - started)
             for method in ('rules', 'IF_SBI', 'IF_CONTEXT'):
                 alerts[method] += int(predictions.loc[predictions.method == method, 'alarm'].sum())
+            if args.ml_method not in alerts:
+                alerts[args.ml_method] = int(predictions.loc[predictions.method == args.ml_method, 'alarm'].sum())
             for identity, decision in result['decisions'].items():
                 if args.include_if_context:
                     assert decision['if_context_alarm'] == observations[identity]['if_context_alarm']
@@ -135,6 +150,10 @@ def main():
         alerts.pop(hybrid_method)
     report = dict(windows=args.windows, nf_windows=args.windows * args.actors, processes=37,
         network_namespaces=holder.get('namespaces'), alerts=alerts,
+        ml_method=args.ml_method,
+        ml_confirmation_mode=args.ml_confirmation_mode,
+        ml_persistence_window=args.ml_persistence_window,
+        ml_persistence_hits=args.ml_persistence_hits,
         confirmation_fraction=args.confirmation_fraction,
         transport_seconds=dict(median=statistics.median(durations), maximum=max(durations)),
         manifest_sha256=sha256(args.out/'manifest.json'), model_sha256=sha256(args.frozen/'model.joblib'),
