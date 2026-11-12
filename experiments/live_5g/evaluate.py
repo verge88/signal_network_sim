@@ -23,11 +23,13 @@ from sklearn.covariance import EllipticEnvelope
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.svm import OneClassSVM
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.metrics import average_precision_score
 from pyod.models.ecod import ECOD
 from pyod.models.knn import KNN
 from isotree import IsolationForest as ExtendedIsolationForest
+from dvmad import DVMAD
+from aderh import ADERH
 
 KEYS = ["run_id", "window_id", "nf_id"]
 META = KEYS + ["timestamp"]
@@ -41,8 +43,8 @@ TAIL_METHODS = ["robust_tail", "hybrid_tail_without_KIE", "hybrid_tail"]
 TAIL_FEATURES = ["request_count", "error_rate", "update_count"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
 PROTOCOL_VERSION = "live-5g-v2-tail"
-DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod")
-DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod"}
+DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh")
+DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod", "dvmad", "aderh"}
 
 
 def build_detector(detector, seed, train_rows):
@@ -80,6 +82,21 @@ def build_detector(detector, seed, train_rows):
         # ECOD is parameter-light and rank/tail based. Its built-in contamination
         # threshold is ignored; our held-out normal calibration sets the alarm cut.
         return ECOD(contamination=0.1, n_jobs=1)
+    if detector == "dvmad":
+        # Fixed, tuning-free one-class discriminant configuration from the ICML
+        # reference implementation. Scaling is fixed a-priori because its score
+        # uses Euclidean nearest-neighbour distance in the learned subspace.
+        return make_pipeline(
+            StandardScaler(),
+            DVMAD(contamination=0.1, mode="both", eps=0.1,
+                  artificial_mode="max", use_faiss=False))
+    if detector == "aderh":
+        # The reference benchmark uses [0,1] feature scaling. The built-in
+        # contamination threshold is ignored in favor of our normal calibration.
+        return make_pipeline(
+            MinMaxScaler(),
+            ADERH(n_estimators=256, n=18, contamination=0.1,
+                  random_state=seed))
     raise ValueError(f"Unknown detector {detector!r}; choose one of {DETECTOR_CHOICES}")
 
 
