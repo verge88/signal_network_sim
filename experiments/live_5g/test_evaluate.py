@@ -192,6 +192,23 @@ class ScientificContractTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "hash mismatch"):
                 load_frozen(root / "frozen")
 
+    def test_alternative_detectors_write_json_safe_frozen_manifests(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_fixture(root / "train", "train", 120)
+            write_fixture(root / "cal", "cal", 1000)
+            for detector in ("ocsvm_rbf", "lof", "elliptic"):
+                with self.subTest(detector=detector):
+                    frozen = root / detector
+                    manifest = fit(root / "train", root / "cal", frozen, detector=detector)
+                    self.assertEqual(manifest["detector"], detector)
+                    self.assertTrue(manifest["threshold_sufficient"])
+                    recorded = __import__("json").loads((frozen / "manifest.json").read_text())
+                    self.assertEqual(recorded["detector"], detector)
+                    self.assertIsInstance(recorded["detector_parameters"], dict)
+                    bundle = load_frozen(frozen)
+                    self.assertEqual(bundle["manifest"]["detector"], detector)
+
     def test_training_rejects_attack(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
