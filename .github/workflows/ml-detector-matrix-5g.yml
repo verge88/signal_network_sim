@@ -2,6 +2,10 @@ name: 5G alternative ML detector matrix
 # Prospective comparison: same seeds/schedule as frozen IF baseline; no test tuning.
 
 on:
+  push:
+    branches: ['experiment/ml-detector-matrix-20261112']
+    paths:
+      - '.github/workflows/ml-detector-matrix-5g.yml'
   workflow_dispatch:
 
 permissions:
