@@ -1,0 +1,23 @@
+name: Temporal graph V3 contract
+
+on:
+  push:
+    branches: ['experiment/temporal-graph-v3-20261113']
+    paths:
+      - '.github/workflows/temporal-graph-v3-contract.yml'
+  workflow_dispatch:
+
+jobs:
+  contract:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==1.26.4 pandas==2.2.3 scikit-learn==1.5.2 joblib==1.5.2 pytest==8.3.4
+      - name: Compile V3 integration
+        run: |
+          python -m py_compile             experiments/distributed_5g/temporal_graph_v3.py             experiments/live_5g/evaluate.py             experiments/distributed_5g/node.py             experiments/distributed_5g/deploy.py             experiments/distributed_5g/live.py             experiments/distributed_5g/full_experiment.py
+      - name: Run temporal graph contracts
+        run: python -m pytest experiments/distributed_5g/test_temporal_graph.py -q
