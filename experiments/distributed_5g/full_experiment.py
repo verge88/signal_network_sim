@@ -50,6 +50,9 @@ def audit(root):
     output = root/'summary'
     output.mkdir(exist_ok=True)
     manifest = read(capture/'manifest.json')
+    deployment = read(capture/'smoke_report.json')
+    confirmation_fraction = float(deployment.get('confirmation_fraction', .5))
+    assert 0 < confirmation_fraction <= 1
     assert manifest['complete'] and manifest['windows'] == 3600 and manifest['actors'] == 32
     assert manifest['schedule'] == [list(x) for x in attack_schedule(3600, manifest['seed'])]
     bundle = load_frozen(root/'frozen')
@@ -137,7 +140,7 @@ def audit(root):
                 ml = bool(context[row.run_id, window, identity])
                 assert decision['if_context_alarm'] == ml
                 without_ml = decision['local_security'] or recovery[identity] > model['threshold']
-                full = without_ml or (ml and recovery[identity] > .5*model['threshold'])
+                full = without_ml or (ml and recovery[identity] > confirmation_fraction*model['threshold'])
                 assert full == decision['security']
                 records.append(dict(run_id=row.run_id, window_id=window, nf_id=identity,
                     FULL_HYBRID=bool(full), WITHOUT_MINING=bool(without_ml),
@@ -171,6 +174,7 @@ def audit(root):
         data_mining_increment=dict(additional_tp=int((paired.attack.eq(1)&paired.FULL_HYBRID&~paired.WITHOUT_MINING).sum()),
             additional_fp=int((paired.attack.eq(0)&paired.FULL_HYBRID&~paired.WITHOUT_MINING).sum())),
         availability_windows=int(paired.availability.sum()),unknown_windows=int(paired.unknown.sum()),
+        confirmation_fraction=confirmation_fraction,
         fpr_target=.001,fpr_target_met=next(m['fpr'] for m in totals if m['method']=='FULL_HYBRID')<=.001,
         overhead=dict(hierarchy_transport_median_seconds=float(np.median(timing)),
             hierarchy_transport_p95_seconds=float(np.quantile(timing,.95)),
