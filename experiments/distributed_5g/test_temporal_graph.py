@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from experiments.distributed_5g.temporal_graph import TemporalGraphDetector
+from experiments.distributed_5g.temporal_graph_v2 import LocalSynchronyTransformer, FEATURES as V2_FEATURES
 from experiments.robustness_5g.design import attack_schedule, s5_members, s5_count
 
 
@@ -53,3 +54,38 @@ def test_s5_is_multi_node_non_overlapping_preregistered_lab_scenario():
     for i,left in enumerate(schedule):
         for right in schedule[i+1:]:
             assert left[1] <= right[0] or right[1] <= left[0]
+
+
+def _graph_pattern(localized):
+    rows=[]
+    for w in range(20):
+        global_wave=(w//3)%4
+        for slot in range(32):
+            if localized and slot in (1,2,3):
+                count=3+((w//2)%3)
+            elif localized:
+                count=2+((w*7+slot*5)%5)
+            else:
+                # Legitimate whole-zone/global synchrony: every NF follows the same cycle.
+                count=3+global_wave
+            rows.append(dict(run_id="pattern",window_id=w,nf_id=f"slot-{slot}",
+                             timestamp=float(w),request_count=float(count)))
+    return pd.DataFrame(rows)
+
+
+def test_invariant_graph_distinguishes_localized_from_global_synchrony():
+    transformer=LocalSynchronyTransformer(history=8)
+    global_features=transformer.transform(_graph_pattern(False))
+    local_features=transformer.transform(_graph_pattern(True))
+    names={name:i for i,name in enumerate(V2_FEATURES)}
+    # Compare the final 10 windows of the three coordinated nodes.
+    idx=[]
+    for w in range(10,20):
+        for slot in (1,2,3):
+            idx.append(w*32+slot)
+    global_contrast=float(np.mean(global_features[idx,names["localized_corr_contrast"]]))
+    local_contrast=float(np.mean(local_features[idx,names["localized_corr_contrast"]]))
+    global_triangle=float(np.mean(global_features[idx,names["triangle_contrast"]]))
+    local_triangle=float(np.mean(local_features[idx,names["triangle_contrast"]]))
+    assert local_contrast > global_contrast + .20
+    assert local_triangle > global_triangle + .20
