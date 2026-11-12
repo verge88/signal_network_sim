@@ -23,10 +23,10 @@ from sklearn.preprocessing import StandardScaler
 from experiments.distributed_5g.temporal_graph_v2 import FEATURES, LocalSynchronyTransformer
 
 KEYS=["run_id","window_id","nf_id"]
-ACCUM_MULTIPLIERS=(1.20,1.25,1.30)
-ALPHAS=(0.00025,0.0005,0.00075,0.001)
-DECAYS=(0.80,0.90,0.95)
-CLUSTER_ORDERS=(2,3)
+ACCUM_MULTIPLIERS=(1.50,1.60,1.75)
+ALPHAS=(0.0001,0.00015,0.0002,0.00025)
+DECAYS=(0.60,0.65,0.70,0.75)
+CLUSTER_ORDERS=(2,)
 PRIMARY_FPR_MARGIN=0.0007
 SECONDARY_FPR_MARGIN=0.00085
 
@@ -195,9 +195,15 @@ def run(roots,output):
         development=[prepared[s]["test"] for s in sorted(prepared) if s!=heldout]
         model,training_meta=fit_hard_negative_logistic(development,heldout)
         test=prepared[heldout]["test"]
-        cal=prepared[heldout]["cal"]
         test_probability=model.predict_proba(test[list(FEATURES)].to_numpy(float))[:,1]
-        cal_probability=model.predict_proba(cal[list(FEATURES)].to_numpy(float))[:,1]
+        # Conservative multi-run calibration: every available calibration phase
+        # is fully normal and independent of the held-out test. The operational
+        # threshold is the maximum per-run conformal threshold, which protects
+        # against run-to-run normal drift instead of trusting one 600-window cal.
+        calibration_probability={
+            seed:model.predict_proba(item["cal"][list(FEATURES)].to_numpy(float))[:,1]
+            for seed,item in prepared.items()
+        }
         truth=test.attack.astype(bool).to_numpy()
         original=(test.local_security | (test.recovery>test.zone_threshold)).to_numpy()
         original_metric=metrics(truth,original)
@@ -206,16 +212,29 @@ def run(roots,output):
         reports=[]
         for order in CLUSTER_ORDERS:
             test_structural=structural_score(test,test_probability,order)
-            cal_structural=structural_score(cal,cal_probability,order)
+            calibration_structural={
+                seed:structural_score(prepared[seed]["cal"],probability,order)
+                for seed,probability in calibration_probability.items()
+            }
             for decay in DECAYS:
                 test_evidence=accumulated_evidence(test,test_structural,decay)
-                cal_evidence=accumulated_evidence(cal,cal_structural,decay)
+                calibration_evidence={
+                    seed:accumulated_evidence(prepared[seed]["cal"],score,decay)
+                    for seed,score in calibration_structural.items()
+                }
                 for alpha in ALPHAS:
-                    threshold=conformal_threshold(cal_evidence,alpha)
+                    per_run_threshold={
+                        seed:conformal_threshold(evidence,alpha)
+                        for seed,evidence in calibration_evidence.items()
+                    }
+                    threshold=max(per_run_threshold.values())
                     graph_alarm=(test_evidence>threshold if math.isfinite(threshold)
                                  else np.zeros(len(test),dtype=bool))
-                    cal_alarm_rate=(float((cal_evidence>threshold).mean())
-                                    if math.isfinite(threshold) else 0.0)
+                    calibration_alarm_rates={
+                        seed:(float((evidence>threshold).mean())
+                              if math.isfinite(threshold) else 0.0)
+                        for seed,evidence in calibration_evidence.items()
+                    }
                     for multiplier in ACCUM_MULTIPLIERS:
                         budgeted=(test.local_security |
                                   (test.recovery>multiplier*test.zone_threshold)).to_numpy()
@@ -228,7 +247,11 @@ def run(roots,output):
                             "alpha":alpha,
                             "accumulator_multiplier":multiplier,
                             "threshold":threshold if math.isfinite(threshold) else None,
-                            "calibration_graph_alarm_rate":cal_alarm_rate,
+                            "per_run_calibration_thresholds":{
+                                str(seed):(value if math.isfinite(value) else None)
+                                for seed,value in per_run_threshold.items()},
+                            "calibration_graph_alarm_rates":{
+                                str(seed):value for seed,value in calibration_alarm_rates.items()},
                             "metrics":total,
                             "budgeted_metrics":metrics(truth,budgeted),
                             "graph_metrics":metrics(truth,graph_alarm),
@@ -308,6 +331,7 @@ def run(roots,output):
         "candidate_summary":sorted(candidates,key=rank),
         "selected_primary":primary[0] if primary else None,
         "selected_secondary":secondary[0] if secondary else None,
+        "calibration_policy":"Maximum conformal threshold across six fully-normal calibration runs; no test observations used.",
         "scope":"Development only. Any selected V3 configuration requires new prospective seeds.",
     }
     (output/"report.json").write_text(json.dumps(result,indent=2,allow_nan=False)+"\n")
