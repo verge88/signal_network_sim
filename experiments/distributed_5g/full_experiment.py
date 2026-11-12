@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score
 
-from experiments.live_5g.evaluate import KEYS, DETECTOR_CHOICES, fit, fit_supervised, fit_temporal_graph, fit_temporal_graph_v2, load_frozen, score_frame, sha256, metrics
+from experiments.live_5g.evaluate import KEYS, DETECTOR_CHOICES, fit, fit_supervised, fit_temporal_graph, fit_temporal_graph_v2, fit_temporal_graph_v3, load_frozen, score_frame, sha256, metrics
 from experiments.distributed_5g.paired import summarize
 from experiments.robustness_5g.design import attack_schedule, s5_members
 from experiments.resilient_5g.audit import mac
@@ -25,7 +25,8 @@ def lines(path):
             yield json.loads(line)
 
 
-def prepare(root, previous, seed, detector='iforest', development=()):
+def prepare(root, previous, seed, detector='iforest', development=(), reference_calibration=(),
+            v3_cluster_order=2, v3_decay=.75, v3_alpha=.0002, v3_accumulator_multiplier=1.50):
     if detector == 'rf_supervised':
         manifest = fit_supervised(root/'train', root/'cal', development, root/'frozen', alpha=.001, seed=seed)
     elif detector == 'temporal_graph':
@@ -34,6 +35,12 @@ def prepare(root, previous, seed, detector='iforest', development=()):
     elif detector == 'temporal_graph_v2':
         manifest = fit_temporal_graph_v2(root/'train', root/'cal', development, root/'frozen',
                                          seed=seed, point_alpha=.001, graph_alpha=.005)
+    elif detector == 'temporal_graph_v3':
+        manifest = fit_temporal_graph_v3(
+            root/'train', root/'cal', development, reference_calibration, root/'frozen',
+            seed=seed, point_alpha=.001, graph_alpha=v3_alpha,
+            cluster_order=v3_cluster_order, decay=v3_decay,
+            accumulator_multiplier=v3_accumulator_multiplier)
     else:
         manifest = fit(root/'train', root/'cal', root/'frozen', alpha=.001, seed=seed, detector=detector)
     assert manifest['threshold_sufficient']
@@ -45,10 +52,12 @@ def prepare(root, previous, seed, detector='iforest', development=()):
         fresh_data_mining=True, inherited_fixed_components=origin,
         detector=detector,
         development_runs=manifest.get('development_runs', []),
-        explanation=('Supervised forest fitted on historical development captures plus fresh normal train; '
-                     if detector == 'rf_supervised' else 'Selected anomaly detector fitted on fresh train. ') +
-                    'Threshold calibrated on separate fresh normal cal. Control deadlines, confirmation gate, '
-                    'and accumulator parameters are frozen before held-out testing; zone models are separately hash-pinned.'), indent=2))
+        calibration_reference_runs=manifest.get('calibration_reference_runs', []),
+        explanation=(
+            'Historical labeled development is used only for supervised detector fitting when declared; '
+            'all operational thresholds are calibrated exclusively on normal calibration runs. '
+            'Control deadlines, fusion parameters and accumulator parameters are frozen before held-out testing; '
+            'zone models are separately hash-pinned.'), indent=2))
 
 
 def audit(root):
@@ -254,5 +263,12 @@ if __name__ == '__main__':
     parser.add_argument('--seed',type=int)
     parser.add_argument('--detector',choices=DETECTOR_CHOICES,default='iforest')
     parser.add_argument('--development',type=Path,nargs='*',default=[])
+    parser.add_argument('--reference-calibration',type=Path,nargs='*',default=[])
+    parser.add_argument('--v3-cluster-order',type=int,default=2)
+    parser.add_argument('--v3-decay',type=float,default=.75)
+    parser.add_argument('--v3-alpha',type=float,default=.0002)
+    parser.add_argument('--v3-accumulator-multiplier',type=float,default=1.50)
     args=parser.parse_args()
-    prepare(args.root,args.previous,args.seed,args.detector,args.development) if args.action=='prepare' else audit(args.root)
+    prepare(args.root,args.previous,args.seed,args.detector,args.development,
+            args.reference_calibration,args.v3_cluster_order,args.v3_decay,
+            args.v3_alpha,args.v3_accumulator_multiplier) if args.action=='prepare' else audit(args.root)
