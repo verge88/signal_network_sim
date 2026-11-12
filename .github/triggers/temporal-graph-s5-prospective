@@ -6,3 +6,4 @@ fusion=3_of_5_per_nf
 fpr_target=0.001
 seeds=89901,89902,89903
 no_test_tuning=true
+frozen_code_commit=e359267b0b5019972d8924c2e4dd5c16e8515c37
