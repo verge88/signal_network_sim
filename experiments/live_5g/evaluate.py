@@ -72,6 +72,23 @@ def dump_json(path, value):
     Path(path).write_text(json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
 
 
+def json_safe_parameters(value):
+    """Convert sklearn parameter trees to stable JSON-safe metadata."""
+    if value is None or isinstance(value, (str, bool, int, float)):
+        return value
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, dict):
+        return {str(key): json_safe_parameters(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [json_safe_parameters(item) for item in value]
+    if hasattr(value, "get_params"):
+        cls = value.__class__
+        return {"estimator_class": f"{cls.__module__}.{cls.__name__}"}
+    cls = value.__class__
+    return {"python_class": f"{cls.__module__}.{cls.__name__}", "repr": repr(value)}
+
+
 def conformal_threshold(scores, alpha=0.001):
     """Finite-sample upper order statistic; ties are never alarms.
 
@@ -190,7 +207,8 @@ def fit(train_directory, cal_directory, output, alpha=0.001, seed=7143, detector
     manifest = {
         "protocol_version": PROTOCOL_VERSION, "created_at": time.time(), "seed": seed,
         "detector": detector,
-        "detector_parameters": model.get_params(deep=True),
+        "detector_parameters": json_safe_parameters(
+            build_detector(detector, seed, len(train)).get_params(deep=True)),
         "internal_method_alias_note": "IF_* method labels are retained only for compatibility with the frozen live hierarchy; the estimator class is given by detector.",
         "alpha_target": alpha, "calibration_rows": len(cal), "training_rows": len(train),
         "train_runs": sorted(train.run_id.unique().tolist()), "calibration_runs": sorted(cal.run_id.unique().tolist()),
