@@ -7,6 +7,7 @@ are checked by explicit rules; an Isolation Forest is never claimed to learn the
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import math
@@ -43,8 +44,91 @@ TAIL_METHODS = ["robust_tail", "hybrid_tail_without_KIE", "hybrid_tail"]
 TAIL_FEATURES = ["request_count", "error_rate", "update_count"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
 PROTOCOL_VERSION = "live-5g-v2-tail"
-DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh")
-DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod", "dvmad", "aderh"}
+DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive")
+DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive"}
+
+
+class AdaptiveScoreEnsemble:
+    """SEAD-inspired causal ensemble with frozen normal-reference quantiles.
+
+    Base detector parameters are frozen before held-out testing. Their scores are
+    mapped to empirical quantiles of the normal training distribution, and only
+    the unsupervised ensemble weights adapt online. This retains the SEAD design
+    principle of penalizing detectors that emit persistently high anomaly scores
+    under distribution shift, while keeping the score reference fixed to normal
+    training evidence so test observations never redefine normality.
+    """
+
+    def __init__(self, seed=7143, train_rows=19200, eta=1.0, regularization=1e-6):
+        self.seed = int(seed)
+        self.train_rows = int(train_rows)
+        self.eta = float(eta)
+        self.regularization = float(regularization)
+        self.base_names = ("iforest", "ecod", "aderh")
+
+    def get_params(self, deep=True):
+        return {"seed": self.seed, "train_rows": self.train_rows, "eta": self.eta,
+                "regularization": self.regularization, "base_names": list(self.base_names),
+                "normalization": "fixed empirical training-score quantile",
+                "weight_update": "SEAD/FTRL-inspired softmax multiplicative weighting"}
+
+    def _make_bases(self):
+        return [
+            IsolationForest(n_estimators=256, max_samples=min(256, self.train_rows),
+                            contamination="auto", random_state=self.seed, n_jobs=1),
+            ECOD(contamination=0.1, n_jobs=1),
+            make_pipeline(MinMaxScaler(),
+                          ADERH(n_estimators=256, n=18, contamination=0.1,
+                                random_state=self.seed)),
+        ]
+
+    @staticmethod
+    def _raw_score(model, name, values):
+        if name == "iforest":
+            return -np.asarray(model.score_samples(values), dtype=float)
+        return np.asarray(model.decision_function(values), dtype=float)
+
+    def fit(self, values, y=None):
+        values = np.asarray(values, dtype=float)
+        self.models_ = self._make_bases()
+        self.references_ = []
+        for name, model in zip(self.base_names, self.models_):
+            model.fit(values)
+            scores = self._raw_score(model, name, values)
+            if not np.isfinite(scores).all():
+                raise ValueError(f"Nonfinite training scores from {name}")
+            self.references_.append(np.sort(scores))
+        # Algorithm 1 in SEAD initializes equal logits; all-ones is softmax-uniform.
+        self.logits_ = np.ones(len(self.models_), dtype=float)
+        return self
+
+    def decision_function(self, values):
+        if not hasattr(self, "models_"):
+            raise ValueError("AdaptiveScoreEnsemble must be fitted first")
+        values = np.asarray(values, dtype=float)
+        raw = np.column_stack([
+            self._raw_score(model, name, values)
+            for name, model in zip(self.base_names, self.models_)
+        ])
+        normalized = np.empty_like(raw, dtype=float)
+        for index, reference in enumerate(self.references_):
+            # Fixed normal-reference empirical CDF; values are in (0, 1].
+            normalized[:, index] = (
+                np.searchsorted(reference, raw[:, index], side="right") + 1
+            ) / (len(reference) + 1)
+        outputs = np.empty(len(values), dtype=float)
+        prior = np.full(len(self.models_), 1. / len(self.models_))
+        for row_index, scores in enumerate(normalized):
+            shifted = self.logits_ - np.max(self.logits_)
+            weights = np.exp(shifted)
+            weights /= weights.sum()
+            outputs[row_index] = float(np.dot(weights, scores))
+            # Gradient of <softmax(w), score> + lambda*KL(softmax(w)||prior).
+            safe = np.maximum(weights, 1e-15)
+            augmented = scores + self.regularization * (np.log(safe / prior) + 1.)
+            gradient = weights * (augmented - float(np.dot(weights, augmented)))
+            self.logits_ -= self.eta * gradient
+        return outputs
 
 
 def build_detector(detector, seed, train_rows):
@@ -97,6 +181,9 @@ def build_detector(detector, seed, train_rows):
             MinMaxScaler(),
             ADERH(n_estimators=256, n=18, contamination=0.1,
                   random_state=seed))
+    if detector == "sead_adaptive":
+        return AdaptiveScoreEnsemble(seed=seed, train_rows=train_rows, eta=1.0,
+                                     regularization=1e-6)
     raise ValueError(f"Unknown detector {detector!r}; choose one of {DETECTOR_CHOICES}")
 
 
@@ -243,11 +330,16 @@ def fit(train_directory, cal_directory, output, alpha=0.001, seed=7143, detector
         raise ValueError(f"Unsupported detector: {detector}")
     bundle = {"protocol_version": PROTOCOL_VERSION, "models": {}, "thresholds": {}, "alpha": alpha,
               "detector": detector}
+    calibration_replay_models = {}
     for name, columns in MODEL_FEATURES.items():
         model = build_detector(detector, seed, len(train))
         model.fit(train[columns].to_numpy(dtype=float))
-        calibration_scores = anomaly_scores(model, cal[columns].to_numpy(dtype=float), detector)
-        bundle["models"][name] = model
+        calibration_replay_models[name] = copy.deepcopy(model)
+        calibration_model = copy.deepcopy(model)
+        calibration_scores = anomaly_scores(calibration_model, cal[columns].to_numpy(dtype=float), detector)
+        # Stateful adaptive ensembles are frozen after normal calibration so the
+        # held-out stream begins with weights learned only from normal evidence.
+        bundle["models"][name] = calibration_model if detector == "sead_adaptive" else model
         bundle["thresholds"][name] = conformal_threshold(calibration_scores, alpha)
     bundle["tail_model"] = fit_tail_model(train)
     bundle["thresholds"]["robust_tail"] = conformal_threshold(tail_scores(bundle["tail_model"], cal), alpha)
@@ -284,7 +376,10 @@ def fit(train_directory, cal_directory, output, alpha=0.001, seed=7143, detector
                      "sklearn": sklearn.__version__},
     }
     bundle["manifest"] = manifest
-    cal_predictions = score_frame(bundle, cal)
+    calibration_bundle = copy.deepcopy(bundle)
+    if detector == "sead_adaptive":
+        calibration_bundle["models"] = calibration_replay_models
+    cal_predictions = score_frame(calibration_bundle, cal)
     manifest["calibration_alarm_rate"] = cal_predictions.groupby("method").alarm.mean().to_dict()
     joblib.dump(bundle, out / "model.joblib")
     manifest["model_sha256"] = sha256(out / "model.joblib")
