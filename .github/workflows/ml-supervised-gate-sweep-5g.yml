@@ -1,4 +1,5 @@
 name: 5G supervised confirmation gate sweep
+# Historical development only; selected gate must be frozen before prospective confirmation.
 
 on:
   push:
