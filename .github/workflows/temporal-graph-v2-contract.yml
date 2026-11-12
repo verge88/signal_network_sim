@@ -1,4 +1,5 @@
 name: Temporal graph v2 contract
+# Frozen v2 classifier/fusion validation before new prospective acquisition.
 
 on:
   push:
