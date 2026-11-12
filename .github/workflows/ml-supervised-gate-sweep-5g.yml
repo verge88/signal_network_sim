@@ -2,10 +2,6 @@ name: 5G supervised confirmation gate sweep
 # Historical development only; selected gate must be frozen before prospective confirmation.
 
 on:
-  push:
-    branches: ['experiment/ml-detector-v2-20261112']
-    paths:
-      - '.github/workflows/ml-supervised-gate-sweep-5g.yml'
   workflow_dispatch:
 
 permissions:
