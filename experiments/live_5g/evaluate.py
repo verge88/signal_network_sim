@@ -44,8 +44,35 @@ TAIL_METHODS = ["robust_tail", "hybrid_tail_without_KIE", "hybrid_tail"]
 TAIL_FEATURES = ["request_count", "error_rate", "update_count"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
 PROTOCOL_VERSION = "live-5g-v2-tail"
-DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive")
-DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive"}
+DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised")
+DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised"}
+
+
+class SupervisedProbabilityDetector:
+    """Frozen RandomForest probability scorer for prospective confirmation.
+
+    Labels are accepted only during development fitting. At runtime this exposes
+    the same larger-is-more-anomalous decision_function convention as the
+    unsupervised detector interface.
+    """
+
+    def __init__(self, seed=7143):
+        self.seed = int(seed)
+        self.model = ExtraTreesClassifier(
+            n_estimators=400, max_features="sqrt", min_samples_leaf=2,
+            class_weight="balanced_subsample", n_jobs=1, random_state=self.seed)
+
+    def get_params(self, deep=True):
+        return {"seed": self.seed, "estimator": "ExtraTreesClassifier",
+                "n_estimators": 400, "max_features": "sqrt",
+                "min_samples_leaf": 2, "class_weight": "balanced_subsample"}
+
+    def fit(self, values, labels):
+        self.model.fit(np.asarray(values, dtype=float), np.asarray(labels, dtype=int))
+        return self
+
+    def decision_function(self, values):
+        return self.model.predict_proba(np.asarray(values, dtype=float))[:, 1]
 
 
 class AdaptiveScoreEnsemble:
@@ -184,6 +211,8 @@ def build_detector(detector, seed, train_rows):
     if detector == "sead_adaptive":
         return AdaptiveScoreEnsemble(seed=seed, train_rows=train_rows, eta=1.0,
                                      regularization=1e-6)
+    if detector == "rf_supervised":
+        return SupervisedProbabilityDetector(seed=seed)
     raise ValueError(f"Unknown detector {detector!r}; choose one of {DETECTOR_CHOICES}")
 
 
@@ -379,6 +408,92 @@ def fit(train_directory, cal_directory, output, alpha=0.001, seed=7143, detector
     calibration_bundle = copy.deepcopy(bundle)
     if detector == "sead_adaptive":
         calibration_bundle["models"] = calibration_replay_models
+    cal_predictions = score_frame(calibration_bundle, cal)
+    manifest["calibration_alarm_rate"] = cal_predictions.groupby("method").alarm.mean().to_dict()
+    joblib.dump(bundle, out / "model.joblib")
+    manifest["model_sha256"] = sha256(out / "model.joblib")
+    dump_json(out / "manifest.json", manifest)
+    cal_predictions.to_csv(out / "calibration_predictions.csv", index=False)
+    return manifest
+
+
+def fit_supervised(train_directory, cal_directory, development_directories, output,
+                   alpha=0.001, seed=7143):
+    """Fit a frozen supervised detector using historical labels and fresh normal data.
+
+    Historical development captures may contain attacks. Fresh train/cal must be
+    normal-only and run-disjoint. The held-out prospective test is not available
+    to this function.
+    """
+    fresh_train, fresh_train_labels, train_files = read_dataset(train_directory)
+    cal, cal_labels, cal_files = read_dataset(cal_directory)
+    if fresh_train_labels.attack.any() or cal_labels.attack.any():
+        raise ValueError("Fresh train/calibration must contain only normal observations")
+    development_frames, development_labels, development_files = [], [], []
+    for directory in development_directories:
+        frame, labels, files = read_dataset(directory)
+        development_frames.append(frame)
+        development_labels.append(labels)
+        development_files.extend(files)
+    if not development_frames:
+        raise ValueError("Supervised fitting requires historical development captures")
+    require_disjoint(fresh_train, cal, *development_frames)
+    dev = pd.concat(development_frames, ignore_index=True)
+    dev_labels = pd.concat(development_labels, ignore_index=True)
+    if not dev_labels.attack.astype(bool).any() or dev_labels.attack.astype(bool).all():
+        raise ValueError("Development captures must contain both normal and attack observations")
+
+    training = pd.concat([dev, fresh_train], ignore_index=True)
+    targets = pd.concat([
+        dev_labels.attack.astype(int).reset_index(drop=True),
+        pd.Series(np.zeros(len(fresh_train), dtype=int))
+    ], ignore_index=True)
+
+    out = Path(output)
+    out.mkdir(parents=True, exist_ok=True)
+    if (out / "manifest.json").exists():
+        raise ValueError("Frozen model already exists; choose a new output directory")
+    detector = "rf_supervised"
+    bundle = {"protocol_version": PROTOCOL_VERSION, "models": {}, "thresholds": {},
+              "alpha": alpha, "detector": detector}
+    for name, columns in MODEL_FEATURES.items():
+        model = build_detector(detector, seed, len(training))
+        model.fit(training[columns].to_numpy(dtype=float), targets.to_numpy(dtype=int))
+        calibration_scores = anomaly_scores(model, cal[columns].to_numpy(dtype=float), detector)
+        bundle["models"][name] = model
+        bundle["thresholds"][name] = conformal_threshold(calibration_scores, alpha)
+    bundle["tail_model"] = fit_tail_model(fresh_train)
+    bundle["thresholds"]["robust_tail"] = conformal_threshold(
+        tail_scores(bundle["tail_model"], cal), alpha)
+
+    manifest = {
+        "protocol_version": PROTOCOL_VERSION, "created_at": time.time(), "seed": seed,
+        "detector": detector,
+        "detector_parameters": json_safe_parameters(build_detector(detector, seed, len(training)).get_params()),
+        "alpha_target": alpha, "calibration_rows": len(cal),
+        "training_rows": len(training), "fresh_normal_training_rows": len(fresh_train),
+        "historical_development_rows": len(dev),
+        "train_runs": sorted(fresh_train.run_id.astype(str).unique().tolist()),
+        "calibration_runs": sorted(cal.run_id.astype(str).unique().tolist()),
+        "development_runs": sorted(dev.run_id.astype(str).unique().tolist()),
+        "features": MODEL_FEATURES,
+        "forbidden_inputs": ["attack", "scenario", "onset", "episode_id"] + META,
+        "supervised_provenance": {
+            "labels_used_only_from_historical_development": True,
+            "fresh_train_added_as_normal": True,
+            "heldout_test_used_for_fit_or_threshold": False,
+            "confirmation_fraction_selected_on_historical_development": 0.80,
+        },
+        "tail_model": bundle["tail_model"],
+        "thresholds": {k: v if math.isfinite(v) else None for k, v in bundle["thresholds"].items()},
+        "threshold_sufficient": all(math.isfinite(v) for v in bundle["thresholds"].values()),
+        "score_convention": "RandomForest attack probability; alarm iff calibrated margin > 0.",
+        "sources": train_files + cal_files + development_files,
+        "versions": {"python": platform.python_version(), "numpy": np.__version__,
+                     "pandas": pd.__version__, "sklearn": sklearn.__version__},
+    }
+    bundle["manifest"] = manifest
+    calibration_bundle = copy.deepcopy(bundle)
     cal_predictions = score_frame(calibration_bundle, cal)
     manifest["calibration_alarm_rate"] = cal_predictions.groupby("method").alarm.mean().to_dict()
     joblib.dump(bundle, out / "model.joblib")
