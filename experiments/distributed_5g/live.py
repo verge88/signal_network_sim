@@ -37,6 +37,7 @@ def main():
     parser.add_argument('--namespace-placement', type=Path)
     parser.add_argument('--include-if-context', action='store_true')
     parser.add_argument('--confirm-if-context', action='store_true')
+    parser.add_argument('--confirmation-fraction', type=float, default=.5)
     parser.add_argument('--load-experiment', action='store_true')
     parser.add_argument('--recover-normal', action='store_true')
     args=parser.parse_args()
@@ -46,6 +47,8 @@ def main():
             parser.error('Load experiment requires a registered seed, 180 windows and confirmation')
     if args.confirm_if_context and not args.include_if_context:
         parser.error('--confirm-if-context requires --include-if-context')
+    if not 0 < args.confirmation_fraction <= 1:
+        parser.error('--confirmation-fraction must be in (0,1]')
     if args.smoke_windows is not None and not 1 <= args.smoke_windows <= 600:
         parser.error('--smoke-windows must be between 1 and 600')
     args.phase='test'
@@ -69,7 +72,7 @@ def main():
         configure(args.out/'hierarchy',topology,models,context['run_id'],context['operator_key'],
                   context['control_key'],context['extensions'],False,args.base_port,
                   hosts=hosts, include_if_context=args.include_if_context, confirm_if_context=args.confirm_if_context,
-                  recover_normal=args.recover_normal)
+                  confirmation_fraction=args.confirmation_fraction, recover_normal=args.recover_normal)
         deployment=Deployment(args.out/'hierarchy', prefixes)
         deployment.__enter__()
         holder['deployment']=deployment
@@ -132,6 +135,7 @@ def main():
         alerts.pop(hybrid_method)
     report = dict(windows=args.windows, nf_windows=args.windows * args.actors, processes=37,
         network_namespaces=holder.get('namespaces'), alerts=alerts,
+        confirmation_fraction=args.confirmation_fraction,
         transport_seconds=dict(median=statistics.median(durations), maximum=max(durations)),
         manifest_sha256=sha256(args.out/'manifest.json'), model_sha256=sha256(args.frozen/'model.joblib'),
         zone_models_sha256=sha256(args.zone_models),
