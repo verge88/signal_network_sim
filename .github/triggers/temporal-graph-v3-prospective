@@ -1,0 +1,17 @@
+Frozen temporal-graph V3 prospective confirmation
+selection_source=consumed_development_seeds_89901_89902_89903_90001_90002_90003
+prospective_seeds=90101,90102,90103
+model=hard_negative_logistic
+hard_negative_quantile=0.98
+hard_negative_weight=8.0
+cluster_order=2
+evidence_decay=0.75
+calibration_policy=max_per_run_conformal_threshold
+graph_alpha=0.0002
+accumulator_multiplier=1.50
+development_worst_seed_fpr=0.0006557663723004285
+development_s5_episodes=19/24
+system_fpr_target=0.001
+primary_development_margin=0.0007
+no_test_tuning=true
+contract_run=43297156151
