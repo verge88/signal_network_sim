@@ -41,7 +41,7 @@ def configure(directory, topology, models, source_run, operator_key, control_key
         raise ValueError('Confirmation requires IF_CONTEXT decisions')
     if not 0 < confirmation_fraction <= 1:
         raise ValueError('Confirmation fraction must be in (0, 1]')
-    if ml_confirmation_mode not in ('recovery', 'persistence'):
+    if ml_confirmation_mode not in ('recovery', 'persistence', 'direct'):
         raise ValueError('Unknown ML confirmation mode')
     if not 1 <= ml_persistence_hits <= ml_persistence_window:
         raise ValueError('Persistence hits must be between 1 and window length')
