@@ -19,7 +19,7 @@ import joblib
 import numpy as np
 import pandas as pd
 import sklearn
-from sklearn.ensemble import IsolationForest
+from sklearn.ensemble import IsolationForest, RandomForestClassifier
 from sklearn.covariance import EllipticEnvelope
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.svm import OneClassSVM
@@ -58,12 +58,12 @@ class SupervisedProbabilityDetector:
 
     def __init__(self, seed=7143):
         self.seed = int(seed)
-        self.model = ExtraTreesClassifier(
+        self.model = RandomForestClassifier(
             n_estimators=400, max_features="sqrt", min_samples_leaf=2,
             class_weight="balanced_subsample", n_jobs=1, random_state=self.seed)
 
     def get_params(self, deep=True):
-        return {"seed": self.seed, "estimator": "ExtraTreesClassifier",
+        return {"seed": self.seed, "estimator": "RandomForestClassifier",
                 "n_estimators": 400, "max_features": "sqrt",
                 "min_samples_leaf": 2, "class_weight": "balanced_subsample"}
 
