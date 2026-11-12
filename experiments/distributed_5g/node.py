@@ -213,9 +213,14 @@ class Node:
                     else:
                         confirmed = context and (not self.config.get('confirm_if_context') or
                                                   recovered > self.config.get('confirmation_fraction', 0.5) * threshold)
+                    accumulator_multiplier=float(self.config.get('accumulator_multiplier', 1.0))
+                    budgeted_without_ml=bool(report['local_security'] or
+                        (complete and recovered > accumulator_multiplier * threshold))
                     decisions[identity].update(original_security=decisions[identity]['security'],
                         recovery_accumulated=recovered, recovery_quiet_windows=streak, recovery_reset=reset,
-                        security=bool(report['local_security'] or (complete and (recovered > threshold or confirmed))))
+                        accumulator_multiplier=accumulator_multiplier,
+                        budgeted_without_ml=budgeted_without_ml,
+                        security=bool(budgeted_without_ml or (complete and confirmed)))
             for identity in missing:
                 self.state['accumulators'].pop(identity, None)
                 self.state.get('recovery', {}).pop(identity, None)
