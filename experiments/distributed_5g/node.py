@@ -177,7 +177,7 @@ class Node:
                     ('local_security', 'allowed', 'evaluation_time') if name in report})
                 if self.config.get('include_if_context'):
                     context = report['if_context_alarm']
-                    confirmed = complete and context and value > CONFIRMATION_FRACTION * self.config['model']['threshold']
+                    confirmed = complete and context and value > self.config.get('confirmation_fraction', 0.5) * self.config['model']['threshold']
                     use_context = confirmed if self.config.get('confirm_if_context') else context
                     decisions[identity].update(accum_security=bool(security),
                         if_context_alarm=context, if_context_confirmed=confirmed,
@@ -197,7 +197,7 @@ class Node:
                     threshold = self.config['model']['threshold']
                     context = report.get('if_context_alarm', False)
                     confirmed = context and (not self.config.get('confirm_if_context') or
-                                              recovered > CONFIRMATION_FRACTION * threshold)
+                                              recovered > self.config.get('confirmation_fraction', 0.5) * threshold)
                     decisions[identity].update(original_security=decisions[identity]['security'],
                         recovery_accumulated=recovered, recovery_quiet_windows=streak, recovery_reset=reset,
                         security=bool(report['local_security'] or (complete and (recovered > threshold or confirmed))))
