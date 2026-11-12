@@ -1,0 +1,50 @@
+name: 5G adaptive ensemble paired replay
+
+on:
+  push:
+    branches: ['experiment/ml-detector-v2-20261112']
+    paths:
+      - '.github/workflows/ml-adaptive-replay-5g.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  replay:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - seed: 89501
+            artifact: 13885821788
+          - seed: 89502
+            artifact: 13884014668
+          - seed: 89503
+            artifact: 13886115411
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install detector stack
+        env:
+          NO_LONG_DOUBLE: '1'
+        run: python -m pip install -r experiments/live_5g/requirements.txt
+      - name: Download archived prospective evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir packed evidence
+          gh api repos/verge88/signal_network_sim/actions/artifacts/${{ matrix.artifact }}/zip > packed/artifact.zip
+          unzip -q packed/artifact.zip -d packed
+          unzip -q packed/full-evidence.zip -d evidence
+      - name: Fit adaptive ensemble and replay FULL_HYBRID
+        run: python -m experiments.distributed_5g.model_replay evidence --detector sead_adaptive --seed ${{ matrix.seed }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: adaptive-replay-${{ matrix.seed }}-${{ github.run_id }}
+          path: evidence/alt_summary/report.json
+          retention-days: 30
