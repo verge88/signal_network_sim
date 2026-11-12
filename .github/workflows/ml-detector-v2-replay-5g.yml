@@ -1,0 +1,90 @@
+name: 5G researched ML paired replay
+
+on:
+  push:
+    branches: ['experiment/ml-detector-v2-20261112']
+    paths:
+      - '.github/workflows/ml-detector-v2-replay-5g.yml'
+      - 'experiments/live_5g/evaluate.py'
+      - 'experiments/live_5g/requirements.txt'
+      - 'experiments/live_5g/test_evaluate.py'
+      - 'experiments/distributed_5g/model_replay.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install detector stack
+        env:
+          NO_LONG_DOUBLE: '1'
+        run: python -m pip install -r experiments/live_5g/requirements.txt
+      - name: Scientific detector contract tests
+        run: python -m pytest experiments/live_5g/test_evaluate.py -q
+
+  replay:
+    needs: contract
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - detector: eif
+            seed: 89501
+            artifact: 13885821788
+          - detector: eif
+            seed: 89502
+            artifact: 13884014668
+          - detector: eif
+            seed: 89503
+            artifact: 13886115411
+          - detector: knn
+            seed: 89501
+            artifact: 13885821788
+          - detector: knn
+            seed: 89502
+            artifact: 13884014668
+          - detector: knn
+            seed: 89503
+            artifact: 13886115411
+          - detector: ecod
+            seed: 89501
+            artifact: 13885821788
+          - detector: ecod
+            seed: 89502
+            artifact: 13884014668
+          - detector: ecod
+            seed: 89503
+            artifact: 13886115411
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install detector stack
+        env:
+          NO_LONG_DOUBLE: '1'
+        run: python -m pip install -r experiments/live_5g/requirements.txt
+      - name: Download archived prospective evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir packed evidence
+          gh api repos/verge88/signal_network_sim/actions/artifacts/${{ matrix.artifact }}/zip > packed/artifact.zip
+          unzip -q packed/artifact.zip -d packed
+          unzip -q packed/full-evidence.zip -d evidence
+      - name: Fit researched detector and replay FULL_HYBRID
+        run: python -m experiments.distributed_5g.model_replay evidence --detector ${{ matrix.detector }} --seed ${{ matrix.seed }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: researched-replay-${{ matrix.detector }}-${{ matrix.seed }}-${{ github.run_id }}
+          path: evidence/alt_summary/report.json
+          retention-days: 30
