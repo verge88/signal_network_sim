@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from experiments.live_5g.evaluate import fit, load_frozen, score_frame, KEYS
+from experiments.live_5g.evaluate import DETECTOR_CHOICES, fit, load_frozen, score_frame, KEYS
 from experiments.distributed_5g.paired import summarize
 
 
@@ -85,7 +85,7 @@ def run(root, detector, seed):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("root", type=Path)
-    parser.add_argument("--detector", required=True, choices=["ocsvm_rbf", "lof", "elliptic"])
+    parser.add_argument("--detector", required=True, choices=DETECTOR_CHOICES)
     parser.add_argument("--seed", required=True, type=int)
     args = parser.parse_args()
     run(args.root, args.detector, args.seed)
