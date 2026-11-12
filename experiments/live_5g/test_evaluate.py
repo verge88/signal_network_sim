@@ -197,7 +197,7 @@ class ScientificContractTests(unittest.TestCase):
             root = Path(directory)
             write_fixture(root / "train", "train", 120)
             write_fixture(root / "cal", "cal", 1000)
-            for detector in ("ocsvm_rbf", "lof", "elliptic"):
+            for detector in ("ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod"):
                 with self.subTest(detector=detector):
                     frozen = root / detector
                     manifest = fit(root / "train", root / "cal", frozen, detector=detector)
