@@ -1,4 +1,5 @@
 name: 5G alternative ML detector matrix
+# Prospective comparison: same seeds/schedule as frozen IF baseline; no test tuning.
 
 on:
   push:
