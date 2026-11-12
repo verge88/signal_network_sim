@@ -38,6 +38,24 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - detector: dvmad
+            seed: 89501
+            artifact: 13885821788
+          - detector: dvmad
+            seed: 89502
+            artifact: 13884014668
+          - detector: dvmad
+            seed: 89503
+            artifact: 13886115411
+          - detector: aderh
+            seed: 89501
+            artifact: 13885821788
+          - detector: aderh
+            seed: 89502
+            artifact: 13884014668
+          - detector: aderh
+            seed: 89503
+            artifact: 13886115411
           - detector: eif
             seed: 89501
             artifact: 13885821788
