@@ -8,6 +8,7 @@ import pandas as pd
 
 from experiments.distributed_5g.temporal_graph import TemporalGraphDetector
 from experiments.distributed_5g.temporal_graph_v2 import LocalSynchronyTransformer, SupervisedTemporalGraphDetector, FEATURES as V2_FEATURES
+from experiments.distributed_5g.temporal_graph_v3 import TemporalGraphV3Detector
 from experiments.robustness_5g.design import attack_schedule, s5_members, s5_count
 
 
@@ -131,3 +132,54 @@ def test_v2_supervised_detector_roundtrips_with_clean_state():
         loaded=joblib.load(path)
         loaded.reset()
         assert np.allclose(batch,loaded.decision_function(test),rtol=0,atol=1e-12)
+
+
+def test_v3_structural_evidence_matches_batch_and_online():
+    dev=frame(30,"v3-dev")
+    labels=pd.DataFrame({"attack":np.zeros(len(dev),dtype=int),
+                         "scenario":["N1"]*len(dev)})
+    mask=dev.window_id.between(10,24) & dev.nf_id.isin(["slot-1","slot-2","slot-3"])
+    # Give the laboratory S5 examples a coordinated temporal shape.
+    for window in range(10,25):
+        wave=(window//2)%3
+        for slot in (1,2,3):
+            row=(dev.window_id.eq(window)&dev.nf_id.eq(f"slot-{slot}"))
+            dev.loc[row,"request_count"]=3+wave+(slot==2)
+    labels.loc[mask,"attack"]=1
+    labels.loc[mask,"scenario"]="S5"
+
+    detector=TemporalGraphV3Detector(seed=321,history=8,cluster_order=2,decay=.75)
+    detector.fit_development([(dev,labels)])
+    test=frame(20,"v3-heldout")
+
+    batch=detector.clean_copy().decision_function(test)
+    online=detector.clean_copy()
+    pieces=[]
+    for _,part in test.groupby("window_id",sort=False):
+        pieces.append(online.decision_function(part))
+    assert np.allclose(batch,np.concatenate(pieces),rtol=0,atol=1e-12)
+
+
+def test_v3_detector_roundtrips_with_clean_temporal_state():
+    dev=frame(30,"v3-dev-serialization")
+    labels=pd.DataFrame({"attack":np.zeros(len(dev),dtype=int),
+                         "scenario":["N1"]*len(dev)})
+    mask=dev.window_id.between(8,22)&dev.nf_id.isin(["slot-9","slot-10","slot-11"])
+    for window in range(8,23):
+        wave=(window//2)%3
+        for slot in (9,10,11):
+            row=(dev.window_id.eq(window)&dev.nf_id.eq(f"slot-{slot}"))
+            dev.loc[row,"request_count"]=3+wave+(slot==10)
+    labels.loc[mask,"attack"]=1
+    labels.loc[mask,"scenario"]="S5"
+    detector=TemporalGraphV3Detector(seed=456,cluster_order=2,decay=.75)
+    detector.fit_development([(dev,labels)])
+    expected=detector.clean_copy().decision_function(frame(18,"v3-roundtrip"))
+
+    with tempfile.TemporaryDirectory() as directory:
+        path=Path(directory)/"v3.joblib"
+        joblib.dump(detector.clean_copy(),path)
+        loaded=joblib.load(path)
+        loaded.reset()
+        actual=loaded.decision_function(frame(18,"v3-roundtrip"))
+    assert np.allclose(expected,actual,rtol=0,atol=1e-12)
