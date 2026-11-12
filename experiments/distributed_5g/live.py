@@ -42,6 +42,7 @@ def main():
     parser.add_argument('--ml-confirmation-mode', choices=['recovery','persistence'], default='recovery')
     parser.add_argument('--ml-persistence-window', type=int, default=5)
     parser.add_argument('--ml-persistence-hits', type=int, default=3)
+    parser.add_argument('--accumulator-multiplier', type=float, default=1.0)
     parser.add_argument('--load-experiment', action='store_true')
     parser.add_argument('--recover-normal', action='store_true')
     args=parser.parse_args()
@@ -55,6 +56,8 @@ def main():
         parser.error('--confirmation-fraction must be in (0,1]')
     if not 1 <= args.ml_persistence_hits <= args.ml_persistence_window:
         parser.error('--ml-persistence-hits must be between 1 and --ml-persistence-window')
+    if args.accumulator_multiplier <= 0:
+        parser.error('--accumulator-multiplier must be positive')
     if args.smoke_windows is not None and not 1 <= args.smoke_windows <= 600:
         parser.error('--smoke-windows must be between 1 and 600')
     args.phase='test'
@@ -82,6 +85,7 @@ def main():
                   ml_confirmation_mode=args.ml_confirmation_mode,
                   ml_persistence_window=args.ml_persistence_window,
                   ml_persistence_hits=args.ml_persistence_hits,
+                  accumulator_multiplier=args.accumulator_multiplier,
                   recover_normal=args.recover_normal)
         deployment=Deployment(args.out/'hierarchy', prefixes)
         deployment.__enter__()
@@ -155,6 +159,7 @@ def main():
         ml_confirmation_mode=args.ml_confirmation_mode,
         ml_persistence_window=args.ml_persistence_window,
         ml_persistence_hits=args.ml_persistence_hits,
+        accumulator_multiplier=args.accumulator_multiplier,
         confirmation_fraction=args.confirmation_fraction,
         transport_seconds=dict(median=statistics.median(durations), maximum=max(durations)),
         manifest_sha256=sha256(args.out/'manifest.json'), model_sha256=sha256(args.frozen/'model.joblib'),
