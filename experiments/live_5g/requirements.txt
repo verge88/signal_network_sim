@@ -10,5 +10,5 @@ pytest==8.3.4
 
 pyod==3.6.7
 isotree==0.6.1.post10
-dvmad==0.1.0
+dvmad @ git+https://github.com/troisang1/dvmad.git@df5cf44174a9170843c41967c12ae4fdbb56e29c
 aderh==1.0.0
