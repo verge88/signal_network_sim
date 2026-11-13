@@ -13,7 +13,7 @@ import pandas as pd
 from scipy.stats import wilcoxon
 
 EXPECTED_SEEDS=tuple(range(90401,90411))
-METHODS=("WITHOUT_MINING","BUDGETED_WITHOUT_MINING","TG_V4","TG_RESCUE","TG_V5","FULL_HYBRID")
+METHODS=("WITHOUT_MINING","BUDGETED_WITHOUT_MINING","TG_V5","FULL_HYBRID")
 FPR_TARGET=.001
 BOOTSTRAP_REPS=20000
 BOOTSTRAP_SEED=20261113
@@ -116,7 +116,7 @@ def run(root,output):
             for key in ("tp","fp","fn","tn","recall","fpr","precision","episodes","episodes_with_alarm"):
                 if key in m:
                     row[f"{prefix}_{key}"]=m[key]
-        for name in ("WITHOUT_MINING","BUDGETED_WITHOUT_MINING","TG_V4","TG_RESCUE","TG_V5","FULL_HYBRID"):
+        for name in METHODS:
             ep=episode_summary(episodes[seed],name)
             for key,value in ep.items():
                 row[f"{name.lower()}_{key}"]=value
@@ -206,7 +206,7 @@ def run(root,output):
         "| Method | TP | FP | Recall | Precision | FPR |",
         "|---|---:|---:|---:|---:|---:|",
     ]
-    for name in ("WITHOUT_MINING","BUDGETED_WITHOUT_MINING","TG_V4","TG_RESCUE","TG_V5","FULL_HYBRID"):
+    for name in METHODS:
         m=pooled_metrics[name]
         lines.append(f"| {name} | {m['tp']} | {m['fp']} | {m['recall']:.6f} | {m['precision']:.6f} | {m['fpr']:.6f} |")
     lines += [
@@ -216,7 +216,7 @@ def run(root,output):
         "| Method | S5 detected | S5 recall | Cyclic-S5 detected | Cyclic-S5 recall |",
         "|---|---:|---:|---:|---:|",
     ]
-    for name in ("WITHOUT_MINING","BUDGETED_WITHOUT_MINING","TG_V4","TG_RESCUE","TG_V5","FULL_HYBRID"):
+    for name in METHODS:
         s=s5_totals[name]
         lines.append(f"| {name} | {s['detected']}/40 | {s['episode_recall']:.3f} | {s['cyclic_detected']}/10 | {s['cyclic_episode_recall']:.3f} |")
     lines += [
