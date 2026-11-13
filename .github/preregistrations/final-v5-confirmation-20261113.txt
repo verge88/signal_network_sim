@@ -1,0 +1,24 @@
+Final V5 preregistered confirmation
+date=2026-11-13
+algorithm=TG_V5 frozen
+core=TG_V4 unchanged
+core_cluster_order=2
+core_decay=0.75
+core_alpha=0.00015
+accumulator_multiplier=1.50
+rescue=contiguous_three_node_common_mode_residual_motif
+rescue_iqr_limit=1.0
+rescue_decay=0.8
+rescue_threshold=2.0
+development_history=89901-90303
+final_prospective_seeds=90401,90402,90403,90404,90405,90406,90407,90408,90409,90410
+fpr_target=0.001
+statistical_unit=independent_seed_run
+primary_1=audit_pass_all_10
+primary_2=FULL_HYBRID_FPR_le_0.001_each_seed
+primary_3=pooled_FULL_HYBRID_recall_gt_pooled_WITHOUT_MINING_recall
+primary_4=paired_one_sided_Wilcoxon_recall_gain_p_lt_0.05
+primary_5=FULL_HYBRID_S5_episode_recall_gt_WITHOUT_MINING
+cyclic_s5=secondary_descriptive_endpoint_no_100_percent_gate
+no_test_tuning=true
+no_parameter_changes_after_trigger=true
