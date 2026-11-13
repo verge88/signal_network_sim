@@ -179,6 +179,27 @@ def learned_probability(bundle, frame):
     return model.predict_proba(graph[:, : len(FEATURES_V4)])[:, 1]
 
 
+def v4_probability_and_evidence(bundle, frame):
+    """Replay V4 once and expose both its learned probability and final evidence.
+
+    This is algebraically the same path as TemporalGraphV4Detector.decision_function,
+    but avoids recomputing the residual-temporal transform solely for the
+    LEARNED_PROBABILITY_ONLY diagnostic.
+    """
+    detector = bundle["temporal_graph_v4"].clean_copy()
+    transformer = CommonModeResidualTransformer(history=detector.history_size)
+    graph = transformer.transform(frame)
+    probability = detector.model.predict_proba(graph)[:, 1]
+    structural = detector._structural(frame, probability, graph)
+    evidence = np.zeros(len(frame), dtype=float)
+    state = {}
+    for pos, nf in enumerate(frame.nf_id.astype(str).to_numpy()):
+        value = detector.decay * state.get(nf, 0.0) + float(structural[pos])
+        state[nf] = value
+        evidence[pos] = value
+    return probability, evidence
+
+
 def learned_threshold(root, bundle):
     cal = pd.read_csv(
         root / "cal" / "features.csv",
@@ -340,11 +361,10 @@ def counterfactual_group(frame, target_relative, variant_name):
 
 
 def branch_predictions(bundle, frame, point_threshold):
-    learned = learned_probability(bundle, frame) > point_threshold
-
-    v4 = bundle["temporal_graph_v4"].clean_copy()
+    probability, v4_evidence = v4_probability_and_evidence(bundle, frame)
+    learned = probability > point_threshold
     v4_threshold = float(bundle["thresholds"]["TG_V4"])
-    v4_alarm = v4.decision_function(frame) > v4_threshold
+    v4_alarm = v4_evidence > v4_threshold
 
     rescue = bundle["cyclic_rescue"].clean_copy()
     rescue_threshold = float(bundle["thresholds"]["TG_RESCUE"])
