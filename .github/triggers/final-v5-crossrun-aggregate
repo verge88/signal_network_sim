@@ -5,3 +5,5 @@ aggregation_checkout=ca53868b7c5bc0c5ed83a9c8ca86b7e34abddd94
 expected_main_valid_summaries=9
 expected_retry_seed=90404
 no_scientific_parameter_changes=true
+analysis_fix_commit=d930117bc4d6fad87addffe21c3d351199aa4537
+retry_90403_run=43454879543
