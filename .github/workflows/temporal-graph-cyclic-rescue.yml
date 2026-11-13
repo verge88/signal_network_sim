@@ -1,4 +1,5 @@
 name: S5 cyclic rescue motif development
+# Low-IQR gated contiguous-triple rescue screen.
 
 on:
   push:
