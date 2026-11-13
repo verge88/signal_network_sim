@@ -1,0 +1,6 @@
+Final V5 confirmation trigger
+frozen_algorithm_commit=f5002ec7429c32bcf0529a2be759ef65f81b5df0
+workflow_and_preregistration_commit=33dc3d5cfd9f2078b9f5bae4e2dbe7d03933b216
+final_seeds=90401,90402,90403,90404,90405,90406,90407,90408,90409,90410
+no_test_tuning=true
+no_parameter_changes_after_trigger=true
