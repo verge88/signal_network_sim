@@ -1,0 +1,92 @@
+name: Final V5 cross-run aggregation
+
+on:
+  push:
+    branches: ['experiment/final-v5-confirmation-20261113']
+    paths:
+      - '.github/triggers/final-v5-crossrun-aggregate'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ca53868b7c5bc0c5ed83a9c8ca86b7e34abddd94
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==1.26.4 pandas==2.2.3 scipy==1.14.1
+
+      - name: Wait for frozen prospective acquisitions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          main=43433732002
+          retry=43435550431
+          for attempt in $(seq 1 180); do
+            main_status="$(gh api repos/verge88/signal_network_sim/actions/runs/$main --jq .status)"
+            retry_status="$(gh api repos/verge88/signal_network_sim/actions/runs/$retry --jq .status)"
+            echo "main=$main_status retry=$retry_status"
+            if test "$main_status" = completed && test "$retry_status" = completed; then
+              break
+            fi
+            sleep 30
+          done
+          test "$(gh api repos/verge88/signal_network_sim/actions/runs/$main --jq .status)" = completed
+          test "$(gh api repos/verge88/signal_network_sim/actions/runs/$retry --jq .status)" = completed
+          test "$(gh api repos/verge88/signal_network_sim/actions/runs/$retry --jq .conclusion)" = success
+
+      - name: Download nine main summaries plus retry 90404
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p final-inputs
+          main=43433732002
+          retry=43435550431
+
+          gh api "repos/verge88/signal_network_sim/actions/runs/$main/artifacts?per_page=100"             --jq '.artifacts[] | select(.name|startswith("temporal-graph-v5-final-summary-")) | [.id,.name] | @tsv'             > main-artifacts.tsv
+
+          valid=0
+          while IFS=$'\t' read -r id name; do
+            case "$name" in
+              *-90404-*) continue ;;
+            esac
+            mkdir -p "final-inputs/$name"
+            gh api "repos/verge88/signal_network_sim/actions/artifacts/$id/zip" > artifact.zip
+            unzip -q artifact.zip -d "final-inputs/$name"
+            rm artifact.zip
+            test -f "final-inputs/$name/report.json"
+            valid=$((valid+1))
+          done < main-artifacts.tsv
+          test "$valid" -eq 9
+
+          retry_line="$(gh api "repos/verge88/signal_network_sim/actions/runs/$retry/artifacts?per_page=100"             --jq '.artifacts[] | select(.name|startswith("temporal-graph-v5-final-retry-summary-90404-")) | [.id,.name] | @tsv')"
+          test -n "$retry_line"
+          id="$(printf '%s\n' "$retry_line" | cut -f1)"
+          name="$(printf '%s\n' "$retry_line" | cut -f2)"
+          mkdir -p "final-inputs/$name"
+          gh api "repos/verge88/signal_network_sim/actions/artifacts/$id/zip" > artifact.zip
+          unzip -q artifact.zip -d "final-inputs/$name"
+          rm artifact.zip
+          test -f "final-inputs/$name/report.json"
+
+          test "$(find final-inputs -name report.json | wc -l)" -eq 10
+
+      - name: Aggregate preregistered final statistics
+        run: |
+          python -m experiments.distributed_5g.final_v5_confirmation             --root final-inputs --output final-confirmation
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-v5-crossrun-confirmation-${{ github.run_id }}
+          path: final-confirmation/
+          retention-days: 90
