@@ -36,15 +36,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p inputs
-          for spec in \
-            "90401:14049128601" \
-            "90402:14049887852" \
-            "90405:14050881142" \
-            "90406:14048993238" \
-            "90407:14049407530" \
-            "90408:14048857700" \
-            "90409:14049716184" \
-            "90410:14049337789"; do
+          download_one() {
+            spec="$1"
             seed="${spec%%:*}"
             artifact="${spec##*:}"
             work="/tmp/v5-${seed}"
@@ -67,7 +60,19 @@ jobs:
             test -f "inputs/${seed}/frozen/model.joblib"
             test -f "inputs/${seed}/test/distributed_predictions.jsonl"
             rm -rf "$work"
+          }
+          for spec in \
+            "90401:14049128601" \
+            "90402:14049887852" \
+            "90405:14050881142" \
+            "90406:14048993238" \
+            "90407:14049407530" \
+            "90408:14048857700" \
+            "90409:14049716184" \
+            "90410:14049337789"; do
+            download_one "$spec" &
           done
+          wait
 
       - name: Run frozen V5 ablation and structural stress test
         run: |
