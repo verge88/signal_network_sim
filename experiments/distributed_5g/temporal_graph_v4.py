@@ -275,6 +275,7 @@ class TemporalGraphV4Detector:
         meta["probability"]=np.asarray(probability,dtype=float)
         meta["local"]=graph[:,FEATURES_V4.index("localized_residual_corr_contrast")]
         meta["triangle"]=graph[:,FEATURES_V4.index("residual_triangle_contrast")]
+        meta["common"]=graph[:,FEATURES_V4.index("zone_common_delta_abs")]
         meta["_pos"]=np.arange(len(meta))
         out=np.zeros(len(meta),dtype=float)
         for (_,window_id),window in meta.groupby(["run_id","window_id"],sort=False):
@@ -287,7 +288,9 @@ class TemporalGraphV4Detector:
                 contrast=max(0.,kth-median)
                 local=np.maximum(0.,part["local"].to_numpy(float))
                 triangle=np.maximum(0.,part["triangle"].to_numpy(float))
-                motif=np.clip(1.+local+triangle,1.,3.)
+                common=np.maximum(0.,part["common"].to_numpy(float))
+                veto=1.0/(1.0+0.20*common)
+                motif=np.clip(1.+local+triangle,1.,3.)*veto
                 out[part._pos.to_numpy(int)]=np.minimum(p,kth)*contrast*motif
         return out
 
