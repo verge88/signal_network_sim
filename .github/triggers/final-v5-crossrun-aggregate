@@ -1,0 +1,7 @@
+Final V5 cross-run aggregation trigger
+main_run=43433732002
+retry_run=43435550431
+aggregation_checkout=ca53868b7c5bc0c5ed83a9c8ca86b7e34abddd94
+expected_main_valid_summaries=9
+expected_retry_seed=90404
+no_scientific_parameter_changes=true
