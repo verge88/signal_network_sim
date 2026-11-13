@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score
 
-from experiments.live_5g.evaluate import KEYS, DETECTOR_CHOICES, fit, fit_supervised, fit_temporal_graph, fit_temporal_graph_v2, fit_temporal_graph_v3, load_frozen, score_frame, sha256, metrics
+from experiments.live_5g.evaluate import KEYS, DETECTOR_CHOICES, fit, fit_supervised, fit_temporal_graph, fit_temporal_graph_v2, fit_temporal_graph_v3, fit_temporal_graph_v4, load_frozen, score_frame, sha256, metrics
 from experiments.distributed_5g.paired import summarize
 from experiments.robustness_5g.design import attack_schedule, s5_members
 from experiments.resilient_5g.audit import mac
@@ -26,7 +26,8 @@ def lines(path):
 
 
 def prepare(root, previous, seed, detector='iforest', development=(), reference_calibration=(),
-            v3_cluster_order=2, v3_decay=.75, v3_alpha=.0002, v3_accumulator_multiplier=1.50):
+            v3_cluster_order=2, v3_decay=.75, v3_alpha=.0002, v3_accumulator_multiplier=1.50,
+            v4_cluster_order=2, v4_decay=.75, v4_alpha=.0001, v4_accumulator_multiplier=1.50):
     if detector == 'rf_supervised':
         manifest = fit_supervised(root/'train', root/'cal', development, root/'frozen', alpha=.001, seed=seed)
     elif detector == 'temporal_graph':
@@ -41,6 +42,12 @@ def prepare(root, previous, seed, detector='iforest', development=(), reference_
             seed=seed, point_alpha=.001, graph_alpha=v3_alpha,
             cluster_order=v3_cluster_order, decay=v3_decay,
             accumulator_multiplier=v3_accumulator_multiplier)
+    elif detector == 'temporal_graph_v4':
+        manifest = fit_temporal_graph_v4(
+            root/'train', root/'cal', development, reference_calibration, root/'frozen',
+            seed=seed, point_alpha=.001, graph_alpha=v4_alpha,
+            cluster_order=v4_cluster_order, decay=v4_decay,
+            accumulator_multiplier=v4_accumulator_multiplier)
     else:
         manifest = fit(root/'train', root/'cal', root/'frozen', alpha=.001, seed=seed, detector=detector)
     assert manifest['threshold_sufficient']
@@ -268,7 +275,13 @@ if __name__ == '__main__':
     parser.add_argument('--v3-decay',type=float,default=.75)
     parser.add_argument('--v3-alpha',type=float,default=.0002)
     parser.add_argument('--v3-accumulator-multiplier',type=float,default=1.50)
+    parser.add_argument('--v4-cluster-order',type=int,default=2)
+    parser.add_argument('--v4-decay',type=float,default=.75)
+    parser.add_argument('--v4-alpha',type=float,default=.0001)
+    parser.add_argument('--v4-accumulator-multiplier',type=float,default=1.50)
     args=parser.parse_args()
     prepare(args.root,args.previous,args.seed,args.detector,args.development,
             args.reference_calibration,args.v3_cluster_order,args.v3_decay,
-            args.v3_alpha,args.v3_accumulator_multiplier) if args.action=='prepare' else audit(args.root)
+            args.v3_alpha,args.v3_accumulator_multiplier,
+            args.v4_cluster_order,args.v4_decay,
+            args.v4_alpha,args.v4_accumulator_multiplier) if args.action=='prepare' else audit(args.root)
