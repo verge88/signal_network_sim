@@ -1,0 +1,91 @@
+name: V5 ablation and structural generalization matrix
+
+on:
+  push:
+    branches: ['experiment/v5-ablation-generalization-20261114']
+    paths:
+      - '.github/triggers/v5-ablation-generalization-matrix'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  replay-seed:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        seed: [90401, 90402, 90405, 90406, 90407, 90408, 90409, 90410]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verify preregistration
+        run: cat .github/preregistrations/v5-ablation-generalization-20261114.txt
+
+      - name: Install replay stack
+        run: python -m pip install numpy==1.26.4 pandas==2.2.3 scipy==1.14.1 scikit-learn==1.5.2 joblib==1.5.2
+
+      - name: Resolve final evidence artifact
+        id: artifact
+        shell: bash
+        run: |
+          case "${{ matrix.seed }}" in
+            90401) echo "id=14049128601" >> "$GITHUB_OUTPUT" ;;
+            90402) echo "id=14049887852" >> "$GITHUB_OUTPUT" ;;
+            90405) echo "id=14050881142" >> "$GITHUB_OUTPUT" ;;
+            90406) echo "id=14048993238" >> "$GITHUB_OUTPUT" ;;
+            90407) echo "id=14049407530" >> "$GITHUB_OUTPUT" ;;
+            90408) echo "id=14048857700" >> "$GITHUB_OUTPUT" ;;
+            90409) echo "id=14049716184" >> "$GITHUB_OUTPUT" ;;
+            90410) echo "id=14049337789" >> "$GITHUB_OUTPUT" ;;
+            *) exit 2 ;;
+          esac
+
+      - name: Retrieve complete frozen final evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          seed="${{ matrix.seed }}"
+          mkdir -p "inputs/$seed" /tmp/v5-artifact
+          gh api "repos/verge88/signal_network_sim/actions/artifacts/${{ steps.artifact.outputs.id }}/zip" > /tmp/v5-artifact/artifact.zip
+          unzip -q /tmp/v5-artifact/artifact.zip -d /tmp/v5-artifact/unpacked
+          nested="$(find /tmp/v5-artifact/unpacked -name full-evidence.zip -print -quit)"
+          test -n "$nested"
+          unzip -q "$nested" \
+            'frozen/model.joblib' \
+            'frozen/manifest.json' \
+            'cal/features.csv' \
+            'cal/labels.csv' \
+            'test/features.csv' \
+            'test/labels.csv' \
+            'test/online_predictions.csv' \
+            'test/distributed_predictions.jsonl' \
+            -d "inputs/$seed"
+
+      - name: Run frozen diagnostic for seed
+        run: |
+          python -m experiments.distributed_5g.v5_ablation_generalization \
+            --root inputs --output "v5-diagnostic-${{ matrix.seed }}" \
+            --seeds "${{ matrix.seed }}"
+
+      - name: Show seed summary
+        if: always()
+        run: |
+          if test -f "v5-diagnostic-${{ matrix.seed }}/REPORT.md"; then
+            cat "v5-diagnostic-${{ matrix.seed }}/REPORT.md"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v5-ablation-generalization-${{ matrix.seed }}-${{ github.run_id }}
+          path: v5-diagnostic-${{ matrix.seed }}/
+          retention-days: 90
