@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ca53868b7c5bc0c5ed83a9c8ca86b7e34abddd94
+          ref: 3f980e2f875904298f9c2693ffdb132c9864aeeb
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -30,35 +30,40 @@ jobs:
         run: |
           set -euo pipefail
           main=43433732002
-          retry=43435550431
+          retry04=43435550431
+          retry03=43454879543
           for attempt in $(seq 1 180); do
             main_status="$(gh api repos/verge88/signal_network_sim/actions/runs/$main --jq .status)"
-            retry_status="$(gh api repos/verge88/signal_network_sim/actions/runs/$retry --jq .status)"
-            echo "main=$main_status retry=$retry_status"
-            if test "$main_status" = completed && test "$retry_status" = completed; then
+            retry04_status="$(gh api repos/verge88/signal_network_sim/actions/runs/$retry04 --jq .status)"
+            retry03_status="$(gh api repos/verge88/signal_network_sim/actions/runs/$retry03 --jq .status)"
+            echo "main=$main_status retry04=$retry04_status retry03=$retry03_status"
+            if test "$main_status" = completed && test "$retry04_status" = completed && test "$retry03_status" = completed; then
               break
             fi
             sleep 30
           done
           test "$(gh api repos/verge88/signal_network_sim/actions/runs/$main --jq .status)" = completed
-          test "$(gh api repos/verge88/signal_network_sim/actions/runs/$retry --jq .status)" = completed
-          test "$(gh api repos/verge88/signal_network_sim/actions/runs/$retry --jq .conclusion)" = success
+          test "$(gh api repos/verge88/signal_network_sim/actions/runs/$retry04 --jq .status)" = completed
+          test "$(gh api repos/verge88/signal_network_sim/actions/runs/$retry03 --jq .status)" = completed
+          test "$(gh api repos/verge88/signal_network_sim/actions/runs/$retry04 --jq .conclusion)" = success
+          test "$(gh api repos/verge88/signal_network_sim/actions/runs/$retry03 --jq .conclusion)" = success
 
-      - name: Download nine main summaries plus retry 90404
+      - name: Download eight main summaries plus exact retries 90403/90404
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           mkdir -p final-inputs
           main=43433732002
-          retry=43435550431
+          retry04=43435550431
+          retry03=43454879543
 
           gh api "repos/verge88/signal_network_sim/actions/runs/$main/artifacts?per_page=100"             --jq '.artifacts[] | select(.name|startswith("temporal-graph-v5-final-summary-")) | [.id,.name] | @tsv'             > main-artifacts.tsv
 
           valid=0
           while IFS=$'\t' read -r id name; do
             case "$name" in
-              *-90404-*) continue ;;
+              *-90403-*|*-90404-*) continue ;;
             esac
             mkdir -p "final-inputs/$name"
             gh api "repos/verge88/signal_network_sim/actions/artifacts/$id/zip" > artifact.zip
@@ -67,17 +72,21 @@ jobs:
             test -f "final-inputs/$name/report.json"
             valid=$((valid+1))
           done < main-artifacts.tsv
-          test "$valid" -eq 9
+          test "$valid" -eq 8
 
-          retry_line="$(gh api "repos/verge88/signal_network_sim/actions/runs/$retry/artifacts?per_page=100"             --jq '.artifacts[] | select(.name|startswith("temporal-graph-v5-final-retry-summary-90404-")) | [.id,.name] | @tsv')"
-          test -n "$retry_line"
-          id="$(printf '%s\n' "$retry_line" | cut -f1)"
-          name="$(printf '%s\n' "$retry_line" | cut -f2)"
-          mkdir -p "final-inputs/$name"
-          gh api "repos/verge88/signal_network_sim/actions/artifacts/$id/zip" > artifact.zip
-          unzip -q artifact.zip -d "final-inputs/$name"
-          rm artifact.zip
-          test -f "final-inputs/$name/report.json"
+          for retry_spec in "$retry04:90404" "$retry03:90403"; do
+            run="${retry_spec%%:*}"
+            seed="${retry_spec##*:}"
+            retry_line="$(gh api "repos/verge88/signal_network_sim/actions/runs/$run/artifacts?per_page=100"               --jq ".artifacts[] | select(.name|startswith(\"temporal-graph-v5-final-retry-summary-$seed-\")) | [.id,.name] | @tsv")"
+            test -n "$retry_line"
+            id="$(printf '%s\n' "$retry_line" | cut -f1)"
+            name="$(printf '%s\n' "$retry_line" | cut -f2)"
+            mkdir -p "final-inputs/$name"
+            gh api "repos/verge88/signal_network_sim/actions/artifacts/$id/zip" > artifact.zip
+            unzip -q artifact.zip -d "final-inputs/$name"
+            rm artifact.zip
+            test -f "final-inputs/$name/report.json"
+          done
 
           test "$(find final-inputs -name report.json | wc -l)" -eq 10
 
