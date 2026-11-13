@@ -9,6 +9,7 @@ import pandas as pd
 from experiments.distributed_5g.temporal_graph import TemporalGraphDetector
 from experiments.distributed_5g.temporal_graph_v2 import LocalSynchronyTransformer, SupervisedTemporalGraphDetector, FEATURES as V2_FEATURES
 from experiments.distributed_5g.temporal_graph_v3 import TemporalGraphV3Detector
+from experiments.distributed_5g.temporal_graph_v4 import CommonModeResidualTransformer, TemporalGraphV4Detector, FEATURES_V4
 from experiments.robustness_5g.design import attack_schedule, s5_members, s5_count
 
 
@@ -183,3 +184,50 @@ def test_v3_detector_roundtrips_with_clean_temporal_state():
         loaded.reset()
         actual=loaded.decision_function(frame(18,"v3-roundtrip"))
     assert np.allclose(expected,actual,rtol=0,atol=1e-12)
+
+
+def test_v4_common_mode_rejection_preserves_local_residual_wave():
+    global_frame=_graph_pattern(False)
+    local_frame=_graph_pattern(True)
+    global_features=CommonModeResidualTransformer(history=8).transform(global_frame)
+    local_features=CommonModeResidualTransformer(history=8).transform(local_frame)
+    names={name:i for i,name in enumerate(FEATURES_V4)}
+    idx=[w*32+slot for w in range(10,20) for slot in (1,2,3)]
+    global_contrast=float(np.mean(global_features[idx,names["localized_residual_corr_contrast"]]))
+    local_contrast=float(np.mean(local_features[idx,names["localized_residual_corr_contrast"]]))
+    assert local_contrast > global_contrast + .15
+
+
+def test_v4_transform_batch_matches_online_windows():
+    test=frame(18,"v4-test")
+    batch=CommonModeResidualTransformer(history=8).transform(test)
+    online=CommonModeResidualTransformer(history=8)
+    parts=[]
+    for _,part in test.groupby("window_id",sort=False):
+        parts.append(online.transform_online(part))
+    assert np.allclose(batch,np.vstack(parts),rtol=0,atol=1e-12)
+
+
+def test_v4_detector_roundtrips_with_clean_state():
+    dev=frame(30,"v4-dev")
+    labels=pd.DataFrame({
+        "attack":np.zeros(len(dev),dtype=int),
+        "scenario":["N1"]*len(dev),
+    })
+    mask=dev.window_id.between(18,27) & dev.nf_id.isin(["slot-1","slot-2","slot-3"])
+    labels.loc[mask,"attack"]=1
+    labels.loc[mask,"scenario"]="S5"
+    detector=TemporalGraphV4Detector(seed=123,history=8,cluster_order=2,decay=.75)
+    detector.fit_development([(dev,labels)])
+    test=frame(16,"v4-heldout")
+    batch=detector.clean_copy().decision_function(test)
+    online=detector.clean_copy()
+    parts=[]
+    for _,part in test.groupby("window_id",sort=False):
+        parts.append(online.decision_function(part))
+    assert np.allclose(batch,np.concatenate(parts),rtol=0,atol=1e-12)
+    with tempfile.TemporaryDirectory() as directory:
+        path=Path(directory)/"v4.joblib"
+        joblib.dump(detector.clean_copy(),path)
+        loaded=joblib.load(path);loaded.reset()
+        assert np.allclose(batch,loaded.decision_function(test),rtol=0,atol=1e-12)
