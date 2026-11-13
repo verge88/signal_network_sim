@@ -515,14 +515,14 @@ def report_markdown(summary):
     return "\n".join(lines) + "\n"
 
 
-def run(root, output):
+def run(root, output, seeds=EXPECTED_SEEDS):
     root = Path(root)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
 
     seed_records = []
     generalization_records = []
-    for seed in EXPECTED_SEEDS:
+    for seed in seeds:
         seed_root = root / str(seed)
         if not seed_root.exists():
             raise ValueError(f"Missing input seed {seed}")
@@ -570,10 +570,10 @@ def run(root, output):
     generalization_pooled = aggregate_generalization(generalization_records)
     summary = {
         "protocol": {
-            "seeds": list(EXPECTED_SEEDS),
+            "seeds": list(seeds),
             "frozen_v5_unchanged": True,
             "point_ablation_alpha": ALPHA,
-            "raw_evidence_seed_count": len(EXPECTED_SEEDS),
+            "raw_evidence_seed_count": len(seeds),
             "excluded_raw_seeds": [90403, 90404],
             "post_final_diagnostic": True,
         },
@@ -635,5 +635,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--seeds", type=int, nargs="*", default=None)
     args = parser.parse_args()
-    run(args.root, args.output)
+    selected = tuple(args.seeds) if args.seeds else EXPECTED_SEEDS
+    unknown = sorted(set(selected) - set(EXPECTED_SEEDS))
+    if unknown:
+        parser.error(f"Unsupported diagnostic seeds: {unknown}")
+    run(args.root, args.output, seeds=selected)
