@@ -1,0 +1,6 @@
+Technical retry for final seed 90403
+reason=heldout schedule TimeoutError in main run 43433732002 before audit
+frozen_checkout=ca53868b7c5bc0c5ed83a9c8ca86b7e34abddd94
+scientific_seed=90403
+previous_attempt_audit_completed=false
+no_parameter_changes=true
