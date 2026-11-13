@@ -1,0 +1,43 @@
+name: S5 temporal graph V4 cyclic development
+
+on:
+  push:
+    branches: ['experiment/temporal-graph-v4-cyclic-20261113']
+    paths:
+      - '.github/workflows/temporal-graph-v4-development.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  develop:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==1.26.4 pandas==2.2.3 scikit-learn==1.5.2
+      - name: Download nine consumed prospective evidence sets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for spec in             "89901:13967200654"             "89902:13966557271"             "89903:13966467216"             "90001:13977466681"             "90002:13976814586"             "90003:13977925621"             "90101:13985819940"             "90102:13989515036"             "90103:13988990036"; do
+            seed="${spec%%:*}"; artifact="${spec##*:}"
+            mkdir -p "packed-${seed}" "evidence-${seed}"
+            gh api "repos/verge88/signal_network_sim/actions/artifacts/${artifact}/zip" > "packed-${seed}/artifact.zip"
+            unzip -q "packed-${seed}/artifact.zip" -d "packed-${seed}"
+            unzip -q "packed-${seed}/full-evidence.zip" -d "evidence-${seed}"
+          done
+      - name: Run cyclic-S5 V4 leave-one-seed-out screen
+        run: |
+          python -m experiments.distributed_5g.temporal_graph_v4_development             --seed-89901 evidence-89901 --seed-89902 evidence-89902 --seed-89903 evidence-89903             --seed-90001 evidence-90001 --seed-90002 evidence-90002 --seed-90003 evidence-90003             --seed-90101 evidence-90101 --seed-90102 evidence-90102 --seed-90103 evidence-90103             --output v4-development
+      - uses: actions/upload-artifact@v4
+        with:
+          name: temporal-graph-v4-development-${{ github.run_id }}
+          path: v4-development/report.json
+          retention-days: 30
