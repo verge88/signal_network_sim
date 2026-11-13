@@ -27,10 +27,8 @@ jobs:
           cat .github/preregistrations/v5-ablation-generalization-20261114.txt
           test -f experiments/distributed_5g/v5_ablation_generalization.py
 
-      - name: Install experiment stack
-        env:
-          NO_LONG_DOUBLE: '1'
-        run: python -m pip install -r experiments/live_5g/requirements.txt
+      - name: Install replay stack
+        run: python -m pip install numpy==1.26.4 pandas==2.2.3 scipy==1.14.1 scikit-learn==1.5.2 joblib==1.5.2
 
       - name: Retrieve eight complete frozen final evidence archives
         env:
