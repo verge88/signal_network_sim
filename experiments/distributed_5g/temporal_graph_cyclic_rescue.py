@@ -14,8 +14,9 @@ import numpy as np
 import pandas as pd
 
 SEEDS=(89901,89902,89903,90001,90002,90003,90101,90102,90103,90201,90202,90203)
-DECAYS=(0.60,0.70,0.80,0.90)
-THRESHOLDS=(0.75,1.0,1.25,1.5,1.75,2.0,2.5,3.0)
+DECAYS=(0.50,0.60,0.70,0.80)
+THRESHOLDS=(1.0,1.25,1.5,1.75,2.0)
+IQR_LIMITS=(1.0,1.25,1.5)
 MAX_RESCUE_FPR=0.00015
 
 
@@ -31,8 +32,9 @@ def load(root):
 
 
 def triple_scores(frame):
-    """Per-node localized contiguous-triple residual motif score."""
+    """Per-node contiguous-triple score plus zone residual IQR."""
     out=np.zeros(len(frame),dtype=float)
+    iqr_out=np.zeros(len(frame),dtype=float)
     positions={idx:pos for pos,idx in enumerate(frame.index)}
     for (_,window_id),part in frame.groupby(["run_id","window_id"],sort=False):
         if len(part)!=32:
@@ -44,6 +46,8 @@ def triple_scores(frame):
             counts=z.request_count.to_numpy(float)
             common=float(np.median(counts))
             residual=counts-common
+            q75,q25=np.quantile(residual,[.75,.25])
+            zone_iqr=float(q75-q25)
             node_score=np.zeros(8,dtype=float)
             for start in range(6):
                 triple=residual[start:start+3]
@@ -55,8 +59,10 @@ def triple_scores(frame):
                 score=max(0.0,separation)*coherence
                 node_score[start:start+3]=np.maximum(node_score[start:start+3],score)
             for row_idx,score in zip(z.index,node_score):
-                out[positions[row_idx]]=score
-    return out
+                pos=positions[row_idx]
+                out[pos]=score
+                iqr_out[pos]=zone_iqr
+    return out,iqr_out
 
 
 def evidence(frame,score,decay):
@@ -81,19 +87,23 @@ def run(roots,output):
     prepared={}
     for seed,root in roots.items():
         frame=load(root)
-        score=triple_scores(frame)
-        prepared[int(seed)]=(frame,score)
+        score,iqr=triple_scores(frame)
+        prepared[int(seed)]=(frame,score,iqr)
 
     candidates=[]
-    for decay in DECAYS:
-        cached={seed:evidence(frame,score,decay) for seed,(frame,score) in prepared.items()}
+    for iqr_limit in IQR_LIMITS:
+      for decay in DECAYS:
+        cached={
+            seed:evidence(frame,score*(iqr<=iqr_limit),decay)
+            for seed,(frame,score,iqr) in prepared.items()
+        }
         for threshold in THRESHOLDS:
             folds=[]
             cyclic_detected=0
             all_s5_detected=0
             total_normal=0
             total_fp=0
-            for seed,(frame,_) in prepared.items():
+            for seed,(frame,_,_) in prepared.items():
                 alarm=cached[seed]>threshold
                 normal=frame.attack.eq(0).to_numpy()
                 fp=int((alarm&normal).sum())
@@ -114,7 +124,7 @@ def run(roots,output):
             worst=max(x["rescue_fpr"] for x in folds)
             pooled=total_fp/total_normal
             candidates.append({
-                "decay":decay,"threshold":threshold,
+                "iqr_limit":iqr_limit,"decay":decay,"threshold":threshold,
                 "worst_seed_rescue_fpr":worst,
                 "pooled_rescue_fpr":pooled,
                 "cyclic_s5_detected":cyclic_detected,
@@ -127,7 +137,7 @@ def run(roots,output):
 
     eligible=[x for x in candidates if x["eligible"]]
     eligible.sort(key=lambda x:(-x["all_s5_detected"],x["worst_seed_rescue_fpr"],
-                                x["pooled_rescue_fpr"],-x["threshold"]))
+                                x["pooled_rescue_fpr"],x["iqr_limit"],-x["threshold"]))
     result={
         "development_seeds":list(SEEDS),
         "max_rescue_fpr":MAX_RESCUE_FPR,
