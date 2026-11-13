@@ -1,4 +1,5 @@
 name: Temporal graph V4 contract
+# Runtime score matches development common-mode veto.
 
 on:
   push:
