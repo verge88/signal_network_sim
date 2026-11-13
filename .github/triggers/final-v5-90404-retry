@@ -1,0 +1,7 @@
+Technical retry for final seed 90404
+reason=pre-data flaky hierarchy contract test in main run 43433732002
+frozen_checkout=ca53868b7c5bc0c5ed83a9c8ca86b7e34abddd94
+scientific_seed=90404
+previous_attempt_reached_train_cal=false
+previous_attempt_reached_heldout_test=false
+no_parameter_changes=true
