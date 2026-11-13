@@ -17,13 +17,14 @@ import argparse
 import copy
 import json
 import math
+import hashlib
 from pathlib import Path
 
+import joblib
 import numpy as np
 import pandas as pd
 from scipy.stats import wilcoxon
 
-from experiments.live_5g.evaluate import conformal_threshold, load_frozen
 from experiments.distributed_5g.temporal_graph_v4 import (
     CommonModeResidualTransformer,
     FEATURES_V4,
@@ -45,6 +46,26 @@ BRANCH_METHODS = (
     "TG_RESCUE",
     "TG_V5",
 )
+
+
+def sha256(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def load_bundle(root):
+    root = Path(root)
+    manifest = json.loads((root / "manifest.json").read_text())
+    if sha256(root / "model.joblib") != manifest["model_sha256"]:
+        raise ValueError("Frozen model hash mismatch")
+    bundle = joblib.load(root / "model.joblib")
+    bundle["manifest"] = manifest
+    return bundle
+
+
+def conformal_threshold(scores, alpha):
+    values = np.asarray(scores, dtype=float)
+    rank = math.ceil((len(values) + 1) * (1 - alpha))
+    return float(np.sort(values)[rank - 1]) if rank <= len(values) else math.inf
 
 
 def slot_number(value):
@@ -170,7 +191,7 @@ def learned_threshold(root, bundle):
 
 def ablation_seed(root, seed):
     frame = load_frame(root)
-    bundle = load_frozen(root / "frozen")
+    bundle = load_bundle(root / "frozen")
     threshold = learned_threshold(root, bundle)
     learned_alarm = learned_probability(bundle, frame) > threshold
 
@@ -339,7 +360,7 @@ def branch_predictions(bundle, frame, point_threshold):
 
 def structural_seed(root, seed):
     frame = load_frame(root)
-    bundle = load_frozen(root / "frozen")
+    bundle = load_bundle(root / "frozen")
     point_threshold = learned_threshold(root, bundle)
 
     variants = {
