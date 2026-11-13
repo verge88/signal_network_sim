@@ -1,4 +1,5 @@
 name: S5 temporal graph V4 cyclic development
+# Focused on the V3-selected cluster_order=2 and accumulator=1.50.
 
 on:
   push:
