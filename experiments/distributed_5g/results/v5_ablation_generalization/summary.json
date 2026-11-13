@@ -1,0 +1,233 @@
+{
+  "analysis": "V5 post-final attribution and structural-generalization diagnostic",
+  "date": "2026-11-14",
+  "source_workflow_run": 43495896034,
+  "source_head_sha": "b6ea333105c79e308a75429570e1d4e7ea96d225",
+  "frozen_v5_unchanged": true,
+  "post_final_diagnostic": true,
+  "seeds": [
+    90401,
+    90402,
+    90405,
+    90406,
+    90407,
+    90408,
+    90409,
+    90410
+  ],
+  "excluded_raw_seeds": {
+    "90403": "technical retry retained summary artifact only; no full-evidence archive",
+    "90404": "technical retry retained summary artifact only; no full-evidence archive"
+  },
+  "ablation_pooled": {
+    "BUDGETED_WITHOUT_MINING": {
+      "tp": 2409,
+      "fp": 117,
+      "fn": 4231,
+      "tn": 914843,
+      "recall": 0.36280120481927713,
+      "fpr": 0.00012787444259858353,
+      "precision": 0.9536817102137767,
+      "s5_detected": 0,
+      "s5_total": 32,
+      "fpr_target_seeds": "8/8"
+    },
+    "LEARNED_PROBABILITY_ONLY": {
+      "tp": 3822,
+      "fp": 912,
+      "fn": 2818,
+      "tn": 914048,
+      "recall": 0.5756024096385542,
+      "fpr": 0.0009967648858966512,
+      "precision": 0.8073510773130546,
+      "s5_detected": 28,
+      "s5_total": 32,
+      "fpr_target_seeds": "3/8"
+    },
+    "V4_CORE_ONLY": {
+      "tp": 4032,
+      "fp": 616,
+      "fn": 2608,
+      "tn": 914344,
+      "recall": 0.6072289156626506,
+      "fpr": 0.0006732534755617732,
+      "precision": 0.8674698795180723,
+      "s5_detected": 31,
+      "s5_total": 32,
+      "fpr_target_seeds": "8/8"
+    },
+    "RESCUE_ONLY": {
+      "tp": 2505,
+      "fp": 117,
+      "fn": 4135,
+      "tn": 914843,
+      "recall": 0.3772590361445783,
+      "fpr": 0.00012787444259858353,
+      "precision": 0.9553775743707094,
+      "s5_detected": 8,
+      "s5_total": 32,
+      "fpr_target_seeds": "8/8"
+    },
+    "FULL_V5": {
+      "tp": 4070,
+      "fp": 616,
+      "fn": 2570,
+      "tn": 914344,
+      "recall": 0.6129518072289156,
+      "fpr": 0.0006732534755617732,
+      "precision": 0.8685446009389671,
+      "s5_detected": 32,
+      "s5_total": 32,
+      "fpr_target_seeds": "8/8"
+    }
+  },
+  "paired_seed_level": {
+    "LEARNED_PROBABILITY_ONLY_minus_BUDGETED_WITHOUT_MINING": {
+      "mean_recall_delta": 0.21280120481927708,
+      "bootstrap95": [
+        0.14277108,
+        0.26671687
+      ],
+      "wilcoxon_one_sided_p": 0.0078125
+    },
+    "V4_CORE_ONLY_minus_BUDGETED_WITHOUT_MINING": {
+      "mean_recall_delta": 0.2444277108433735,
+      "bootstrap95": [
+        0.23268072,
+        0.25948795
+      ],
+      "wilcoxon_one_sided_p": 0.00390625
+    },
+    "V4_CORE_ONLY_minus_LEARNED_PROBABILITY_ONLY": {
+      "mean_recall_delta": 0.03162650602409642,
+      "bootstrap95": [
+        -0.02710843,
+        0.11340361
+      ],
+      "wilcoxon_one_sided_p": 0.4375
+    },
+    "RESCUE_ONLY_minus_BUDGETED_WITHOUT_MINING": {
+      "mean_recall_delta": 0.014457831325301207,
+      "bootstrap95": [
+        0.00903614,
+        0.01987952
+      ],
+      "wilcoxon_one_sided_p": 0.00390625
+    },
+    "FULL_V5_minus_V4_CORE_ONLY": {
+      "mean_recall_delta": 0.0057228915662650565,
+      "bootstrap95": [
+        0.00361446,
+        0.00783133
+      ],
+      "wilcoxon_one_sided_p": 0.0078125
+    },
+    "FULL_V5_minus_BUDGETED_WITHOUT_MINING": {
+      "mean_recall_delta": 0.2501506024096386,
+      "bootstrap95": [
+        0.2378012,
+        0.26506024
+      ],
+      "wilcoxon_one_sided_p": 0.00390625
+    }
+  },
+  "two_block_shapley_recall": {
+    "v4_core": {
+      "mean": 0.24006024096385542,
+      "bootstrap95": [
+        0.22989458,
+        0.25323795
+      ],
+      "share_of_total": 0.9596628537025889
+    },
+    "explicit_v5_rescue": {
+      "mean": 0.010090361445783132,
+      "bootstrap95": [
+        0.0064759,
+        0.01340361
+      ],
+      "share_of_total": 0.04033714629741119
+    },
+    "total": {
+      "mean": 0.2501506024096386,
+      "bootstrap95": [
+        0.23795181,
+        0.26521084
+      ]
+    }
+  },
+  "structural_generalization": {
+    "original": {
+      "full_v5_episodes": "32/32",
+      "full_v5_episode_recall": 1,
+      "full_v5_nf_window_recall": 0.5767361111111111,
+      "rescue_episodes": "8/32",
+      "learned_only_episodes": "28/32"
+    },
+    "contiguous_left": {
+      "full_v5_episodes": "32/32",
+      "full_v5_episode_recall": 1,
+      "full_v5_nf_window_recall": 0.5767361111111111,
+      "rescue_episodes": "8/32"
+    },
+    "contiguous_middle": {
+      "full_v5_episodes": "32/32",
+      "full_v5_episode_recall": 1,
+      "full_v5_nf_window_recall": 0.5767361111111111,
+      "rescue_episodes": "8/32"
+    },
+    "contiguous_right": {
+      "full_v5_episodes": "32/32",
+      "full_v5_episode_recall": 1,
+      "full_v5_nf_window_recall": 0.5767361111111111,
+      "rescue_episodes": "8/32"
+    },
+    "id_permutation_evenodd": {
+      "full_v5_episodes": "31/32",
+      "full_v5_episode_recall": 0.96875,
+      "full_v5_nf_window_recall": 0.5635416666666667,
+      "rescue_episodes": "0/32",
+      "v4_episodes": "31/32"
+    },
+    "group_k2": {
+      "full_v5_episodes": "13/32",
+      "full_v5_episode_recall": 0.40625,
+      "full_v5_nf_window_recall": 0.04895833333333333,
+      "rescue_episodes": "0/32",
+      "learned_only_episodes": "5/32"
+    },
+    "group_k3": {
+      "full_v5_episodes": "32/32",
+      "full_v5_episode_recall": 1,
+      "full_v5_nf_window_recall": 0.5767361111111111,
+      "rescue_episodes": "8/32",
+      "learned_only_episodes": "28/32"
+    },
+    "group_k4": {
+      "full_v5_episodes": "11/32",
+      "full_v5_episode_recall": 0.34375,
+      "full_v5_nf_window_recall": 0.03515625,
+      "rescue_episodes": "0/32",
+      "learned_only_episodes": "29/32"
+    },
+    "group_k5": {
+      "full_v5_episodes": "0/32",
+      "full_v5_episode_recall": 0,
+      "full_v5_nf_window_recall": 0,
+      "rescue_episodes": "0/32",
+      "learned_only_episodes": "28/32"
+    },
+    "spaced_triple": {
+      "full_v5_episodes": "20/32",
+      "full_v5_episode_recall": 0.625,
+      "full_v5_nf_window_recall": 0.17291666666666666,
+      "rescue_episodes": "0/32",
+      "learned_only_episodes": "27/32"
+    }
+  },
+  "interpretation": {
+    "reviewer_1": "Closed by attribution: the total gain must not be described as Data Mining alone. Most pooled gain belongs to the V4 core; the explicit V5 rescue adds a small but consistent zero-extra-FP increment.",
+    "reviewer_2": "The experiment confirms a real limitation. Frozen V5 is location-invariant for contiguous triples, but the explicit rescue is not permutation-invariant and does not generalize to k=2/4/5 or spaced triples. Full V5 remains partly robust only because V4 supplies detections.",
+    "claim_boundary": "V5 supports a contiguous three-NF rescue motif, not a generic arbitrary-size group detector."
+  }
+}
