@@ -1,0 +1,32 @@
+V5 ablation and structural-generalization diagnostic
+date=2026-11-14
+source_branch=experiment/final-v5-confirmation-20261113
+frozen_v5_unchanged=true
+no_v5_parameter_changes=true
+no_threshold_tuning_on_final_test=true
+
+complete_evidence_seeds=90401,90402,90405,90406,90407,90408,90409,90410
+excluded_from_raw_replay=90403,90404
+exclusion_reason=technical retries retained summary artifacts but not full-evidence archives
+
+question_1=separate learned-core contribution from explicit handcrafted group rescue
+ablation_methods=BUDGETED_WITHOUT_MINING,LEARNED_PROBABILITY_ONLY,V4_CORE_ONLY,RESCUE_ONLY,FULL_V5
+learned_probability_only=V4 logistic probability on V4 residual-temporal features, without V4 structural score/evidence accumulation
+learned_probability_threshold=fresh normal calibration only, conformal alpha 0.00015, fixed before final-test replay
+v4_core_only=frozen TG_V4 alarm fused with BUDGETED_WITHOUT_MINING
+rescue_only=frozen TG_RESCUE alarm fused with BUDGETED_WITHOUT_MINING
+full_v5=frozen TG_V5 fused with BUDGETED_WITHOUT_MINING
+primary_attribution_outputs=pooled recall,FPR,S5 episode recall,paired seed-level recall deltas
+statistics=paired one-sided Wilcoxon across complete independent seeds; descriptive because this diagnostic was defined after the original final result was known
+
+question_2=test dependence on arbitrary NF identifiers, group size, and placement
+generalization_scope=frozen detector branches only; distributed non-ML hierarchy is not counterfactually recomputed
+id_permutation=within-zone bijection applied to the entire measured stream and labels; request-count multiset unchanged
+placement_variants=contiguous left,middle,right; spaced triple; all within one 8-NF zone
+size_variants=2,3,4,5 coordinated NF
+size_counterfactual=original measured three S5 request-count trajectories are reused; removed attackers are replaced by the same-window median of measured unaffected peers; added attackers receive cyclic copies of measured S5 trajectories
+other_features_unchanged=true
+reason_other_features_unchanged=TG_V4 and TG_RESCUE consume only request_count-derived temporal/residual features
+generalization_methods=LEARNED_PROBABILITY_ONLY,TG_V4,TG_RESCUE,TG_V5
+primary_generalization_outputs=S5 episode recall,NF-window recall,variant FPR
+interpretation=negative results narrow the V5 claim; they must not be hidden by post-hoc parameter changes
