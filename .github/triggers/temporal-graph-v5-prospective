@@ -1,0 +1,17 @@
+Frozen temporal-graph V5 cyclic rescue prospective confirmation
+core=TG_V4 unchanged
+core_cluster_order=2
+core_decay=0.75
+core_alpha=0.00015
+accumulator_multiplier=1.50
+rescue=contiguous_three_node_common_mode_residual_motif
+rescue_iqr_limit=1.0
+rescue_decay=0.8
+rescue_threshold=2.0
+rescue_development_seeds=89901,89902,89903,90001,90002,90003,90101,90102,90103,90201,90202,90203
+rescue_development_cyclic_s5=12/12
+rescue_development_normal_fp=0/1372440
+prospective_seeds=90301,90302,90303
+system_fpr_target=0.001
+no_test_tuning=true
+workflow_commit=f9488cdab0bfa41e2baf5da21f033e33547831e2
