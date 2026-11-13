@@ -34,6 +34,7 @@ from aderh import ADERH
 from experiments.distributed_5g.temporal_graph import TemporalGraphDetector, GRAPH_FEATURES
 from experiments.distributed_5g.temporal_graph_v2 import SupervisedTemporalGraphDetector, FEATURES as GRAPH_V2_FEATURES
 from experiments.distributed_5g.temporal_graph_v3 import TemporalGraphV3Detector
+from experiments.distributed_5g.temporal_graph_v4 import TemporalGraphV4Detector, FEATURES_V4
 
 KEYS = ["run_id", "window_id", "nf_id"]
 META = KEYS + ["timestamp"]
@@ -47,7 +48,7 @@ TAIL_METHODS = ["robust_tail", "hybrid_tail_without_KIE", "hybrid_tail"]
 TAIL_FEATURES = ["request_count", "error_rate", "update_count"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
 PROTOCOL_VERSION = "live-5g-v2-tail"
-DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2", "temporal_graph_v3")
+DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2", "temporal_graph_v3", "temporal_graph_v4")
 DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised"}
 
 
@@ -756,6 +757,122 @@ def fit_temporal_graph_v3(train_directory, cal_directory, development_directorie
     return manifest
 
 
+
+def fit_temporal_graph_v4(train_directory, cal_directory, development_directories,
+                          reference_calibration_directories, output, seed=7143,
+                          point_alpha=0.001, graph_alpha=0.0001,
+                          cluster_order=2, decay=0.75,
+                          accumulator_multiplier=1.50):
+    """Fit frozen V4 common-mode residual graph detector before prospective test."""
+    manifest = fit(train_directory, cal_directory, output,
+                   alpha=point_alpha, seed=seed, detector="iforest")
+    out = Path(output)
+    bundle = joblib.load(out / "model.joblib")
+    train, train_labels, train_files = read_dataset(train_directory)
+    cal, cal_labels, cal_files = read_dataset(cal_directory)
+    if train_labels.attack.any() or cal_labels.attack.any():
+        raise ValueError("Fresh V4 train/calibration must remain normal-only")
+
+    development=[]; development_frames=[]; development_files=[]
+    for directory in development_directories:
+        frame, labels, files = read_dataset(directory)
+        development.append((frame,labels))
+        development_frames.append(frame)
+        development_files.extend(files)
+    if not development or not any(labels.scenario.astype(str).eq("S5").any()
+                                  for _,labels in development):
+        raise ValueError("V4 requires consumed historical S5 development captures")
+
+    reference=[]; reference_frames=[]; reference_files=[]
+    for directory in reference_calibration_directories:
+        frame, labels, files = read_dataset(directory)
+        if labels.attack.any():
+            raise ValueError("Historical V4 calibration references must be normal-only")
+        reference.append(frame)
+        reference_frames.append(frame)
+        reference_files.extend(files)
+    if not reference:
+        raise ValueError("V4 requires historical normal calibration references")
+
+    require_disjoint(train, cal, *development_frames, *reference_frames)
+    graph=TemporalGraphV4Detector(
+        seed=seed, history=8, cluster_order=cluster_order, decay=decay,
+        hard_negative_quantile=.98, hard_negative_weight=8.,
+        cyclic_positive_weight=3., cyclic_normal_weight=2.)
+    graph.fit_development(development)
+
+    calibration_runs=[cal]+reference
+    thresholds=[]; calibration_scores=[]
+    for frame in calibration_runs:
+        scorer=graph.clean_copy()
+        scores=scorer.decision_function(frame)
+        thresholds.append(conformal_threshold(scores,graph_alpha))
+        calibration_scores.append((frame,scores))
+    graph_threshold=max(thresholds)
+
+    bundle["temporal_graph_v4"]=graph.clean_copy()
+    bundle["thresholds"]["TG_V4"]=graph_threshold
+    bundle["ml_method"]="TG_V4"
+    manifest["detector"]="temporal_graph_logistic_v4"
+    manifest["ml_method"]="TG_V4"
+    manifest["development_runs"]=sorted({
+        str(run) for frame in development_frames for run in frame.run_id.unique().tolist()
+    })
+    manifest["calibration_reference_runs"]=sorted({
+        str(run) for frame in calibration_runs for run in frame.run_id.unique().tolist()
+    })
+    manifest["temporal_graph_v4"]={
+        "estimator":"StandardScaler + hard-negative LogisticRegression",
+        "features":list(FEATURES_V4),
+        "history_windows":8,
+        "cluster_order":int(cluster_order),
+        "decay":float(decay),
+        "graph_alpha":float(graph_alpha),
+        "accumulator_multiplier":float(accumulator_multiplier),
+        "common_mode_rejection":"subtract per-window zone median before temporal correlations",
+        "cyclic_development_weighting":{
+            "positive":3.0,"normal":2.0,
+            "runtime_regime_feature_used":False,
+        },
+        "hard_negative_quantile":.98,
+        "hard_negative_weight":8.0,
+        "training_meta":graph.training_meta,
+        "calibration_policy":"maximum conformal threshold across fresh normal cal plus historical fully-normal calibration runs",
+        "fusion_preregistered":"hard local security OR recovery > accumulator_multiplier * zone threshold OR calibrated TG_V4 evidence alarm",
+        "heldout_test_used_for_fit_threshold_or_selection":False,
+    }
+    manifest["thresholds"]["TG_V4"]=graph_threshold if math.isfinite(graph_threshold) else None
+    manifest["threshold_sufficient"]=bool(manifest["threshold_sufficient"] and math.isfinite(graph_threshold))
+    manifest["development_disclosure"]=(
+        "V4 common-mode residual representation and cyclic weighting were selected only "
+        "from consumed development evidence. Runtime inputs contain no regime, scenario, "
+        "window index, run ID or labels. New prospective held-out tests are unavailable "
+        "during fit, calibration and fusion selection."
+    )
+    manifest["sources"]=train_files+cal_files+development_files+reference_files
+    manifest["v4_reference_alarm_rates"]={
+        str(frame.run_id.iloc[0]):(
+            float((scores>graph_threshold).mean()) if math.isfinite(graph_threshold) else 0.0)
+        for frame,scores in calibration_scores
+    }
+    manifest["v4_per_run_thresholds"]={
+        str(frame.run_id.iloc[0]):(value if math.isfinite(value) else None)
+        for frame,value in zip(calibration_runs,thresholds)
+    }
+    bundle["manifest"]=manifest
+
+    calibration_bundle=copy.deepcopy(bundle)
+    calibration_bundle["temporal_graph_v4"].reset()
+    cal_predictions=score_frame(calibration_bundle,cal)
+    manifest["calibration_alarm_rate"]=cal_predictions.groupby("method").alarm.mean().to_dict()
+    bundle["temporal_graph_v4"].reset()
+    joblib.dump(bundle,out/"model.joblib")
+    manifest["model_sha256"]=sha256(out/"model.joblib")
+    dump_json(out/"manifest.json",manifest)
+    cal_predictions.to_csv(out/"calibration_predictions.csv",index=False)
+    return manifest
+
+
 def load_frozen(path):
     root = Path(path)
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
@@ -766,6 +883,8 @@ def load_frozen(path):
         bundle["temporal_graph_v2"].reset()
     if "temporal_graph_v3" in bundle:
         bundle["temporal_graph_v3"].reset()
+    if "temporal_graph_v4" in bundle:
+        bundle["temporal_graph_v4"].reset()
     if bundle["protocol_version"] not in ("live-5g-v1", PROTOCOL_VERSION):
         raise ValueError("Unsupported protocol version")
     bundle["manifest"] = manifest
@@ -804,6 +923,11 @@ def score_frame(bundle, frame):
         raw = bundle["temporal_graph_v3"].decision_function(frame)
         margins["TG_V3"] = raw - threshold if math.isfinite(threshold) else np.full(len(frame), -1.)
         methods.append("TG_V3")
+    if "temporal_graph_v4" in bundle:
+        threshold = bundle["thresholds"]["TG_V4"]
+        raw = bundle["temporal_graph_v4"].decision_function(frame)
+        margins["TG_V4"] = raw - threshold if math.isfinite(threshold) else np.full(len(frame), -1.)
+        methods.append("TG_V4")
     if "tail_model" in bundle:
         threshold = bundle["thresholds"]["robust_tail"]
         margins["robust_tail"] = (tail_scores(bundle["tail_model"], frame) - threshold
