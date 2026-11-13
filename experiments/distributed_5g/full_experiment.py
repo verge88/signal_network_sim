@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score
 
-from experiments.live_5g.evaluate import KEYS, DETECTOR_CHOICES, fit, fit_supervised, fit_temporal_graph, fit_temporal_graph_v2, fit_temporal_graph_v3, fit_temporal_graph_v4, load_frozen, score_frame, sha256, metrics
+from experiments.live_5g.evaluate import KEYS, DETECTOR_CHOICES, fit, fit_supervised, fit_temporal_graph, fit_temporal_graph_v2, fit_temporal_graph_v3, fit_temporal_graph_v4, fit_temporal_graph_v5, load_frozen, score_frame, sha256, metrics
 from experiments.distributed_5g.paired import summarize
 from experiments.robustness_5g.design import attack_schedule, s5_members
 from experiments.resilient_5g.audit import mac
@@ -48,6 +48,13 @@ def prepare(root, previous, seed, detector='iforest', development=(), reference_
             seed=seed, point_alpha=.001, graph_alpha=v4_alpha,
             cluster_order=v4_cluster_order, decay=v4_decay,
             accumulator_multiplier=v4_accumulator_multiplier)
+    elif detector == 'temporal_graph_v5':
+        manifest = fit_temporal_graph_v5(
+            root/'train', root/'cal', development, reference_calibration, root/'frozen',
+            seed=seed, point_alpha=.001, graph_alpha=v4_alpha,
+            cluster_order=v4_cluster_order, decay=v4_decay,
+            accumulator_multiplier=v4_accumulator_multiplier,
+            rescue_iqr_limit=1.0, rescue_decay=.8, rescue_threshold=2.0)
     else:
         manifest = fit(root/'train', root/'cal', root/'frozen', alpha=.001, seed=seed, detector=detector)
     assert manifest['threshold_sufficient']
