@@ -35,6 +35,7 @@ from experiments.distributed_5g.temporal_graph import TemporalGraphDetector, GRA
 from experiments.distributed_5g.temporal_graph_v2 import SupervisedTemporalGraphDetector, FEATURES as GRAPH_V2_FEATURES
 from experiments.distributed_5g.temporal_graph_v3 import TemporalGraphV3Detector
 from experiments.distributed_5g.temporal_graph_v4 import TemporalGraphV4Detector, FEATURES_V4
+from experiments.distributed_5g.temporal_graph_v5 import CyclicTripleRescue
 
 KEYS = ["run_id", "window_id", "nf_id"]
 META = KEYS + ["timestamp"]
@@ -48,7 +49,7 @@ TAIL_METHODS = ["robust_tail", "hybrid_tail_without_KIE", "hybrid_tail"]
 TAIL_FEATURES = ["request_count", "error_rate", "update_count"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
 PROTOCOL_VERSION = "live-5g-v2-tail"
-DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2", "temporal_graph_v3", "temporal_graph_v4")
+DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2", "temporal_graph_v3", "temporal_graph_v4", "temporal_graph_v5")
 DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised"}
 
 
@@ -873,6 +874,72 @@ def fit_temporal_graph_v4(train_directory, cal_directory, development_directorie
     return manifest
 
 
+
+def fit_temporal_graph_v5(train_directory, cal_directory, development_directories,
+                          reference_calibration_directories, output, seed=7143,
+                          point_alpha=0.001, graph_alpha=0.00015,
+                          cluster_order=2, decay=0.75,
+                          accumulator_multiplier=1.50,
+                          rescue_iqr_limit=1.0, rescue_decay=0.8,
+                          rescue_threshold=2.0):
+    """Freeze the validated V4 core plus the independently selected cyclic rescue."""
+    fit_temporal_graph_v4(
+        train_directory, cal_directory, development_directories,
+        reference_calibration_directories, output, seed=seed,
+        point_alpha=point_alpha, graph_alpha=graph_alpha,
+        cluster_order=cluster_order, decay=decay,
+        accumulator_multiplier=accumulator_multiplier)
+    out=Path(output)
+    bundle=joblib.load(out/"model.joblib")
+    manifest=json.loads((out/"manifest.json").read_text())
+
+    rescue=CyclicTripleRescue(iqr_limit=rescue_iqr_limit,decay=rescue_decay)
+    bundle["cyclic_rescue"]=rescue.clean_copy()
+    bundle["thresholds"]["TG_RESCUE"]=float(rescue_threshold)
+    bundle["ml_method"]="TG_V5"
+
+    manifest["detector"]="temporal_graph_logistic_v5"
+    manifest["ml_method"]="TG_V5"
+    manifest["thresholds"]["TG_RESCUE"]=float(rescue_threshold)
+    manifest["temporal_graph_v5"]={
+        "core":"TG_V4 unchanged",
+        "combination":"TG_V5 alarm iff TG_V4 margin > 0 OR TG_RESCUE margin > 0",
+        "rescue":{
+            "iqr_limit":float(rescue_iqr_limit),
+            "decay":float(rescue_decay),
+            "threshold":float(rescue_threshold),
+            "motif":"contiguous 3-node elevated common-mode residual cluster",
+            "selection_development_seeds":[89901,89902,89903,90001,90002,90003,
+                                           90101,90102,90103,90201,90202,90203],
+            "development_worst_seed_normal_fpr":0.0,
+            "development_cyclic_s5_episodes_detected":"12/12",
+        },
+        "heldout_test_used_for_selection":False,
+    }
+    manifest["development_disclosure"]+=(
+        " V5 adds a fixed low-IQR contiguous-triple rescue selected on already-consumed "
+        "seeds 89901-90203; no future prospective test is used for rescue selection."
+    )
+    bundle["manifest"]=manifest
+
+    cal,cal_labels,_=read_dataset(cal_directory)
+    if cal_labels.attack.any():
+        raise ValueError("V5 fresh calibration must remain normal-only")
+    calibration_bundle=copy.deepcopy(bundle)
+    calibration_bundle["temporal_graph_v4"].reset()
+    calibration_bundle["cyclic_rescue"].reset()
+    cal_predictions=score_frame(calibration_bundle,cal)
+    manifest["calibration_alarm_rate"]=cal_predictions.groupby("method").alarm.mean().to_dict()
+
+    bundle["temporal_graph_v4"].reset()
+    bundle["cyclic_rescue"].reset()
+    joblib.dump(bundle,out/"model.joblib")
+    manifest["model_sha256"]=sha256(out/"model.joblib")
+    dump_json(out/"manifest.json",manifest)
+    cal_predictions.to_csv(out/"calibration_predictions.csv",index=False)
+    return manifest
+
+
 def load_frozen(path):
     root = Path(path)
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
@@ -885,6 +952,8 @@ def load_frozen(path):
         bundle["temporal_graph_v3"].reset()
     if "temporal_graph_v4" in bundle:
         bundle["temporal_graph_v4"].reset()
+    if "cyclic_rescue" in bundle:
+        bundle["cyclic_rescue"].reset()
     if bundle["protocol_version"] not in ("live-5g-v1", PROTOCOL_VERSION):
         raise ValueError("Unsupported protocol version")
     bundle["manifest"] = manifest
@@ -923,11 +992,23 @@ def score_frame(bundle, frame):
         raw = bundle["temporal_graph_v3"].decision_function(frame)
         margins["TG_V3"] = raw - threshold if math.isfinite(threshold) else np.full(len(frame), -1.)
         methods.append("TG_V3")
+    v4_margin = None
     if "temporal_graph_v4" in bundle:
         threshold = bundle["thresholds"]["TG_V4"]
         raw = bundle["temporal_graph_v4"].decision_function(frame)
-        margins["TG_V4"] = raw - threshold if math.isfinite(threshold) else np.full(len(frame), -1.)
+        v4_margin = raw - threshold if math.isfinite(threshold) else np.full(len(frame), -1.)
+        margins["TG_V4"] = v4_margin
         methods.append("TG_V4")
+    if "cyclic_rescue" in bundle:
+        threshold = bundle["thresholds"]["TG_RESCUE"]
+        raw = bundle["cyclic_rescue"].decision_function(frame)
+        rescue_margin = raw - threshold
+        margins["TG_RESCUE"] = rescue_margin
+        methods.append("TG_RESCUE")
+        if v4_margin is None:
+            raise ValueError("TG_V5 rescue requires frozen TG_V4 core")
+        margins["TG_V5"] = np.maximum(v4_margin, rescue_margin)
+        methods.append("TG_V5")
     if "tail_model" in bundle:
         threshold = bundle["thresholds"]["robust_tail"]
         margins["robust_tail"] = (tail_scores(bundle["tail_model"], frame) - threshold
