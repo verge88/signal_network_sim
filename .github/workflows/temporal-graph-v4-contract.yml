@@ -1,0 +1,25 @@
+name: Temporal graph V4 contract
+
+on:
+  push:
+    branches: ['experiment/temporal-graph-v4-cyclic-20261113']
+    paths:
+      - '.github/workflows/temporal-graph-v4-contract.yml'
+  workflow_dispatch:
+
+jobs:
+  contract:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==1.26.4 pandas==2.2.3 scikit-learn==1.5.2 joblib==1.5.2 pytest==8.3.4 pyod==3.6.7 isotree==0.6.1.post10 aderh==1.0.0 "dvmad @ git+https://github.com/troisang1/dvmad.git@df5cf44174a9170843c41967c12ae4fdbb56e29c"
+        env:
+          NO_LONG_DOUBLE: '1'
+      - name: Compile V4 integration
+        run: |
+          python -m py_compile             experiments/distributed_5g/temporal_graph_v4.py             experiments/live_5g/evaluate.py             experiments/distributed_5g/full_experiment.py
+      - name: Run temporal graph contracts
+        run: python -m pytest experiments/distributed_5g/test_temporal_graph.py -q
