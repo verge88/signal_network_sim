@@ -1,0 +1,15 @@
+Frozen cyclic-S5 temporal-graph V4 prospective confirmation
+development_seeds=89901,89902,89903,90001,90002,90003,90101,90102,90103
+prospective_seeds=90201,90202,90203
+representation=zone_common_mode_residual
+model=StandardScaler+hard-negative LogisticRegression
+cyclic_positive_weight=3.0
+cyclic_normal_weight=2.0
+cluster_order=2
+decay=0.75
+graph_alpha=0.00015
+accumulator_multiplier=1.50
+selection_requirement=9_of_9_cyclic_S5_detected_and_worst_seed_FPR_le_0.0007
+development_result=36_of_36_S5_episodes;9_of_9_cyclic_S5;worst_FPR_0.0006033051
+system_fpr_target=0.001
+no_test_tuning=true
