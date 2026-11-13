@@ -308,6 +308,16 @@ def counterfactual_group(frame, target_relative, variant_name):
     if not all(0 <= x < 8 for x in target_relative):
         raise ValueError(target_relative)
 
+    # Build the row locator once. The previous implementation recomputed an
+    # all-frame NF map for every S5 window; that was equivalent but unnecessarily
+    # expensive for the 8-seed diagnostic replay.
+    numeric_slots = out.nf_id.astype(str).str.split("-", n=1).str[1].astype(int).to_numpy()
+    windows_all = out.window_id.astype(int).to_numpy()
+    locator = {
+        (int(window), int(slot)): int(idx)
+        for idx, window, slot in zip(out.index.to_numpy(), windows_all, numeric_slots)
+    }
+
     for item in episodes:
         zone = item["zone"]
         original = item["members"]
@@ -323,16 +333,9 @@ def counterfactual_group(frame, target_relative, variant_name):
         if "variant" in out:
             out.loc[original_label_mask, "variant"] = "normal"
 
+        zone_members = list(range(zone * 8, zone * 8 + 8))
         for window in sorted(windows):
-            zone_mask = (
-                out.window_id.astype(int).eq(window)
-                & out.nf_id.map(slot_number).floordiv(8).eq(zone)
-            )
-            zone_part = out.loc[zone_mask]
-            by_slot = {
-                slot_number(row.nf_id): idx
-                for idx, row in zone_part[["nf_id"]].iterrows()
-            }
+            by_slot = {member: locator[(int(window), member)] for member in zone_members}
             attack_values = [
                 float(out.at[by_slot[member], "request_count"]) for member in original
             ]
