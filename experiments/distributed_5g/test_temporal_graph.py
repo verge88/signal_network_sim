@@ -10,6 +10,7 @@ from experiments.distributed_5g.temporal_graph import TemporalGraphDetector
 from experiments.distributed_5g.temporal_graph_v2 import LocalSynchronyTransformer, SupervisedTemporalGraphDetector, FEATURES as V2_FEATURES
 from experiments.distributed_5g.temporal_graph_v3 import TemporalGraphV3Detector
 from experiments.distributed_5g.temporal_graph_v4 import CommonModeResidualTransformer, TemporalGraphV4Detector, FEATURES_V4
+from experiments.distributed_5g.temporal_graph_v5 import CyclicTripleRescue
 from experiments.robustness_5g.design import attack_schedule, s5_members, s5_count
 
 
@@ -228,6 +229,47 @@ def test_v4_detector_roundtrips_with_clean_state():
     assert np.allclose(batch,np.concatenate(parts),rtol=0,atol=1e-12)
     with tempfile.TemporaryDirectory() as directory:
         path=Path(directory)/"v4.joblib"
+        joblib.dump(detector.clean_copy(),path)
+        loaded=joblib.load(path);loaded.reset()
+        assert np.allclose(batch,loaded.decision_function(test),rtol=0,atol=1e-12)
+
+
+def _cyclic_rescue_pattern(attack):
+    rows=[]
+    for w in range(30):
+        base=2+(w//8)
+        wave=(0,1,1,2,1,0)[(w//3)%6]
+        for slot in range(32):
+            count=base
+            if attack and slot in (17,18,19):
+                count=base+wave+(slot==18)
+            rows.append(dict(run_id="cyclic-rescue",window_id=w,nf_id=f"slot-{slot}",
+                             timestamp=float(w),request_count=float(count),
+                             interarrival_mean=1.0/max(1,count),latency_ms=1.0,error_rate=0.0))
+    return pd.DataFrame(rows)
+
+
+def test_cyclic_rescue_detects_local_triple_not_global_common_mode():
+    detector=CyclicTripleRescue(iqr_limit=1.0,decay=.8)
+    normal=detector.clean_copy().decision_function(_cyclic_rescue_pattern(False))
+    attack=detector.clean_copy().decision_function(_cyclic_rescue_pattern(True))
+    assert float(normal.max()) <= 2.0
+    attack_frame=_cyclic_rescue_pattern(True)
+    target=attack_frame.nf_id.isin(["slot-17","slot-18","slot-19"]).to_numpy()
+    assert float(attack[target].max()) > 2.0
+
+
+def test_cyclic_rescue_batch_matches_online_and_serializes():
+    test=_cyclic_rescue_pattern(True)
+    detector=CyclicTripleRescue(iqr_limit=1.0,decay=.8)
+    batch=detector.clean_copy().decision_function(test)
+    online=detector.clean_copy()
+    pieces=[]
+    for _,part in test.groupby("window_id",sort=False):
+        pieces.append(online.decision_function(part))
+    assert np.allclose(batch,np.concatenate(pieces),rtol=0,atol=1e-12)
+    with tempfile.TemporaryDirectory() as directory:
+        path=Path(directory)/"rescue.joblib"
         joblib.dump(detector.clean_copy(),path)
         loaded=joblib.load(path);loaded.reset()
         assert np.allclose(batch,loaded.decision_function(test),rtol=0,atol=1e-12)
