@@ -1,0 +1,62 @@
+V7 stable-set FPR-constrained prospective confirmation
+date=2026-11-14
+branch=experiment/v7-stable-set-fpr-20261114
+status=preregistered_before_906xx_acquisition
+
+motivation=V6 solved permutation/cardinality generalization but failed the preregistered FPR target on 0/6 seeds; most V6 false positives were short post-episode temporal tails
+v6_905xx_status=consumed development evidence for V7 only; never V7 confirmation
+consumed_v6_seeds=90501,90502,90503,90504,90505,90506
+no_906xx_data_used_for_design=true
+
+architecture=TG_V4 unchanged OR TG_V7_GROUP
+same_run_comparator=TG_V6 retained in the frozen bundle but not used by TG_V7 decisions
+v7_group_input=frozen TG_V4 learned logistic probabilities over V4 residual-temporal features
+candidate_definition=same permutation-invariant top-k probability boundaries as V6 for k=2,3,4,5
+candidate_score=(p_k-p_kplus1)*mean(top-k p)/(1+4*std(top-k p))
+temporal_state=per zone and k, retain evidence only while the same unordered top-k membership set persists
+membership_change=hard reset evidence to current instantaneous candidate score
+uses_absolute_numeric_nf_id=false
+uses_adjacency=false
+nf_identity_role=opaque key only for equality of unordered membership sets across adjacent windows
+permutation_equivariant_within_zone=true
+group_size_range=2,3,4,5
+stable_set_decay=0.25
+threshold_floor=0.65
+group_alpha=0.00015
+threshold_policy=max(0.65, normal-only conformal threshold over fresh cal and historical fully-normal references)
+
+development_screen_source=consumed V6 90501-90506 prospective evidence
+development_screen_max_seed_fpr=0.0008714596949891067
+development_screen_pooled_recall=0.6209662698412698
+development_screen_episode_detection=k2 11/12; k3 12/12; k4 12/12; k5 12/12
+development_screen_status=selection evidence only; not confirmation
+parameter_changes_after_906xx_trigger=forbidden
+
+v4_core_unchanged=true
+v4_cluster_order=2
+v4_decay=0.75
+v4_graph_alpha=0.00015
+accumulator_multiplier=1.50
+training=fresh normal train/cal per seed plus previously consumed labeled development runs for the unchanged V4 logistic model
+development_runs=89901,89902,89903,90001,90002,90003,90101,90102,90103
+historical_normal_calibration_runs=89901,89902,89903,90001,90002,90003,90101,90102,90103
+
+prospective_seeds=90601,90602,90603,90604,90605,90606
+prospective_windows=600
+episodes_per_seed=8
+episode_duration_windows=30
+group_sizes_per_seed=two episodes each of k=2,k=3,k=4,k=5
+placement=deterministic random within-zone subset from seed; no adjacency requirement
+scenario=S7
+workload=benign-range coordinated low-and-slow request counts, 2..5 requests/window
+online_method=TG_V7
+fusion=direct confirmation with BUDGETED_WITHOUT_MINING OR TG_V7
+no_test_tuning=true
+
+primary_fpr_target=TG_V7 FPR <= 0.001 on every one of six seeds
+primary_group_target=TG_V7 detects at least 10 of 12 prospective episodes separately for each k=2,3,4,5
+primary_window_recall_target=pooled TG_V7 NF-window recall >= 0.50
+scientific_success=all three primary targets must hold
+
+secondary_outputs=TG_V7_GROUP standalone metrics; same-run TG_V6 and TG_V4 comparisons; FULL_HYBRID and BUDGETED_WITHOUT_MINING; per-k window recall; post-episode 5-window false-positive tails; paired V6-minus-V7 FPR and V7-minus-V4 recall
+negative_result_policy=report unchanged; do not modify V7 parameters after seeing 906xx outcomes
