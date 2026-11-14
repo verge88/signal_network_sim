@@ -37,6 +37,7 @@ from experiments.distributed_5g.temporal_graph_v3 import TemporalGraphV3Detector
 from experiments.distributed_5g.temporal_graph_v4 import TemporalGraphV4Detector, FEATURES_V4
 from experiments.distributed_5g.temporal_graph_v5 import CyclicTripleRescue
 from experiments.distributed_5g.temporal_graph_v6 import PermutationInvariantGroupRescue
+from experiments.distributed_5g.temporal_graph_v7 import StableSetGroupDetector
 
 KEYS = ["run_id", "window_id", "nf_id"]
 META = KEYS + ["timestamp"]
@@ -50,7 +51,7 @@ TAIL_METHODS = ["robust_tail", "hybrid_tail_without_KIE", "hybrid_tail"]
 TAIL_FEATURES = ["request_count", "error_rate", "update_count"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
 PROTOCOL_VERSION = "live-5g-v2-tail"
-DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2", "temporal_graph_v3", "temporal_graph_v4", "temporal_graph_v5", "temporal_graph_v6")
+DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2", "temporal_graph_v3", "temporal_graph_v4", "temporal_graph_v5", "temporal_graph_v6", "temporal_graph_v7")
 DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised"}
 
 
@@ -1042,6 +1043,124 @@ def fit_temporal_graph_v6(train_directory, cal_directory, development_directorie
     return manifest
 
 
+
+def fit_temporal_graph_v7(train_directory, cal_directory, development_directories,
+                          reference_calibration_directories, output, seed=7143,
+                          point_alpha=0.001, graph_alpha=0.00015,
+                          cluster_order=2, decay=0.75,
+                          accumulator_multiplier=1.50,
+                          group_alpha=0.00015, v6_group_decay=0.75,
+                          stable_decay=0.25, stable_threshold_floor=0.65,
+                          min_group=2, max_group=5):
+    """Freeze V6 as comparator and add the development-selected stable-set V7 branch.
+
+    V7 parameters were selected only after V6 seeds 90501-90506 became consumed
+    development evidence. Future V7 prospective observations are unavailable here.
+    The operational threshold is never lower than the development-selected floor
+    and may only increase under normal-only conformal calibration.
+    """
+    fit_temporal_graph_v6(
+        train_directory, cal_directory, development_directories,
+        reference_calibration_directories, output, seed=seed,
+        point_alpha=point_alpha, graph_alpha=graph_alpha,
+        cluster_order=cluster_order, decay=decay,
+        accumulator_multiplier=accumulator_multiplier,
+        group_alpha=group_alpha, group_decay=v6_group_decay,
+        min_group=min_group, max_group=max_group)
+    out=Path(output)
+    bundle=joblib.load(out/"model.joblib")
+    manifest=json.loads((out/"manifest.json").read_text())
+
+    core=bundle["temporal_graph_v4"]
+    stable=StableSetGroupDetector(
+        core.model, history=core.history_size, min_group=min_group,
+        max_group=max_group, decay=stable_decay)
+
+    cal,cal_labels,_=read_dataset(cal_directory)
+    if cal_labels.attack.any():
+        raise ValueError("V7 fresh calibration must remain normal-only")
+    calibration_runs=[cal]
+    for directory in reference_calibration_directories:
+        frame,labels,_=read_dataset(directory)
+        if labels.attack.any():
+            raise ValueError("V7 historical calibration references must be normal-only")
+        calibration_runs.append(frame)
+    if len(calibration_runs)<2:
+        raise ValueError("V7 requires historical normal calibration references")
+
+    per_run_thresholds=[]
+    for frame in calibration_runs:
+        scores=stable.clean_copy().decision_function(frame)
+        per_run_thresholds.append(conformal_threshold(scores,group_alpha))
+    stable_threshold=max(float(stable_threshold_floor),*per_run_thresholds)
+
+    bundle["v7_group_rescue"]=stable.clean_copy()
+    bundle["thresholds"]["TG_V7_GROUP"]=stable_threshold
+    bundle["ml_method"]="TG_V7"
+
+    manifest["detector"]="temporal_graph_logistic_v7"
+    manifest["ml_method"]="TG_V7"
+    manifest["thresholds"]["TG_V7_GROUP"]=stable_threshold
+    manifest["threshold_sufficient"]=bool(
+        manifest["threshold_sufficient"] and math.isfinite(stable_threshold))
+    manifest["temporal_graph_v7"]={
+        "core":"TG_V4 unchanged; TG_V6 retained only as same-run comparator",
+        "combination":"TG_V7 alarm iff TG_V4 margin > 0 OR TG_V7_GROUP margin > 0",
+        "group_branch":{
+            "learned_model":"copy of frozen TG_V4 logistic probability model",
+            "candidate_score":"same top-k boundary score as V6",
+            "min_group":int(min_group),
+            "max_group":int(max_group),
+            "stable_set_decay":float(stable_decay),
+            "threshold_floor":float(stable_threshold_floor),
+            "group_alpha":float(group_alpha),
+            "membership_change":"reset evidence to current instantaneous score",
+            "adjacency_used":False,
+            "numeric_nf_order_used":False,
+            "permutation_equivariant_within_zone":True,
+            "threshold_policy":"max(development-selected floor, normal-only conformal thresholds across fresh and historical calibration runs)",
+        },
+        "development_selection":{
+            "consumed_v6_seeds":[90501,90502,90503,90504,90505,90506],
+            "future_v7_test_used":False,
+            "selected_decay":float(stable_decay),
+            "selected_floor":float(stable_threshold_floor),
+            "screen_max_seed_fpr":0.0008714596949891067,
+            "screen_episode_detection":{"k2":"11/12","k3":"12/12","k4":"12/12","k5":"12/12"},
+            "screen_pooled_recall":0.6209662698412698,
+            "screen_note":"post-final V6 runs are development evidence only; these figures are not V7 confirmation",
+        },
+        "calibration_per_run_thresholds":[
+            value if math.isfinite(value) else None for value in per_run_thresholds
+        ],
+        "heldout_v7_test_used_for_selection":False,
+    }
+    manifest["development_disclosure"]+=(
+        " V7 was designed after V6 seeds 90501-90506 were consumed. It retains "
+        "the V6 permutation-invariant variable-k candidate score but accumulates "
+        "evidence only while the same unordered group persists; membership changes "
+        "reset evidence. The decay 0.25 and threshold floor 0.65 are frozen before "
+        "all 906xx prospective acquisitions."
+    )
+    bundle["manifest"]=manifest
+
+    calibration_bundle=copy.deepcopy(bundle)
+    calibration_bundle["temporal_graph_v4"].reset()
+    calibration_bundle["v6_group_rescue"].reset()
+    calibration_bundle["v7_group_rescue"].reset()
+    cal_predictions=score_frame(calibration_bundle,cal)
+    manifest["calibration_alarm_rate"]=cal_predictions.groupby("method").alarm.mean().to_dict()
+
+    bundle["temporal_graph_v4"].reset()
+    bundle["v6_group_rescue"].reset()
+    bundle["v7_group_rescue"].reset()
+    joblib.dump(bundle,out/"model.joblib")
+    manifest["model_sha256"]=sha256(out/"model.joblib")
+    dump_json(out/"manifest.json",manifest)
+    cal_predictions.to_csv(out/"calibration_predictions.csv",index=False)
+    return manifest
+
+
 def load_frozen(path):
     root = Path(path)
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
@@ -1058,6 +1177,8 @@ def load_frozen(path):
         bundle["cyclic_rescue"].reset()
     if "v6_group_rescue" in bundle:
         bundle["v6_group_rescue"].reset()
+    if "v7_group_rescue" in bundle:
+        bundle["v7_group_rescue"].reset()
     if bundle["protocol_version"] not in ("live-5g-v1", PROTOCOL_VERSION):
         raise ValueError("Unsupported protocol version")
     bundle["manifest"] = manifest
@@ -1123,6 +1244,16 @@ def score_frame(bundle, frame):
             raise ValueError("TG_V6 group branch requires frozen TG_V4 core")
         margins["TG_V6"] = np.maximum(v4_margin, group_margin)
         methods.append("TG_V6")
+    if "v7_group_rescue" in bundle:
+        threshold = bundle["thresholds"]["TG_V7_GROUP"]
+        raw = bundle["v7_group_rescue"].decision_function(frame)
+        stable_margin = raw - threshold if math.isfinite(threshold) else np.full(len(frame), -1.)
+        margins["TG_V7_GROUP"] = stable_margin
+        methods.append("TG_V7_GROUP")
+        if v4_margin is None:
+            raise ValueError("TG_V7 group branch requires frozen TG_V4 core")
+        margins["TG_V7"] = np.maximum(v4_margin, stable_margin)
+        methods.append("TG_V7")
     if "tail_model" in bundle:
         threshold = bundle["thresholds"]["robust_tail"]
         margins["robust_tail"] = (tail_scores(bundle["tail_model"], frame) - threshold
