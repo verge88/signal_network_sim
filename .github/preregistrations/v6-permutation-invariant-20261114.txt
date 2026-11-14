@@ -1,0 +1,50 @@
+V6 permutation-invariant variable-cardinality prospective confirmation
+date=2026-11-14
+branch=experiment/v6-permutation-invariant-20261114
+status=preregistered_before_905xx_acquisition
+
+motivation=V5 post-final structural diagnostic showed that the learned V4 probability branch retains signal for k=4/5 while the fixed ID-adjacent structural gate suppresses it
+v5_final_data_status=consumed development evidence for V6 only; never V6 confirmation
+no_905xx_data_used_for_design=true
+
+architecture=TG_V4 unchanged OR TG_V6_GROUP
+v6_group_input=frozen TG_V4 learned logistic probabilities over V4 residual-temporal features
+v6_group_aggregation=for each eight-NF zone, test top-k probability boundaries for every k=2,3,4,5
+v6_group_score=(p_k-p_kplus1)*mean(top-k p)/(1+4*std(top-k p))
+v6_group_membership=top-k nodes by learned probability when boundary gap is positive
+uses_absolute_nf_id=false
+uses_adjacency=false
+permutation_invariant_within_zone=true
+group_size_range=2,3,4,5
+group_decay=0.75
+v4_core_unchanged=true
+v4_cluster_order=2
+v4_decay=0.75
+v4_graph_alpha=0.00015
+accumulator_multiplier=1.50
+
+training=fresh normal train/cal per seed plus previously consumed labeled development runs for the unchanged V4 logistic model
+development_runs=89901,89902,89903,90001,90002,90003,90101,90102,90103
+group_threshold_labels_used=false
+group_threshold_policy=normal-only conformal threshold, maximum across fresh normal calibration and the historical fully-normal calibration references
+group_alpha=0.00015
+
+prospective_seeds=90501,90502,90503,90504,90505,90506
+prospective_windows=600
+episodes_per_seed=8
+episode_duration_windows=30
+group_sizes_per_seed=two episodes each of k=2,k=3,k=4,k=5
+placement=deterministic random within-zone subset from seed; no adjacency requirement
+scenario=S6
+workload=benign-range coordinated low-and-slow request counts, 2..5 requests/window
+online_method=TG_V6
+fusion=direct confirmation with BUDGETED_WITHOUT_MINING OR TG_V6
+no_test_tuning=true
+
+primary_fpr_target=TG_V6 FPR <= 0.001 on every one of six seeds
+primary_group_target=TG_V6 detects at least 10 of 12 prospective episodes separately for each k=2,3,4,5
+primary_improvement_target=mean seed-level TG_V6 recall minus TG_V4 recall is nonnegative
+scientific_success=all three primary targets must hold
+
+secondary_outputs=TG_V6_GROUP standalone recall/FPR; TG_V4 comparison; FULL_HYBRID and BUDGETED_WITHOUT_MINING; per-k NF-window recall; paired seed-level recall deltas
+negative_result_policy=report unchanged; do not modify V6 parameters after seeing 905xx outcomes
