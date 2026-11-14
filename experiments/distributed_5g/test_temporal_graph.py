@@ -11,6 +11,7 @@ from experiments.distributed_5g.temporal_graph_v2 import LocalSynchronyTransform
 from experiments.distributed_5g.temporal_graph_v3 import TemporalGraphV3Detector
 from experiments.distributed_5g.temporal_graph_v4 import CommonModeResidualTransformer, TemporalGraphV4Detector, FEATURES_V4
 from experiments.distributed_5g.temporal_graph_v5 import CyclicTripleRescue
+from experiments.distributed_5g.temporal_graph_v6 import PermutationInvariantGroupRescue
 from experiments.robustness_5g.design import attack_schedule, s5_members, s5_count
 
 
@@ -273,3 +274,50 @@ def test_cyclic_rescue_batch_matches_online_and_serializes():
         joblib.dump(detector.clean_copy(),path)
         loaded=joblib.load(path);loaded.reset()
         assert np.allclose(batch,loaded.decision_function(test),rtol=0,atol=1e-12)
+
+
+def _single_window():
+    return pd.DataFrame([
+        dict(run_id="v6-window",window_id=0,nf_id=f"slot-{slot}",
+             timestamp=0.0,request_count=2.0)
+        for slot in range(32)
+    ])
+
+
+def test_v6_group_scores_are_permutation_invariant_within_zone():
+    part=_single_window()
+    probability=np.full(32,.05,dtype=float)
+    probability[[0,3,6,7]]=[.92,.90,.88,.86]
+    detector=PermutationInvariantGroupRescue(
+        model=object(),history=8,min_group=2,max_group=5,decay=.75)
+    original=detector._window_scores(part,probability)
+
+    mapping={0:5,1:1,2:7,3:0,4:4,5:2,6:6,7:3}
+    renamed=part.copy()
+    renamed["nf_id"]=renamed.nf_id.map(
+        lambda x: f"slot-{(int(x.split('-')[1])//8)*8 + mapping[int(x.split('-')[1])%8]}")
+    permuted=detector._window_scores(renamed,probability)
+
+    for zone in range(4):
+        left=sorted(original[f"slot-{zone*8+i}"] for i in range(8))
+        right=sorted(permuted[f"slot-{zone*8+i}"] for i in range(8))
+        assert np.allclose(left,right,rtol=0,atol=1e-12)
+
+
+def test_v6_group_score_supports_k2_and_k5_without_adjacency():
+    part=_single_window()
+    detector=PermutationInvariantGroupRescue(
+        model=object(),history=8,min_group=2,max_group=5,decay=.75)
+
+    p2=np.full(32,.05,dtype=float)
+    p2[[0,7]]=[.95,.92]
+    score2=detector._window_scores(part,p2)
+    assert score2["slot-0"]>0 and score2["slot-7"]>0
+    assert all(score2[f"slot-{i}"]==0 for i in range(1,7))
+
+    p5=np.full(32,.04,dtype=float)
+    members=(0,2,3,5,7)
+    p5[list(members)]=[.95,.94,.93,.92,.91]
+    score5=detector._window_scores(part,p5)
+    assert all(score5[f"slot-{i}"]>0 for i in members)
+    assert all(score5[f"slot-{i}"]==0 for i in set(range(8))-set(members))
