@@ -1,0 +1,4 @@
+triggered=2026-11-14T16:21:00Z
+preregistration=.github/preregistrations/v7-stable-set-fpr-20261114.txt
+frozen_parameters=stable_decay:0.25,threshold_floor:0.65,min_group:2,max_group:5
+prospective_seeds=90601,90602,90603,90604,90605,90606
