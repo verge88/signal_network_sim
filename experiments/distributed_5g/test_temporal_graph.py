@@ -12,6 +12,8 @@ from experiments.distributed_5g.temporal_graph_v3 import TemporalGraphV3Detector
 from experiments.distributed_5g.temporal_graph_v4 import CommonModeResidualTransformer, TemporalGraphV4Detector, FEATURES_V4
 from experiments.distributed_5g.temporal_graph_v5 import CyclicTripleRescue
 from experiments.distributed_5g.temporal_graph_v6 import PermutationInvariantGroupRescue
+from experiments.distributed_5g.temporal_graph_v7 import StableSetGroupDetector
+from experiments.distributed_5g.v7_design import v7_attack_schedule, v7_members, V7_WINDOWS
 from experiments.robustness_5g.design import attack_schedule, s5_members, s5_count
 from experiments.distributed_5g.v6_design import v6_attack_schedule, v6_members, v6_count
 
@@ -338,3 +340,95 @@ def test_v6_schedule_balances_group_sizes_and_random_positions():
     for i,left in enumerate(schedule):
         for right in schedule[i+1:]:
             assert left[1]<=right[0] or right[1]<=left[0]
+
+
+
+def test_v7_stable_set_is_permutation_equivariant():
+    part=_single_window()
+    probability=np.full(32,.04,dtype=float)
+    probability[[0,2,5,7]]=[.95,.92,.89,.86]
+    detector=StableSetGroupDetector(
+        model=object(),history=8,min_group=2,max_group=5,decay=.25)
+    original=detector._window_scores(part,probability)
+
+    mapping={0:6,1:1,2:4,3:0,4:7,5:2,6:5,7:3}
+    renamed=part.copy()
+    renamed["nf_id"]=renamed.nf_id.map(
+        lambda x: f"slot-{(int(x.split('-')[1])//8)*8 + mapping[int(x.split('-')[1])%8]}")
+    other=StableSetGroupDetector(
+        model=object(),history=8,min_group=2,max_group=5,decay=.25)
+    permuted=other._window_scores(renamed,probability)
+
+    for zone in range(4):
+        left=sorted(original[f"slot-{zone*8+i}"] for i in range(8))
+        right=sorted(permuted[f"slot-{zone*8+i}"] for i in range(8))
+        assert np.allclose(left,right,rtol=0,atol=1e-12)
+
+
+def test_v7_membership_change_resets_group_evidence():
+    part=_single_window()
+    detector=StableSetGroupDetector(
+        model=object(),history=8,min_group=2,max_group=2,decay=.25)
+
+    first=np.full(32,.05,dtype=float)
+    first[[0,1]]=[.95,.90]
+    score1=detector._window_scores(part,first)
+    score2=detector._window_scores(part,first)
+    assert score2["slot-0"] > score1["slot-0"]
+
+    changed=np.full(32,.05,dtype=float)
+    changed[[0,2]]=[.95,.90]
+    after_change=detector._window_scores(part,changed)
+    fresh=StableSetGroupDetector(
+        model=object(),history=8,min_group=2,max_group=2,decay=.25)
+    fresh_score=fresh._window_scores(part,changed)
+    assert np.isclose(after_change["slot-0"],fresh_score["slot-0"],rtol=0,atol=1e-12)
+    assert np.isclose(after_change["slot-2"],fresh_score["slot-2"],rtol=0,atol=1e-12)
+    assert after_change["slot-1"] == 0.0
+
+
+def test_v7_batch_matches_online_and_serializes():
+    dev=frame(30,"v7-dev")
+    labels=pd.DataFrame({
+        "attack":np.zeros(len(dev),dtype=int),
+        "scenario":["N1"]*len(dev),
+    })
+    mask=dev.window_id.between(16,27) & dev.nf_id.isin(["slot-1","slot-3","slot-6"])
+    for window in range(16,28):
+        wave=(window//2)%3
+        for slot in (1,3,6):
+            row=dev.window_id.eq(window)&dev.nf_id.eq(f"slot-{slot}")
+            dev.loc[row,"request_count"]=3+wave+(slot==3)
+    labels.loc[mask,"attack"]=1
+    labels.loc[mask,"scenario"]="S5"
+    core=TemporalGraphV4Detector(seed=789,history=8,cluster_order=2,decay=.75)
+    core.fit_development([(dev,labels)])
+    detector=StableSetGroupDetector(
+        core.model,history=8,min_group=2,max_group=5,decay=.25)
+
+    test=frame(18,"v7-heldout")
+    batch=detector.clean_copy().decision_function(test)
+    online=detector.clean_copy()
+    pieces=[]
+    for _,part in test.groupby("window_id",sort=False):
+        pieces.append(online.decision_function(part))
+    assert np.allclose(batch,np.concatenate(pieces),rtol=0,atol=1e-12)
+
+    with tempfile.TemporaryDirectory() as directory:
+        path=Path(directory)/"v7.joblib"
+        joblib.dump(detector.clean_copy(),path)
+        loaded=joblib.load(path);loaded.reset()
+        assert np.allclose(batch,loaded.decision_function(test),rtol=0,atol=1e-12)
+
+
+def test_v7_schedule_has_two_fresh_randomized_episodes_per_k():
+    schedule=v7_attack_schedule(V7_WINDOWS,90601)
+    assert len(schedule)==8
+    sizes=sorted(len(v7_members(entry)) for entry in schedule)
+    assert sizes==[2,2,3,3,4,4,5,5]
+    assert all(entry[2]=="S7" and entry[1]-entry[0]==30 for entry in schedule)
+    # V7 does not require numeric adjacency.
+    assert any(
+        max(v7_members(entry))-min(v7_members(entry))+1 != len(v7_members(entry))
+        for entry in schedule
+    )
