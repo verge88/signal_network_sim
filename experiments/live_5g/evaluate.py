@@ -36,6 +36,7 @@ from experiments.distributed_5g.temporal_graph_v2 import SupervisedTemporalGraph
 from experiments.distributed_5g.temporal_graph_v3 import TemporalGraphV3Detector
 from experiments.distributed_5g.temporal_graph_v4 import TemporalGraphV4Detector, FEATURES_V4
 from experiments.distributed_5g.temporal_graph_v5 import CyclicTripleRescue
+from experiments.distributed_5g.temporal_graph_v6 import PermutationInvariantGroupRescue
 
 KEYS = ["run_id", "window_id", "nf_id"]
 META = KEYS + ["timestamp"]
@@ -49,7 +50,7 @@ TAIL_METHODS = ["robust_tail", "hybrid_tail_without_KIE", "hybrid_tail"]
 TAIL_FEATURES = ["request_count", "error_rate", "update_count"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
 PROTOCOL_VERSION = "live-5g-v2-tail"
-DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2", "temporal_graph_v3", "temporal_graph_v4", "temporal_graph_v5")
+DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2", "temporal_graph_v3", "temporal_graph_v4", "temporal_graph_v5", "temporal_graph_v6")
 DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised"}
 
 
@@ -940,6 +941,107 @@ def fit_temporal_graph_v5(train_directory, cal_directory, development_directorie
     return manifest
 
 
+
+def fit_temporal_graph_v6(train_directory, cal_directory, development_directories,
+                          reference_calibration_directories, output, seed=7143,
+                          point_alpha=0.001, graph_alpha=0.00015,
+                          cluster_order=2, decay=0.75,
+                          accumulator_multiplier=1.50,
+                          group_alpha=0.00015, group_decay=0.75,
+                          min_group=2, max_group=5):
+    """Freeze V4 core plus a permutation-invariant variable-k learned group branch.
+
+    The learned probability model is the already-defined V4 logistic model.
+    V6 changes only group aggregation: no adjacency or absolute NF identifier is
+    used inside a zone. The group threshold is calibrated solely on normal
+    calibration runs, using the same max-across-reference policy as V4.
+    """
+    fit_temporal_graph_v4(
+        train_directory, cal_directory, development_directories,
+        reference_calibration_directories, output, seed=seed,
+        point_alpha=point_alpha, graph_alpha=graph_alpha,
+        cluster_order=cluster_order, decay=decay,
+        accumulator_multiplier=accumulator_multiplier)
+    out=Path(output)
+    bundle=joblib.load(out/"model.joblib")
+    manifest=json.loads((out/"manifest.json").read_text())
+
+    core=bundle["temporal_graph_v4"]
+    group=PermutationInvariantGroupRescue(
+        core.model, history=core.history_size, min_group=min_group,
+        max_group=max_group, decay=group_decay)
+
+    cal,cal_labels,_=read_dataset(cal_directory)
+    if cal_labels.attack.any():
+        raise ValueError("V6 fresh calibration must remain normal-only")
+    calibration_runs=[cal]
+    reference_files=[]
+    for directory in reference_calibration_directories:
+        frame,labels,files=read_dataset(directory)
+        if labels.attack.any():
+            raise ValueError("V6 historical calibration references must be normal-only")
+        calibration_runs.append(frame)
+        reference_files.extend(files)
+    if len(calibration_runs)<2:
+        raise ValueError("V6 requires historical normal calibration references")
+
+    thresholds=[]
+    reference_alarm_rates={}
+    for frame in calibration_runs:
+        scorer=group.clean_copy()
+        scores=scorer.decision_function(frame)
+        threshold=conformal_threshold(scores,group_alpha)
+        thresholds.append(threshold)
+    group_threshold=max(thresholds)
+
+    bundle["v6_group_rescue"]=group.clean_copy()
+    bundle["thresholds"]["TG_V6_GROUP"]=group_threshold
+    bundle["ml_method"]="TG_V6"
+
+    manifest["detector"]="temporal_graph_logistic_v6"
+    manifest["ml_method"]="TG_V6"
+    manifest["thresholds"]["TG_V6_GROUP"]=group_threshold if math.isfinite(group_threshold) else None
+    manifest["threshold_sufficient"]=bool(manifest["threshold_sufficient"] and math.isfinite(group_threshold))
+    manifest["temporal_graph_v6"]={
+        "core":"TG_V4 unchanged",
+        "combination":"TG_V6 alarm iff TG_V4 margin > 0 OR TG_V6_GROUP margin > 0",
+        "group_branch":{
+            "learned_model":"copy of frozen TG_V4 logistic probability model",
+            "min_group":int(min_group),
+            "max_group":int(max_group),
+            "decay":float(group_decay),
+            "group_alpha":float(group_alpha),
+            "adjacency_used":False,
+            "permutation_invariant_within_zone":True,
+            "aggregation":"positive top-k probability boundary with k in [min_group,max_group]",
+            "threshold_policy":"maximum conformal threshold across fresh normal cal plus historical fully-normal calibration runs",
+        },
+        "motivation":"V5 post-final diagnostic showed learned signal for k=4/5 but fixed structural gating suppressed it.",
+        "development_evidence":"V5 final evidence is consumed development evidence for V6 only; it is never reused as V6 prospective confirmation.",
+        "heldout_v6_test_used_for_selection":False,
+    }
+    manifest["development_disclosure"]+=(
+        " V6 replaces the ID-adjacent fixed-k rescue with a learned-probability "
+        "top-k boundary branch covering k=2..5. Its threshold uses normal-only "
+        "calibration; future V6 prospective runs are unavailable during freezing."
+    )
+    bundle["manifest"]=manifest
+
+    calibration_bundle=copy.deepcopy(bundle)
+    calibration_bundle["temporal_graph_v4"].reset()
+    calibration_bundle["v6_group_rescue"].reset()
+    cal_predictions=score_frame(calibration_bundle,cal)
+    manifest["calibration_alarm_rate"]=cal_predictions.groupby("method").alarm.mean().to_dict()
+
+    bundle["temporal_graph_v4"].reset()
+    bundle["v6_group_rescue"].reset()
+    joblib.dump(bundle,out/"model.joblib")
+    manifest["model_sha256"]=sha256(out/"model.joblib")
+    dump_json(out/"manifest.json",manifest)
+    cal_predictions.to_csv(out/"calibration_predictions.csv",index=False)
+    return manifest
+
+
 def load_frozen(path):
     root = Path(path)
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
@@ -954,6 +1056,8 @@ def load_frozen(path):
         bundle["temporal_graph_v4"].reset()
     if "cyclic_rescue" in bundle:
         bundle["cyclic_rescue"].reset()
+    if "v6_group_rescue" in bundle:
+        bundle["v6_group_rescue"].reset()
     if bundle["protocol_version"] not in ("live-5g-v1", PROTOCOL_VERSION):
         raise ValueError("Unsupported protocol version")
     bundle["manifest"] = manifest
@@ -1009,6 +1113,16 @@ def score_frame(bundle, frame):
             raise ValueError("TG_V5 rescue requires frozen TG_V4 core")
         margins["TG_V5"] = np.maximum(v4_margin, rescue_margin)
         methods.append("TG_V5")
+    if "v6_group_rescue" in bundle:
+        threshold = bundle["thresholds"]["TG_V6_GROUP"]
+        raw = bundle["v6_group_rescue"].decision_function(frame)
+        group_margin = raw - threshold if math.isfinite(threshold) else np.full(len(frame), -1.)
+        margins["TG_V6_GROUP"] = group_margin
+        methods.append("TG_V6_GROUP")
+        if v4_margin is None:
+            raise ValueError("TG_V6 group branch requires frozen TG_V4 core")
+        margins["TG_V6"] = np.maximum(v4_margin, group_margin)
+        methods.append("TG_V6")
     if "tail_model" in bundle:
         threshold = bundle["thresholds"]["robust_tail"]
         margins["robust_tail"] = (tail_scores(bundle["tail_model"], frame) - threshold
