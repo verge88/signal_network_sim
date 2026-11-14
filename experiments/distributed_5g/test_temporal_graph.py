@@ -13,6 +13,7 @@ from experiments.distributed_5g.temporal_graph_v4 import CommonModeResidualTrans
 from experiments.distributed_5g.temporal_graph_v5 import CyclicTripleRescue
 from experiments.distributed_5g.temporal_graph_v6 import PermutationInvariantGroupRescue
 from experiments.robustness_5g.design import attack_schedule, s5_members, s5_count
+from experiments.distributed_5g.v6_design import v6_attack_schedule, v6_members, v6_count
 
 
 def frame(windows=16, run_id="normal"):
@@ -321,3 +322,19 @@ def test_v6_group_score_supports_k2_and_k5_without_adjacency():
     score5=detector._window_scores(part,p5)
     assert all(score5[f"slot-{i}"]>0 for i in members)
     assert all(score5[f"slot-{i}"]==0 for i in set(range(8))-set(members))
+
+
+def test_v6_schedule_balances_group_sizes_and_random_positions():
+    schedule=v6_attack_schedule(600,90501)
+    assert len(schedule)==8
+    sizes=[len(v6_members(entry)) for entry in schedule]
+    assert sorted(sizes)==[2,2,3,3,4,4,5,5]
+    for entry in schedule:
+        members=v6_members(entry)
+        assert len({m//8 for m in members})==1
+        for window in range(entry[0],entry[1]):
+            counts=[v6_count(entry,window,m) for m in members]
+            assert all(2<=value<=5 for value in counts)
+    for i,left in enumerate(schedule):
+        for right in schedule[i+1:]:
+            assert left[1]<=right[0] or right[1]<=left[0]
