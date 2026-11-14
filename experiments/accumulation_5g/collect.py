@@ -544,7 +544,7 @@ def run(args):
                                             'episode_id': f'{run_id}-{current[2]}-{current[0]}'})
             active = current
             old_port = control.ready['port']
-            control.prepare(window, active[2] if active is not None and active[3] == 4 else 'N1')
+            control.prepare(window, active[2] if active is not None and active[3] == 4 and active[2] != 'S6' else 'N1')
             if old_port != control.ready['port']:
                 bind_control_profile()
                 witness.update('slot-4', profile=profiles['slot-4'], route=route_address(profiles['slot-4']))
