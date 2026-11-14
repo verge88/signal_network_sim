@@ -20,5 +20,15 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install numpy==1.26.4 pandas==2.2.3 scipy==1.14.1 scikit-learn==1.5.2 joblib==1.5.2 pytest==8.3.4
+      - name: Compile V7 integration surface
+        run: |
+          python -m py_compile \
+            experiments/distributed_5g/temporal_graph_v7.py \
+            experiments/distributed_5g/v7_design.py \
+            experiments/distributed_5g/v7_structural_trial.py \
+            experiments/live_5g/evaluate.py \
+            experiments/distributed_5g/full_experiment.py \
+            experiments/accumulation_5g/collect.py \
+            experiments/distributed_5g/live.py
       - name: V7 temporal graph contracts
         run: python -m pytest experiments/distributed_5g/test_temporal_graph.py -q
