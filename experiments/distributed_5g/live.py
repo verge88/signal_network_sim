@@ -45,6 +45,7 @@ def main():
     parser.add_argument('--accumulator-multiplier', type=float, default=1.0)
     parser.add_argument('--load-experiment', action='store_true')
     parser.add_argument('--v6-structure-experiment', action='store_true')
+    parser.add_argument('--v7-structure-experiment', action='store_true')
     parser.add_argument('--recover-normal', action='store_true')
     args=parser.parse_args()
     if args.load_experiment:
@@ -56,6 +57,11 @@ def main():
             parser.error('V6 structural experiment cannot be combined with load/smoke modes')
         if not args.confirm_if_context or args.ml_method != 'TG_V6':
             parser.error('V6 structural experiment requires confirmation with --ml-method TG_V6')
+    if args.v7_structure_experiment:
+        if args.v6_structure_experiment or args.load_experiment or args.smoke_windows is not None:
+            parser.error('V7 structural experiment cannot be combined with V6/load/smoke modes')
+        if not args.confirm_if_context or args.ml_method != 'TG_V7':
+            parser.error('V7 structural experiment requires confirmation with --ml-method TG_V7')
     if args.confirm_if_context and not args.include_if_context:
         parser.error('--confirm-if-context requires --include-if-context')
     if not 0 < args.confirmation_fraction <= 1:
@@ -68,7 +74,7 @@ def main():
         parser.error('--smoke-windows must be between 1 and 600')
     args.phase='test'
     args.normal_smoke = args.smoke_windows is not None
-    args.windows = 600 if args.v6_structure_experiment else (args.smoke_windows if args.normal_smoke else 3600)
+    args.windows = 600 if (args.v6_structure_experiment or args.v7_structure_experiment) else (args.smoke_windows if args.normal_smoke else 3600)
     args.actors=32
     args.window_seconds=1.
     args.skip_native_restart=args.normal_smoke
@@ -170,7 +176,7 @@ def main():
         transport_seconds=dict(median=statistics.median(durations), maximum=max(durations)),
         manifest_sha256=sha256(args.out/'manifest.json'), model_sha256=sha256(args.frozen/'model.joblib'),
         zone_models_sha256=sha256(args.zone_models),
-        scope=('Fresh V6 variable-k/permuted structural schedule on one physical runner with five network namespaces.'
+        scope=(('Fresh V7 stable-set FPR-constrained structural schedule on one physical runner with five network namespaces.' if args.v7_structure_experiment else 'Fresh V6 variable-k/permuted structural schedule on one physical runner with five network namespaces.')
                if args.v6_structure_experiment else
                ('Fresh normal Open5GS SBI observations. Short engineering smoke on one physical runner.'
                 if args.normal_smoke else 'Full prospective scenario schedule on one physical runner with five network namespaces.')))
