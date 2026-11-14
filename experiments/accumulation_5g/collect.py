@@ -361,7 +361,23 @@ def run(args):
     smoke = getattr(args, 'normal_smoke', False)
     if smoke and (not 1 <= args.windows <= 600 or not args.skip_native_restart):
         raise ValueError('Normal acquisition requires 1 to 600 windows and no native restart')
-    schedule = [] if smoke else attack_schedule(args.windows, args.seed)
+    v6_structure=bool(getattr(args,'v6_structure_experiment',False))
+    if smoke:
+        schedule=[]
+    elif v6_structure:
+        from experiments.distributed_5g.v6_design import v6_attack_schedule, v6_members, v6_count
+        schedule=v6_attack_schedule(args.windows,args.seed)
+    else:
+        schedule=attack_schedule(args.windows,args.seed)
+
+    def coordinated_members(entry):
+        if entry is None:
+            return ()
+        if entry[2]=='S5':
+            return s5_members(entry)
+        if entry[2]=='S6' and v6_structure:
+            return v6_members(entry)
+        return ()
     frozen = None
     if args.phase == 'test':
         if not args.frozen:
@@ -430,6 +446,7 @@ def run(args):
     if smoke:
         manifest['normal_smoke'] = True
     manifest['load_experiment'] = getattr(args, 'load_experiment', False)
+    manifest['v6_structure_experiment'] = v6_structure
     manifest['unchanged_freshness_limit_seconds'] = .25
     manifest['accumulation'] = json.loads((args.frozen/'accumulation.json').read_text())
     manifest['refinement'] = refinement
@@ -522,7 +539,7 @@ def run(args):
                     witness.update(slot, route='127.99.0.3')
                 onsets[current[2]] = begin
                 append_json(interventions, {'kind': 'attack_start', 'scenario': current[2], 'slot': slot,
-                                            'members': [f'slot-{x}' for x in s5_members(current)] if current[2] == 'S5' else [slot],
+                                            'members': [f'slot-{x}' for x in coordinated_members(current)] if current[2] in ('S5','S6') else [slot],
                                             'onset': begin, 'applied': time.time(),
                                             'episode_id': f'{run_id}-{current[2]}-{current[0]}'})
             active = current
@@ -538,7 +555,7 @@ def run(args):
             for index, (slot, expected) in enumerate(profiles.items()):
                 observed_events = []
                 is_target = active is not None and (index == active[3] or
-                    (active[2] == 'S5' and index in s5_members(active)))
+                    (active[2] in ('S5','S6') and index in coordinated_members(active)))
                 scenario = active[2] if is_target else 'N1'
                 # The policy allows NSSF discovery by these registered research clients.
                 count = normal_count(rng,index,window)
@@ -556,6 +573,8 @@ def run(args):
                     count = growth_count(active,window)
                 if scenario == 'S5':
                     count = s5_count(active, window, regime(window), index)
+                if scenario == 'S6':
+                    count = v6_count(active, window, index)
                 benign_error = count >= 12 and rng.random() < .15
                 for number in range(count):
                     target_type = 'UDM' if scenario == 'S2' else 'NSSF'
