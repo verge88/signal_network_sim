@@ -1,0 +1,24 @@
+name: V6 contract tests
+
+on:
+  push:
+    branches: ['experiment/v6-permutation-invariant-20261114']
+    paths:
+      - '.github/triggers/v6-contract'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==1.26.4 pandas==2.2.3 scipy==1.14.1 scikit-learn==1.5.2 joblib==1.5.2 pytest==8.3.4
+      - name: V6 temporal graph contracts
+        run: python -m pytest experiments/distributed_5g/test_temporal_graph.py -q
