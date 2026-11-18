@@ -80,7 +80,7 @@ def main():
         parser.error('--smoke-windows must be between 1 and 600')
     args.phase='test'
     args.normal_smoke = args.smoke_windows is not None
-    args.windows = 600 if (args.v6_structure_experiment or args.v7_structure_experiment or args.v8_structure_experiment) else (args.smoke_windows if args.normal_smoke else 3600)
+    args.windows = 700 if args.v8_structure_experiment else (600 if (args.v6_structure_experiment or args.v7_structure_experiment) else (args.smoke_windows if args.normal_smoke else 3600))
     args.actors=32
     args.window_seconds=1.
     args.skip_native_restart=args.normal_smoke
