@@ -38,6 +38,7 @@ from experiments.distributed_5g.temporal_graph_v4 import TemporalGraphV4Detector
 from experiments.distributed_5g.temporal_graph_v5 import CyclicTripleRescue
 from experiments.distributed_5g.temporal_graph_v6 import PermutationInvariantGroupRescue
 from experiments.distributed_5g.temporal_graph_v7 import StableSetGroupDetector
+from experiments.distributed_5g.temporal_graph_v8 import PairSensitiveStableSetDetector
 
 KEYS = ["run_id", "window_id", "nf_id"]
 META = KEYS + ["timestamp"]
@@ -51,7 +52,7 @@ TAIL_METHODS = ["robust_tail", "hybrid_tail_without_KIE", "hybrid_tail"]
 TAIL_FEATURES = ["request_count", "error_rate", "update_count"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
 PROTOCOL_VERSION = "live-5g-v2-tail"
-DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2", "temporal_graph_v3", "temporal_graph_v4", "temporal_graph_v5", "temporal_graph_v6", "temporal_graph_v7")
+DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2", "temporal_graph_v3", "temporal_graph_v4", "temporal_graph_v5", "temporal_graph_v6", "temporal_graph_v7", "temporal_graph_v8")
 DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised"}
 
 
@@ -1161,6 +1162,132 @@ def fit_temporal_graph_v7(train_directory, cal_directory, development_directorie
     return manifest
 
 
+
+def fit_temporal_graph_v8(train_directory, cal_directory, development_directories,
+                          reference_calibration_directories, output, seed=7143,
+                          point_alpha=0.001, graph_alpha=0.00015,
+                          cluster_order=2, decay=0.75,
+                          accumulator_multiplier=1.50,
+                          group_alpha=0.00015, v6_group_decay=0.75,
+                          stable_decay=0.25, stable_threshold_floor=0.65,
+                          pair_decay=0.55,
+                          min_group=2, max_group=5):
+    """Freeze V7 as comparator and add the pair-sensitive V8 group branch.
+
+    V8 parameters were selected only after V7 seeds 90601-90606 became consumed
+    development evidence. Future V8 prospective observations are unavailable here.
+    Candidate score and threshold policy are unchanged from V7; only persistent
+    k=2 evidence uses pair_decay while k=3..5 retain stable_decay.
+    """
+    fit_temporal_graph_v7(
+        train_directory, cal_directory, development_directories,
+        reference_calibration_directories, output, seed=seed,
+        point_alpha=point_alpha, graph_alpha=graph_alpha,
+        cluster_order=cluster_order, decay=decay,
+        accumulator_multiplier=accumulator_multiplier,
+        group_alpha=group_alpha, v6_group_decay=v6_group_decay,
+        stable_decay=stable_decay, stable_threshold_floor=stable_threshold_floor,
+        min_group=min_group, max_group=max_group)
+    out=Path(output)
+    bundle=joblib.load(out/"model.joblib")
+    manifest=json.loads((out/"manifest.json").read_text())
+
+    core=bundle["temporal_graph_v4"]
+    pair_sensitive=PairSensitiveStableSetDetector(
+        core.model, history=core.history_size, min_group=min_group,
+        max_group=max_group, pair_decay=pair_decay, group_decay=stable_decay)
+
+    cal,cal_labels,_=read_dataset(cal_directory)
+    if cal_labels.attack.any():
+        raise ValueError("V8 fresh calibration must remain normal-only")
+    calibration_runs=[cal]
+    for directory in reference_calibration_directories:
+        frame,labels,_=read_dataset(directory)
+        if labels.attack.any():
+            raise ValueError("V8 historical calibration references must be normal-only")
+        calibration_runs.append(frame)
+    if len(calibration_runs)<2:
+        raise ValueError("V8 requires historical normal calibration references")
+
+    per_run_thresholds=[]
+    for frame in calibration_runs:
+        scores=pair_sensitive.clean_copy().decision_function(frame)
+        per_run_thresholds.append(conformal_threshold(scores,group_alpha))
+    v8_threshold=max(float(stable_threshold_floor),*per_run_thresholds)
+
+    bundle["v8_group_rescue"]=pair_sensitive.clean_copy()
+    bundle["thresholds"]["TG_V8_GROUP"]=v8_threshold
+    bundle["ml_method"]="TG_V8"
+
+    manifest["detector"]="temporal_graph_logistic_v8"
+    manifest["ml_method"]="TG_V8"
+    manifest["thresholds"]["TG_V8_GROUP"]=v8_threshold
+    manifest["threshold_sufficient"]=bool(
+        manifest["threshold_sufficient"] and math.isfinite(v8_threshold))
+    manifest["temporal_graph_v8"]={
+        "core":"TG_V4 unchanged; TG_V7 retained only as same-run comparator",
+        "combination":"TG_V8 alarm iff TG_V4 margin > 0 OR TG_V8_GROUP margin > 0",
+        "group_branch":{
+            "learned_model":"copy of frozen TG_V4 logistic probability model",
+            "candidate_score":"same top-k boundary score as V7",
+            "min_group":int(min_group),
+            "max_group":int(max_group),
+            "pair_decay":float(pair_decay),
+            "group_decay_k3_to_k5":float(stable_decay),
+            "threshold_floor":float(stable_threshold_floor),
+            "group_alpha":float(group_alpha),
+            "membership_change":"reset evidence to current instantaneous score",
+            "adjacency_used":False,
+            "numeric_nf_order_used":False,
+            "permutation_equivariant_within_zone":True,
+            "threshold_policy":"max(development-selected floor, normal-only conformal thresholds across fresh and historical calibration runs)",
+        },
+        "development_selection":{
+            "consumed_v7_seeds":[90601,90602,90603,90604,90605,90606],
+            "future_v8_test_used":False,
+            "selected_pair_decay":float(pair_decay),
+            "unchanged_k3_to_k5_decay":float(stable_decay),
+            "screen_all_seed_fpr_le_0_001":True,
+            "screen_max_seed_fpr":0.000980392156862745,
+            "screen_pooled_fpr":0.0007262164124909223,
+            "screen_k2_episode_detection":"12/12",
+            "screen_k2_mean_window_recall":0.2652777777777778,
+            "screen_pooled_recall":0.5974206349206349,
+            "screen_note":"V7 90601-90606 are consumed development evidence only; these figures are not V8 confirmation",
+        },
+        "calibration_per_run_thresholds":[
+            value if math.isfinite(value) else None for value in per_run_thresholds
+        ],
+        "heldout_v8_test_used_for_selection":False,
+    }
+    manifest["development_disclosure"]+=(
+        " V8 was designed after V7 seeds 90601-90606 were consumed. It changes "
+        "only persistent-pair retention: k=2 decay is 0.55 while k=3..5 remain "
+        "at 0.25. Candidate score, threshold calibration, membership-change reset, "
+        "and permutation-equivariant runtime representation are unchanged. All "
+        "907xx prospective acquisitions are unavailable during V8 selection."
+    )
+    bundle["manifest"]=manifest
+
+    calibration_bundle=copy.deepcopy(bundle)
+    calibration_bundle["temporal_graph_v4"].reset()
+    calibration_bundle["v6_group_rescue"].reset()
+    calibration_bundle["v7_group_rescue"].reset()
+    calibration_bundle["v8_group_rescue"].reset()
+    cal_predictions=score_frame(calibration_bundle,cal)
+    manifest["calibration_alarm_rate"]=cal_predictions.groupby("method").alarm.mean().to_dict()
+
+    bundle["temporal_graph_v4"].reset()
+    bundle["v6_group_rescue"].reset()
+    bundle["v7_group_rescue"].reset()
+    bundle["v8_group_rescue"].reset()
+    joblib.dump(bundle,out/"model.joblib")
+    manifest["model_sha256"]=sha256(out/"model.joblib")
+    dump_json(out/"manifest.json",manifest)
+    cal_predictions.to_csv(out/"calibration_predictions.csv",index=False)
+    return manifest
+
+
 def load_frozen(path):
     root = Path(path)
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
@@ -1179,6 +1306,8 @@ def load_frozen(path):
         bundle["v6_group_rescue"].reset()
     if "v7_group_rescue" in bundle:
         bundle["v7_group_rescue"].reset()
+    if "v8_group_rescue" in bundle:
+        bundle["v8_group_rescue"].reset()
     if bundle["protocol_version"] not in ("live-5g-v1", PROTOCOL_VERSION):
         raise ValueError("Unsupported protocol version")
     bundle["manifest"] = manifest
@@ -1254,6 +1383,16 @@ def score_frame(bundle, frame):
             raise ValueError("TG_V7 group branch requires frozen TG_V4 core")
         margins["TG_V7"] = np.maximum(v4_margin, stable_margin)
         methods.append("TG_V7")
+    if "v8_group_rescue" in bundle:
+        threshold = bundle["thresholds"]["TG_V8_GROUP"]
+        raw = bundle["v8_group_rescue"].decision_function(frame)
+        pair_sensitive_margin = raw - threshold if math.isfinite(threshold) else np.full(len(frame), -1.)
+        margins["TG_V8_GROUP"] = pair_sensitive_margin
+        methods.append("TG_V8_GROUP")
+        if v4_margin is None:
+            raise ValueError("TG_V8 group branch requires frozen TG_V4 core")
+        margins["TG_V8"] = np.maximum(v4_margin, pair_sensitive_margin)
+        methods.append("TG_V8")
     if "tail_model" in bundle:
         threshold = bundle["thresholds"]["robust_tail"]
         margins["robust_tail"] = (tail_scores(bundle["tail_model"], frame) - threshold
