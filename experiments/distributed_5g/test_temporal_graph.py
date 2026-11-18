@@ -14,6 +14,8 @@ from experiments.distributed_5g.temporal_graph_v5 import CyclicTripleRescue
 from experiments.distributed_5g.temporal_graph_v6 import PermutationInvariantGroupRescue
 from experiments.distributed_5g.temporal_graph_v7 import StableSetGroupDetector
 from experiments.distributed_5g.temporal_graph_v8 import PairSensitiveStableSetDetector
+from experiments.distributed_5g.temporal_graph_v9 import PairMedianStableRescue, FixedKStableRescue
+from experiments.distributed_5g.v9_design import v9_attack_schedule, v9_members, V9_WINDOWS
 from experiments.distributed_5g.v8_design import v8_attack_schedule, v8_members, V8_WINDOWS
 from experiments.distributed_5g.v7_design import v7_attack_schedule, v7_members, V7_WINDOWS
 from experiments.robustness_5g.design import attack_schedule, s5_members, s5_count
@@ -498,3 +500,55 @@ def test_v8_schedule_focuses_on_pairs_and_retains_other_cardinalities():
         max(v8_members(entry))-min(v8_members(entry))+1 != len(v8_members(entry))
         for entry in schedule
     )
+
+
+
+def test_v9_pair_score_uses_rest_median_and_is_permutation_equivariant():
+    part=_single_window()
+    probability=np.full(32,.05,dtype=float)
+    probability[[0,3]]=[.92,.90]
+    probability[5]=.70
+    detector=PairMedianStableRescue(model=object(),history=8,decay=.75)
+    original=detector._window_scores(part,probability)
+    assert original["slot-0"]>0 and original["slot-3"]>0
+    assert original["slot-5"]==0
+
+    mapping={0:6,1:1,2:4,3:0,4:7,5:2,6:5,7:3}
+    renamed=part.copy()
+    renamed["nf_id"]=renamed.nf_id.map(
+        lambda x:f"slot-{(int(x.split('-')[1])//8)*8+mapping[int(x.split('-')[1])%8]}")
+    other=PairMedianStableRescue(model=object(),history=8,decay=.75)
+    permuted=other._window_scores(renamed,probability)
+    for zone in range(4):
+        left=sorted(original[f"slot-{zone*8+i}"] for i in range(8))
+        right=sorted(permuted[f"slot-{zone*8+i}"] for i in range(8))
+        assert np.allclose(left,right,rtol=0,atol=1e-12)
+
+
+def test_v9_pair_membership_change_hard_resets():
+    part=_single_window();d=PairMedianStableRescue(model=object(),history=8,decay=.75)
+    p=np.full(32,.05);p[[0,1]]=[.95,.90]
+    first=d._window_scores(part,p);second=d._window_scores(part,p)
+    assert second["slot-0"]>first["slot-0"]
+    q=np.full(32,.05);q[[0,2]]=[.95,.90]
+    after=d._window_scores(part,q)
+    fresh=PairMedianStableRescue(model=object(),history=8,decay=.75)._window_scores(part,q)
+    assert np.isclose(after["slot-0"],fresh["slot-0"],rtol=0,atol=1e-12)
+    assert after["slot-1"]==0.0
+
+
+def test_v9_fixed_k_rescues_are_exactly_k4_and_k5():
+    part=_single_window();p=np.full(32,.05)
+    p[[0,2,4,6,7]]=[.95,.92,.89,.86,.83]
+    k4=FixedKStableRescue(model=object(),k=4,history=8,decay=.25)._window_scores(part,p)
+    k5=FixedKStableRescue(model=object(),k=5,history=8,decay=.25)._window_scores(part,p)
+    assert sum(v>0 for v in k4.values())==4
+    assert sum(v>0 for v in k5.values())==5
+
+
+def test_v9_schedule_has_four_pairs_and_two_each_other_k():
+    schedule=v9_attack_schedule(V9_WINDOWS,90801)
+    sizes=sorted(len(v9_members(e)) for e in schedule)
+    assert sizes==[2,2,2,2,3,3,4,4,5,5]
+    assert all(e[2]=="S9" and e[1]-e[0]==30 for e in schedule)
+    assert any(max(v9_members(e))-min(v9_members(e))+1 != len(v9_members(e)) for e in schedule)
