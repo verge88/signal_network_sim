@@ -364,10 +364,14 @@ def run(args):
     v6_structure=bool(getattr(args,'v6_structure_experiment',False))
     v7_structure=bool(getattr(args,'v7_structure_experiment',False))
     v8_structure=bool(getattr(args,'v8_structure_experiment',False))
-    if sum(map(bool,(v6_structure,v7_structure,v8_structure)))>1:
-        raise ValueError("V6, V7 and V8 structural modes are mutually exclusive")
+    v9_structure=bool(getattr(args,'v9_structure_experiment',False))
+    if sum(map(bool,(v6_structure,v7_structure,v8_structure,v9_structure)))>1:
+        raise ValueError("V6, V7, V8 and V9 structural modes are mutually exclusive")
     if smoke:
         schedule=[]
+    elif v9_structure:
+        from experiments.distributed_5g.v9_design import v9_attack_schedule, v9_members, v9_count
+        schedule=v9_attack_schedule(args.windows,args.seed)
     elif v8_structure:
         from experiments.distributed_5g.v8_design import v8_attack_schedule, v8_members, v8_count
         schedule=v8_attack_schedule(args.windows,args.seed)
@@ -391,6 +395,8 @@ def run(args):
             return v7_members(entry)
         if entry[2]=='S8' and v8_structure:
             return v8_members(entry)
+        if entry[2]=='S9' and v9_structure:
+            return v9_members(entry)
         return ()
     frozen = None
     if args.phase == 'test':
@@ -463,6 +469,7 @@ def run(args):
     manifest['v6_structure_experiment'] = v6_structure
     manifest['v7_structure_experiment'] = v7_structure
     manifest['v8_structure_experiment'] = v8_structure
+    manifest['v9_structure_experiment'] = v9_structure
     manifest['unchanged_freshness_limit_seconds'] = .25
     manifest['accumulation'] = json.loads((args.frozen/'accumulation.json').read_text())
     manifest['refinement'] = refinement
@@ -555,12 +562,12 @@ def run(args):
                     witness.update(slot, route='127.99.0.3')
                 onsets[current[2]] = begin
                 append_json(interventions, {'kind': 'attack_start', 'scenario': current[2], 'slot': slot,
-                                            'members': [f'slot-{x}' for x in coordinated_members(current)] if current[2] in ('S5','S6','S7','S8') else [slot],
+                                            'members': [f'slot-{x}' for x in coordinated_members(current)] if current[2] in ('S5','S6','S7','S8','S9') else [slot],
                                             'onset': begin, 'applied': time.time(),
                                             'episode_id': f'{run_id}-{current[2]}-{current[0]}'})
             active = current
             old_port = control.ready['port']
-            control.prepare(window, active[2] if active is not None and active[3] == 4 and active[2] not in ('S6','S7','S8') else 'N1')
+            control.prepare(window, active[2] if active is not None and active[3] == 4 and active[2] not in ('S6','S7','S8','S9') else 'N1')
             if old_port != control.ready['port']:
                 bind_control_profile()
                 witness.update('slot-4', profile=profiles['slot-4'], route=route_address(profiles['slot-4']))
@@ -571,7 +578,7 @@ def run(args):
             for index, (slot, expected) in enumerate(profiles.items()):
                 observed_events = []
                 is_target = active is not None and (index == active[3] or
-                    (active[2] in ('S5','S6','S7','S8') and index in coordinated_members(active)))
+                    (active[2] in ('S5','S6','S7','S8','S9') and index in coordinated_members(active)))
                 scenario = active[2] if is_target else 'N1'
                 # The policy allows NSSF discovery by these registered research clients.
                 count = normal_count(rng,index,window)
@@ -595,6 +602,8 @@ def run(args):
                     count = v7_count(active, window, index)
                 if scenario == 'S8':
                     count = v8_count(active, window, index)
+                if scenario == 'S9':
+                    count = v9_count(active, window, index)
                 benign_error = count >= 12 and rng.random() < .15
                 for number in range(count):
                     target_type = 'UDM' if scenario == 'S2' else 'NSSF'
