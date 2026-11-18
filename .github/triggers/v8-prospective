@@ -1,0 +1,4 @@
+triggered=2026-11-18T15:45:00Z
+preregistration=.github/preregistrations/v8-pair-sensitive-20261118.txt
+frozen_parameters=pair_decay:0.55,k3_to_k5_decay:0.25,threshold_floor:0.65,min_group:2,max_group:5
+prospective_seeds=90701,90702,90703,90704,90705,90706
