@@ -1,0 +1,77 @@
+V8 pair-sensitive stable-set prospective confirmation
+date=2026-11-18
+branch=experiment/v8-pair-sensitive-20261118
+status=preregistered_before_907xx_acquisition
+
+motivation=V7 passed all prospective criteria but k=2 remained the only material weakness: 11/12 episodes and mean k=2 NF-window recall 0.180556
+v7_906xx_status=consumed development evidence for V8 only; never V8 confirmation
+consumed_v7_seeds=90601,90602,90603,90604,90605,90606
+no_907xx_data_used_for_design=true
+
+architecture=TG_V4 unchanged OR TG_V8_GROUP
+same_run_comparators=TG_V7 and TG_V4 retained in the frozen bundle but not used by TG_V8 decisions
+v8_group_input=frozen TG_V4 learned logistic probabilities over V4 residual-temporal features
+candidate_definition=same permutation-equivariant top-k probability boundaries as V7 for k=2,3,4,5
+candidate_score=(p_k-p_kplus1)*mean(top-k p)/(1+4*std(top-k p))
+temporal_state=per zone and k, retain evidence only while the same unordered top-k membership set persists
+membership_change=hard reset evidence to current instantaneous candidate score
+k2_pair_decay=0.55
+k3_to_k5_decay=0.25
+uses_absolute_numeric_nf_id=false
+uses_adjacency=false
+nf_identity_role=opaque key only for equality of unordered membership sets across adjacent windows
+permutation_equivariant_within_zone=true
+group_size_range=2,3,4,5
+threshold_floor=0.65
+group_alpha=0.00015
+threshold_policy=max(0.65, normal-only conformal threshold over fresh cal and historical fully-normal references)
+threshold_not_lowered_relative_to_v7_design=true
+
+development_screen_source=consumed V7 90601-90606 prospective evidence
+development_screen_pair_decay_candidates=0.25,0.35,0.45,0.55,0.65,0.75,0.85,0.90,0.93,0.95,0.97
+development_selected_pair_decay=0.55
+development_selection_rule=smallest screened pair decay yielding 12/12 k2 episodes while preserving FPR <=0.001 on every consumed seed
+development_screen_k2_detection=12/12
+development_screen_k2_mean_window_recall=0.2652777777777778
+development_screen_pooled_recall=0.5974206349206349
+development_screen_pooled_fpr=0.0007262164124909223
+development_screen_max_seed_fpr=0.000980392156862745
+development_screen_added_false_positives_vs_v7=0
+development_normal_calibration_check=fresh 906xx V8 thresholds all below 0.69421790988; historical V7-max reference 90001 remains 0.6942179098773884
+development_screen_status=selection evidence only; not confirmation
+parameter_changes_after_907xx_trigger=forbidden
+
+v4_core_unchanged=true
+v4_cluster_order=2
+v4_decay=0.75
+v4_graph_alpha=0.00015
+accumulator_multiplier=1.50
+training=fresh normal train/cal per seed plus previously consumed labeled development runs for the unchanged V4 logistic model
+development_runs=89901,89902,89903,90001,90002,90003,90101,90102,90103
+historical_normal_calibration_runs=89901,89902,89903,90001,90002,90003,90101,90102,90103
+
+prospective_seeds=90701,90702,90703,90704,90705,90706
+prospective_windows=700
+episodes_per_seed=10
+episode_duration_windows=30
+group_sizes_per_seed=four k=2 episodes; two each k=3,k=4,k=5
+prospective_k2_episodes_total=24
+prospective_k3_episodes_total=12
+prospective_k4_episodes_total=12
+prospective_k5_episodes_total=12
+placement=deterministic random within-zone subset from seed; no adjacency requirement
+scenario=S8
+workload=benign-range coordinated low-and-slow request counts, 2..5 requests/window
+online_method=TG_V8
+fusion=direct confirmation with BUDGETED_WITHOUT_MINING OR TG_V8
+no_test_tuning=true
+
+primary_fpr_target=TG_V8 FPR <= 0.001 on every one of six seeds
+primary_k2_episode_target=TG_V8 detects all 24/24 prospective k=2 episodes
+primary_k2_window_target=TG_V8 mean k=2 NF-window recall >= 0.25
+primary_retention_target=TG_V8 detects at least 10/12 prospective episodes separately for each k=3,k=4,k=5
+primary_improvement_target=mean seed-level k=2 window recall TG_V8 minus TG_V7 is positive
+scientific_success=all five primary targets must hold
+
+secondary_outputs=TG_V8_GROUP standalone metrics; same-run TG_V7 and TG_V4 comparisons; FULL_HYBRID and BUDGETED_WITHOUT_MINING; per-k window recall; post-episode 5-window false-positive tails; paired seed-level k2 recall deltas
+negative_result_policy=report unchanged; do not modify V8 parameters after seeing 907xx outcomes
