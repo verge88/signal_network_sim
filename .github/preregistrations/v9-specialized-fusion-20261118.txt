@@ -1,0 +1,82 @@
+V9 specialized pair/fixed-k fusion prospective confirmation
+date=2026-11-18
+branch=experiment/v9-specialized-fusion-20261118
+status=preregistered_before_908xx_acquisition
+
+motivation=V8 improved k2 from 18/24 to 22/24 on new evidence but failed 24/24, k2 window-recall and one per-seed FPR criterion
+v8_907xx_status=consumed development evidence for V9 only; never V9 confirmation
+consumed_v8_seeds=90701,90702,90703,90704,90705,90706
+no_908xx_data_used_for_design=true
+
+architecture=TG_V4 unchanged OR supported TG_V9_PAIR OR TG_V9_K4 OR TG_V9_K5
+same_run_comparator=TG_V8
+pair_candidate=top2 learned TG_V4 probabilities within each 8-NF zone
+pair_score=(mean(top2)-median(rest6))*min(top2)/(1+4*std(top2))
+pair_decay=0.75
+pair_threshold_floor=0.65
+pair_support=TG_V4 raw evidence / TG_V4 threshold > 0.62
+pair_membership_change=hard reset
+k4_score=(p4-p5)*mean(top4)/(1+4*std(top4))
+k4_decay=0.25
+k4_threshold_floor=0.91
+k5_score=(p5-p6)*mean(top5)/(1+4*std(top5))
+k5_decay=0.25
+k5_threshold_floor=0.65
+uses_absolute_numeric_nf_id=false
+uses_adjacency=false
+permutation_equivariant_within_zone=true
+v4_core_unchanged=true
+
+v9_rescue_calibration=fresh current-seed normal calibration only, conformal alpha 0.00015 with frozen floors
+v4_calibration=unchanged historical-max policy inherited from frozen V4
+historical_reference_change_disclosure=historical normal references are not used to set V9 rescue thresholds; consumed analysis showed the max historical threshold for the new pair score was dominated by a benign persistent-pair regime and erased pair sensitivity. The primary scientific check is prospective FPR <=0.001 on every fresh seed.
+no_test_tuning=true
+
+development_selection_source=consumed V8 90701-90706
+development_screen_pair_support_grid=0.50..0.80
+development_selected_pair_support=0.62
+development_pair_score=robust rest-median contrast
+development_pair_decay=0.75
+development_k4_floor=0.91
+development_k5_floor=0.65
+development_screen_detection=k2 24/24; k3 12/12; k4 12/12; k5 12/12
+development_screen_k2_mean_window_recall=0.3520833333333333
+development_screen_k3_mean_window_recall=0.6851851851851851
+development_screen_k4_mean_window_recall=0.6159722222222223
+development_screen_k5_mean_window_recall=0.6744444444444443
+development_screen_pooled_recall=0.58125
+development_screen_pooled_fpr=0.000792910447761194
+development_screen_max_seed_fpr=0.0009794776119402984
+development_screen_precision=0.9704347826086956
+development_screen_status=selection evidence only; not confirmation
+parameter_changes_after_908xx_trigger=forbidden
+
+training=fresh normal train/cal per seed plus consumed labeled V4 development runs
+development_runs=89901,89902,89903,90001,90002,90003,90101,90102,90103
+historical_v4_normal_references=89901,89902,89903,90001,90002,90003,90101,90102,90103
+
+prospective_seeds=90801,90802,90803,90804,90805,90806
+prospective_windows=700
+episodes_per_seed=10
+episode_duration_windows=30
+group_sizes_per_seed=four k2 episodes; two each k3,k4,k5
+prospective_k2_episodes_total=24
+prospective_k3_episodes_total=12
+prospective_k4_episodes_total=12
+prospective_k5_episodes_total=12
+placement=deterministic random within-zone subset from seed; no adjacency requirement
+scenario=S9
+workload=benign-range coordinated low-and-slow request counts, 2..5 requests/window
+online_method=TG_V9
+fusion=direct confirmation with BUDGETED_WITHOUT_MINING OR TG_V9
+
+primary_fpr_target=TG_V9 FPR <= 0.001 on every one of six seeds
+primary_k2_episode_target=TG_V9 detects all 24/24 prospective k2 episodes
+primary_k2_window_target=TG_V9 mean k2 NF-window recall >= 0.30
+primary_retention_target=TG_V9 detects at least 10/12 episodes separately for each k3,k4,k5
+primary_overall_recall_target=pooled TG_V9 NF-window recall >= 0.50
+primary_improvement_target=mean seed-level k2 window recall TG_V9 minus TG_V8 is positive
+scientific_success=all six primary targets must hold
+
+secondary_outputs=precision, TG_V9_PAIR/K4/K5 standalone metrics, same-run TG_V8 and TG_V4, FULL_HYBRID, BUDGETED_WITHOUT_MINING, per-k window recall, paired k2 recall statistics
+negative_result_policy=report unchanged; do not modify V9 parameters after seeing 908xx outcomes
