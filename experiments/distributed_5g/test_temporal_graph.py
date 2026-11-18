@@ -13,6 +13,8 @@ from experiments.distributed_5g.temporal_graph_v4 import CommonModeResidualTrans
 from experiments.distributed_5g.temporal_graph_v5 import CyclicTripleRescue
 from experiments.distributed_5g.temporal_graph_v6 import PermutationInvariantGroupRescue
 from experiments.distributed_5g.temporal_graph_v7 import StableSetGroupDetector
+from experiments.distributed_5g.temporal_graph_v8 import PairSensitiveStableSetDetector
+from experiments.distributed_5g.v8_design import v8_attack_schedule, v8_members, V8_WINDOWS
 from experiments.distributed_5g.v7_design import v7_attack_schedule, v7_members, V7_WINDOWS
 from experiments.robustness_5g.design import attack_schedule, s5_members, s5_count
 from experiments.distributed_5g.v6_design import v6_attack_schedule, v6_members, v6_count
@@ -430,5 +432,69 @@ def test_v7_schedule_has_two_fresh_randomized_episodes_per_k():
     # V7 does not require numeric adjacency.
     assert any(
         max(v7_members(entry))-min(v7_members(entry))+1 != len(v7_members(entry))
+        for entry in schedule
+    )
+
+
+
+def test_v8_pair_persistence_is_stronger_than_v7_without_changing_first_score():
+    part=_single_window()
+    probability=np.full(32,.05,dtype=float)
+    probability[[0,1]]=[.95,.90]
+    v7=StableSetGroupDetector(model=object(),history=8,min_group=2,max_group=2,decay=.25)
+    v8=PairSensitiveStableSetDetector(
+        model=object(),history=8,min_group=2,max_group=2,pair_decay=.55,group_decay=.25)
+
+    first7=v7._window_scores(part,probability)
+    first8=v8._window_scores(part,probability)
+    assert np.isclose(first7["slot-0"],first8["slot-0"],rtol=0,atol=1e-12)
+
+    second7=v7._window_scores(part,probability)
+    second8=v8._window_scores(part,probability)
+    assert second8["slot-0"] > second7["slot-0"]
+    assert second8["slot-1"] > second7["slot-1"]
+
+
+def test_v8_k3_to_k5_decay_matches_v7():
+    part=_single_window()
+    probability=np.full(32,.05,dtype=float)
+    probability[[0,1,2,3]]=[.96,.93,.90,.87]
+    v7=StableSetGroupDetector(model=object(),history=8,min_group=3,max_group=3,decay=.25)
+    v8=PairSensitiveStableSetDetector(
+        model=object(),history=8,min_group=3,max_group=3,pair_decay=.55,group_decay=.25)
+
+    for _ in range(3):
+        a=v7._window_scores(part,probability)
+        b=v8._window_scores(part,probability)
+        for nf in part.nf_id.astype(str):
+            assert np.isclose(a[nf],b[nf],rtol=0,atol=1e-12)
+
+
+def test_v8_pair_membership_change_still_hard_resets():
+    part=_single_window()
+    detector=PairSensitiveStableSetDetector(
+        model=object(),history=8,min_group=2,max_group=2,pair_decay=.55,group_decay=.25)
+    first=np.full(32,.05,dtype=float);first[[0,1]]=[.95,.90]
+    detector._window_scores(part,first)
+    detector._window_scores(part,first)
+
+    changed=np.full(32,.05,dtype=float);changed[[0,2]]=[.95,.90]
+    after=detector._window_scores(part,changed)
+    fresh=PairSensitiveStableSetDetector(
+        model=object(),history=8,min_group=2,max_group=2,pair_decay=.55,group_decay=.25)
+    baseline=fresh._window_scores(part,changed)
+    assert np.isclose(after["slot-0"],baseline["slot-0"],rtol=0,atol=1e-12)
+    assert np.isclose(after["slot-2"],baseline["slot-2"],rtol=0,atol=1e-12)
+    assert after["slot-1"]==0.0
+
+
+def test_v8_schedule_focuses_on_pairs_and_retains_other_cardinalities():
+    schedule=v8_attack_schedule(V8_WINDOWS,90701)
+    sizes=sorted(len(v8_members(entry)) for entry in schedule)
+    assert len(schedule)==10
+    assert sizes==[2,2,2,2,3,3,4,4,5,5]
+    assert all(entry[2]=="S8" and entry[1]-entry[0]==30 for entry in schedule)
+    assert any(
+        max(v8_members(entry))-min(v8_members(entry))+1 != len(v8_members(entry))
         for entry in schedule
     )
