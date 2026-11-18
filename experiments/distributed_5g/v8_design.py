@@ -7,9 +7,9 @@ from __future__ import annotations
 
 import random
 
-V8_WINDOWS=600
-V8_EPISODE_STARTS=(30,100,170,240,310,380,450,520)
-V8_GROUP_SIZES=(2,3,4,5,2,3,4,5)
+V8_WINDOWS=700
+V8_EPISODE_STARTS=(30,100,170,240,310,380,450,520,590,660)
+V8_GROUP_SIZES=(2,2,2,2,3,3,4,4,5,5)
 
 
 def v8_attack_schedule(windows, seed):
