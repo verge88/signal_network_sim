@@ -1,0 +1,4 @@
+triggered=2026-11-18T17:42:00Z
+preregistration=.github/preregistrations/v9-specialized-fusion-20261118.txt
+frozen_parameters=pair_decay:0.75,pair_support:0.62,k4_floor:0.91,k5_floor:0.65
+prospective_seeds=90801,90802,90803,90804,90805,90806
