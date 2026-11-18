@@ -39,6 +39,7 @@ from experiments.distributed_5g.temporal_graph_v5 import CyclicTripleRescue
 from experiments.distributed_5g.temporal_graph_v6 import PermutationInvariantGroupRescue
 from experiments.distributed_5g.temporal_graph_v7 import StableSetGroupDetector
 from experiments.distributed_5g.temporal_graph_v8 import PairSensitiveStableSetDetector
+from experiments.distributed_5g.temporal_graph_v9 import PairMedianStableRescue, FixedKStableRescue
 
 KEYS = ["run_id", "window_id", "nf_id"]
 META = KEYS + ["timestamp"]
@@ -52,7 +53,7 @@ TAIL_METHODS = ["robust_tail", "hybrid_tail_without_KIE", "hybrid_tail"]
 TAIL_FEATURES = ["request_count", "error_rate", "update_count"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
 PROTOCOL_VERSION = "live-5g-v2-tail"
-DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2", "temporal_graph_v3", "temporal_graph_v4", "temporal_graph_v5", "temporal_graph_v6", "temporal_graph_v7", "temporal_graph_v8")
+DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2", "temporal_graph_v3", "temporal_graph_v4", "temporal_graph_v5", "temporal_graph_v6", "temporal_graph_v7", "temporal_graph_v8", "temporal_graph_v9")
 DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised"}
 
 
@@ -1288,6 +1289,148 @@ def fit_temporal_graph_v8(train_directory, cal_directory, development_directorie
     return manifest
 
 
+
+def fit_temporal_graph_v9(train_directory, cal_directory, development_directories,
+                          reference_calibration_directories, output, seed=7143,
+                          point_alpha=0.001, graph_alpha=0.00015,
+                          cluster_order=2, decay=0.75,
+                          accumulator_multiplier=1.50,
+                          group_alpha=0.00015, v6_group_decay=0.75,
+                          stable_decay=0.25, stable_threshold_floor=0.65,
+                          pair_decay=0.55,
+                          v9_pair_decay=0.75,
+                          v9_pair_floor=0.65,
+                          v9_pair_support=0.62,
+                          v9_k4_floor=0.91,
+                          v9_k5_floor=0.65):
+    """Freeze V8 as comparator and add specialized V9 rescue/fusion.
+
+    V9 parameters were selected only after V8 seeds 90701-90706 became consumed
+    development evidence.  The new rescue branches use only the fresh normal
+    calibration split of the current seed.  The unchanged V4 core retains its
+    existing conservative historical-reference threshold policy.
+    """
+    fit_temporal_graph_v8(
+        train_directory, cal_directory, development_directories,
+        reference_calibration_directories, output, seed=seed,
+        point_alpha=point_alpha, graph_alpha=graph_alpha,
+        cluster_order=cluster_order, decay=decay,
+        accumulator_multiplier=accumulator_multiplier,
+        group_alpha=group_alpha, v6_group_decay=v6_group_decay,
+        stable_decay=stable_decay, stable_threshold_floor=stable_threshold_floor,
+        pair_decay=pair_decay, min_group=2, max_group=5)
+    out=Path(output)
+    bundle=joblib.load(out/"model.joblib")
+    manifest=json.loads((out/"manifest.json").read_text())
+
+    core=bundle["temporal_graph_v4"]
+    pair=PairMedianStableRescue(core.model,history=core.history_size,decay=v9_pair_decay)
+    k4=FixedKStableRescue(core.model,k=4,history=core.history_size,decay=stable_decay)
+    k5=FixedKStableRescue(core.model,k=5,history=core.history_size,decay=stable_decay)
+
+    cal,cal_labels,_=read_dataset(cal_directory)
+    if cal_labels.attack.any():
+        raise ValueError("V9 fresh calibration must remain normal-only")
+
+    pair_scores=pair.clean_copy().decision_function(cal)
+    k4_scores=k4.clean_copy().decision_function(cal)
+    k5_scores=k5.clean_copy().decision_function(cal)
+    pair_threshold=max(float(v9_pair_floor),conformal_threshold(pair_scores,group_alpha))
+    k4_threshold=max(float(v9_k4_floor),conformal_threshold(k4_scores,group_alpha))
+    k5_threshold=max(float(v9_k5_floor),conformal_threshold(k5_scores,group_alpha))
+
+    bundle["v9_pair_rescue"]=pair.clean_copy()
+    bundle["v9_k4_rescue"]=k4.clean_copy()
+    bundle["v9_k5_rescue"]=k5.clean_copy()
+    bundle["thresholds"]["TG_V9_PAIR"]=pair_threshold
+    bundle["thresholds"]["TG_V9_K4"]=k4_threshold
+    bundle["thresholds"]["TG_V9_K5"]=k5_threshold
+    bundle["v9_pair_support"]=float(v9_pair_support)
+    bundle["ml_method"]="TG_V9"
+
+    manifest["detector"]="temporal_graph_logistic_v9"
+    manifest["ml_method"]="TG_V9"
+    manifest["thresholds"]["TG_V9_PAIR"]=pair_threshold
+    manifest["thresholds"]["TG_V9_K4"]=k4_threshold
+    manifest["thresholds"]["TG_V9_K5"]=k5_threshold
+    manifest["temporal_graph_v9"]={
+        "core":"TG_V4 unchanged; TG_V8 retained only as same-run comparator",
+        "fusion":{
+            "v4_direct":"TG_V4 raw / TG_V4 threshold > 1",
+            "pair_supported":"TG_V9_PAIR raw / pair threshold > 1 AND TG_V4 raw / TG_V4 threshold > support",
+            "k4_direct":"TG_V9_K4 raw / k4 threshold > 1",
+            "k5_direct":"TG_V9_K5 raw / k5 threshold > 1",
+            "pair_support":float(v9_pair_support),
+            "final_margin":"max(v4_ratio-1, min(pair_ratio-1,v4_ratio-support), k4_ratio-1, k5_ratio-1)",
+        },
+        "pair_branch":{
+            "score":"(mean(top2)-median(rest6))*min(top2)/(1+4*std(top2))",
+            "decay":float(v9_pair_decay),
+            "threshold_floor":float(v9_pair_floor),
+            "calibration":"fresh current-run normal calibration only",
+        },
+        "k4_branch":{
+            "score":"V7/V8 top-k boundary score",
+            "decay":float(stable_decay),
+            "threshold_floor":float(v9_k4_floor),
+            "calibration":"fresh current-run normal calibration only",
+        },
+        "k5_branch":{
+            "score":"V7/V8 top-k boundary score",
+            "decay":float(stable_decay),
+            "threshold_floor":float(v9_k5_floor),
+            "calibration":"fresh current-run normal calibration only",
+        },
+        "development_selection":{
+            "consumed_v8_seeds":[90701,90702,90703,90704,90705,90706],
+            "future_v9_test_used":False,
+            "pair_decay":float(v9_pair_decay),
+            "pair_support":float(v9_pair_support),
+            "k4_floor":float(v9_k4_floor),
+            "k5_floor":float(v9_k5_floor),
+            "screen_episode_detection":{"k2":"24/24","k3":"12/12","k4":"12/12","k5":"12/12"},
+            "screen_k2_mean_window_recall":0.3520833333333333,
+            "screen_pooled_recall":0.58125,
+            "screen_pooled_fpr":0.000792910447761194,
+            "screen_max_seed_fpr":0.0009794776119402984,
+            "screen_precision":0.9704347826086956,
+            "screen_note":"V8 90701-90706 are consumed development evidence only; not V9 confirmation",
+        },
+        "historical_reference_policy":{
+            "v4":"unchanged historical-max normal calibration from prior frozen core",
+            "v9_rescues":"not used for rescue thresholds; final scientific criterion is prospective per-seed FPR",
+            "reason":"historical max for the new pair statistic was dominated by a benign persistent-pair regime and erased the targeted pair sensitivity",
+        },
+        "heldout_v9_test_used_for_selection":False,
+    }
+    manifest["development_disclosure"]+=(
+        " V9 was designed after V8 seeds 90701-90706 were consumed. It replaces "
+        "the single variable-k rescue by specialized k=2, k=4 and k=5 channels. "
+        "The k=2 score contrasts the stable top pair with the median of the other "
+        "six zone members and requires sub-threshold support from unchanged V4. "
+        "All 908xx prospective observations are unavailable during V9 selection."
+    )
+    bundle["manifest"]=manifest
+
+    calibration_bundle=copy.deepcopy(bundle)
+    for name in ("temporal_graph_v4","v6_group_rescue","v7_group_rescue",
+                 "v8_group_rescue","v9_pair_rescue","v9_k4_rescue","v9_k5_rescue"):
+        if name in calibration_bundle:
+            calibration_bundle[name].reset()
+    cal_predictions=score_frame(calibration_bundle,cal)
+    manifest["calibration_alarm_rate"]=cal_predictions.groupby("method").alarm.mean().to_dict()
+
+    for name in ("temporal_graph_v4","v6_group_rescue","v7_group_rescue",
+                 "v8_group_rescue","v9_pair_rescue","v9_k4_rescue","v9_k5_rescue"):
+        if name in bundle:
+            bundle[name].reset()
+    joblib.dump(bundle,out/"model.joblib")
+    manifest["model_sha256"]=sha256(out/"model.joblib")
+    dump_json(out/"manifest.json",manifest)
+    cal_predictions.to_csv(out/"calibration_predictions.csv",index=False)
+    return manifest
+
+
 def load_frozen(path):
     root = Path(path)
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
@@ -1308,6 +1451,12 @@ def load_frozen(path):
         bundle["v7_group_rescue"].reset()
     if "v8_group_rescue" in bundle:
         bundle["v8_group_rescue"].reset()
+    if "v9_pair_rescue" in bundle:
+        bundle["v9_pair_rescue"].reset()
+    if "v9_k4_rescue" in bundle:
+        bundle["v9_k4_rescue"].reset()
+    if "v9_k5_rescue" in bundle:
+        bundle["v9_k5_rescue"].reset()
     if bundle["protocol_version"] not in ("live-5g-v1", PROTOCOL_VERSION):
         raise ValueError("Unsupported protocol version")
     bundle["manifest"] = manifest
@@ -1347,9 +1496,13 @@ def score_frame(bundle, frame):
         margins["TG_V3"] = raw - threshold if math.isfinite(threshold) else np.full(len(frame), -1.)
         methods.append("TG_V3")
     v4_margin = None
+    v4_raw = None
+    v4_threshold = None
     if "temporal_graph_v4" in bundle:
         threshold = bundle["thresholds"]["TG_V4"]
         raw = bundle["temporal_graph_v4"].decision_function(frame)
+        v4_raw = raw
+        v4_threshold = threshold
         v4_margin = raw - threshold if math.isfinite(threshold) else np.full(len(frame), -1.)
         margins["TG_V4"] = v4_margin
         methods.append("TG_V4")
@@ -1393,6 +1546,27 @@ def score_frame(bundle, frame):
             raise ValueError("TG_V8 group branch requires frozen TG_V4 core")
         margins["TG_V8"] = np.maximum(v4_margin, pair_sensitive_margin)
         methods.append("TG_V8")
+    if "v9_pair_rescue" in bundle:
+        if v4_raw is None or v4_threshold is None or not math.isfinite(v4_threshold) or v4_threshold <= 0:
+            raise ValueError("TG_V9 requires positive finite frozen TG_V4 threshold")
+        pair_threshold=bundle["thresholds"]["TG_V9_PAIR"]
+        k4_threshold=bundle["thresholds"]["TG_V9_K4"]
+        k5_threshold=bundle["thresholds"]["TG_V9_K5"]
+        pair_raw=bundle["v9_pair_rescue"].decision_function(frame)
+        k4_raw=bundle["v9_k4_rescue"].decision_function(frame)
+        k5_raw=bundle["v9_k5_rescue"].decision_function(frame)
+        pair_ratio=pair_raw/pair_threshold
+        k4_ratio=k4_raw/k4_threshold
+        k5_ratio=k5_raw/k5_threshold
+        v4_ratio=v4_raw/v4_threshold
+        support=float(bundle["v9_pair_support"])
+        pair_supported=np.minimum(pair_ratio-1.0,v4_ratio-support)
+        margins["TG_V9_PAIR"]=pair_ratio-1.0
+        margins["TG_V9_K4"]=k4_ratio-1.0
+        margins["TG_V9_K5"]=k5_ratio-1.0
+        margins["TG_V9"]=np.maximum.reduce([
+            v4_ratio-1.0,pair_supported,k4_ratio-1.0,k5_ratio-1.0])
+        methods += ["TG_V9_PAIR","TG_V9_K4","TG_V9_K5","TG_V9"]
     if "tail_model" in bundle:
         threshold = bundle["thresholds"]["robust_tail"]
         margins["robust_tail"] = (tail_scores(bundle["tail_model"], frame) - threshold
