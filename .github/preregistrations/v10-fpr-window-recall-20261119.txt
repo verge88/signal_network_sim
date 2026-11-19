@@ -1,0 +1,70 @@
+V10 confidence-gated fusion prospective confirmation
+date=2026-11-19
+branch=experiment/v10-fpr-window-recall-20261119
+status=preregistered_before_909xx_acquisition
+
+motivation=V9 improved pair and overall window recall but failed the preregistered per-seed FPR target on seed 90804: TG_V9 FPR 0.0017257462686567165
+v9_908xx_status=consumed development evidence for V10 only; never V10 confirmation
+consumed_v9_seeds=90801,90802,90803,90804,90805,90806
+consumed_v9_run=44361276416
+no_909xx_data_used_for_design=true
+
+architecture=frozen V8/V9 branches with confidence-gated fusion; no branch retraining and no branch threshold changes
+v10_formula=max(TG_V8_GROUP_ratio-1.08, TG_V4_ratio-1.25, TG_V9_PAIR_ratio-1, TG_V9_K4_ratio-1, TG_V9_K5_ratio-1)
+v8_group_ratio_floor=1.08
+v4_ratio_floor=1.25
+pair_ratio_floor=1.0
+k4_ratio_floor=1.0
+k5_ratio_floor=1.0
+v9_pair_support_not_used_by_v10=true
+uses_absolute_numeric_nf_id=false
+uses_adjacency=false
+permutation_equivariant_within_zone=true
+
+development_selection_source=consumed V9 90801-90806
+development_grid=v8_group_ratio_floor 1.00..1.20 step 0.01; v4_ratio_floor 1.00..2.00 step 0.05; pair/k4/k5 ratio floors fixed at 1.0
+development_selection_rule=maximize mean NF-window recall subject to FPR <=0.001 on every consumed seed and recall > frozen V9 on every consumed seed
+development_selected_v8_group_ratio_floor=1.08
+development_selected_v4_ratio_floor=1.25
+development_screen_per_seed_recall=0.60625,0.6760416666666667,0.621875,0.61875,0.65625,0.646875
+development_screen_per_seed_fpr=0.0009794776119402984,0.0006529850746268657,0.0006063432835820895,0.0009794776119402984,0.0005597014925373135,0.0006063432835820895
+development_screen_pooled_recall=0.6376736111111111
+development_screen_pooled_fpr=0.0007307213930348259
+development_screen_precision=0.9750464560658348
+development_screen_episode_detection=k2 24/24; k3 12/12; k4 12/12; k5 12/12
+development_screen_k2_mean_window_recall=0.46805555555555556
+development_screen_k3_mean_window_recall=0.6703703703703704
+development_screen_k4_mean_window_recall=0.6833333333333333
+development_screen_k5_mean_window_recall=0.7172222222222222
+parameter_changes_after_909xx_trigger=forbidden
+
+training=fresh normal train/cal per seed plus the same consumed labeled V4 development runs used by V9
+development_runs=89901,89902,89903,90001,90002,90003,90101,90102,90103
+historical_v4_normal_references=89901,89902,89903,90001,90002,90003,90101,90102,90103
+
+prospective_seeds=90901,90902,90903,90904,90905,90906
+prospective_windows=700
+episodes_per_seed=10
+episode_duration_windows=30
+group_sizes_per_seed=four k2 episodes; two each k3,k4,k5
+prospective_k2_episodes_total=24
+prospective_k3_episodes_total=12
+prospective_k4_episodes_total=12
+prospective_k5_episodes_total=12
+placement=unchanged S9 deterministic random within-zone subset from seed; no adjacency requirement
+scenario=S9
+workload=unchanged benign-range coordinated low-and-slow request counts, 2..5 requests/window
+online_method=TG_V10
+fusion=direct confirmation with BUDGETED_WITHOUT_MINING OR TG_V10
+no_test_tuning=true
+
+primary_fpr_target=TG_V10 FPR <=0.001 on every one of six seeds
+primary_pooled_window_recall_target=pooled TG_V10 NF-window recall >=0.62
+primary_improvement_target=mean seed-level TG_V10 recall minus TG_V9 recall is positive
+primary_k2_episode_target=TG_V10 detects all 24/24 prospective k2 episodes
+primary_k2_window_target=TG_V10 mean k2 NF-window recall >=0.44
+primary_retention_target=TG_V10 detects at least 10/12 episodes separately for each k3,k4,k5
+scientific_success=all six primary targets must hold
+
+secondary_outputs=precision, per-k window recall, same-run TG_V9/TG_V8_GROUP/TG_V4, branch standalone metrics, paired seed-level recall deltas
+negative_result_policy=report unchanged; do not modify V10 parameters after seeing 909xx outcomes
