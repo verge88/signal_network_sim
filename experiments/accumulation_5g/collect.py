@@ -365,10 +365,14 @@ def run(args):
     v7_structure=bool(getattr(args,'v7_structure_experiment',False))
     v8_structure=bool(getattr(args,'v8_structure_experiment',False))
     v9_structure=bool(getattr(args,'v9_structure_experiment',False))
-    if sum(map(bool,(v6_structure,v7_structure,v8_structure,v9_structure)))>1:
-        raise ValueError("V6, V7, V8 and V9 structural modes are mutually exclusive")
+    v10_structure=bool(getattr(args,'v10_structure_experiment',False))
+    if sum(map(bool,(v6_structure,v7_structure,v8_structure,v9_structure,v10_structure)))>1:
+        raise ValueError("V6, V7, V8, V9 and V10 structural modes are mutually exclusive")
     if smoke:
         schedule=[]
+    elif v10_structure:
+        from experiments.distributed_5g.v9_design import v9_attack_schedule, v9_members, v9_count
+        schedule=v9_attack_schedule(args.windows,args.seed)
     elif v9_structure:
         from experiments.distributed_5g.v9_design import v9_attack_schedule, v9_members, v9_count
         schedule=v9_attack_schedule(args.windows,args.seed)
@@ -395,7 +399,7 @@ def run(args):
             return v7_members(entry)
         if entry[2]=='S8' and v8_structure:
             return v8_members(entry)
-        if entry[2]=='S9' and v9_structure:
+        if entry[2]=='S9' and (v9_structure or v10_structure):
             return v9_members(entry)
         return ()
     frozen = None
@@ -470,6 +474,7 @@ def run(args):
     manifest['v7_structure_experiment'] = v7_structure
     manifest['v8_structure_experiment'] = v8_structure
     manifest['v9_structure_experiment'] = v9_structure
+    manifest['v10_structure_experiment'] = v10_structure
     manifest['unchanged_freshness_limit_seconds'] = .25
     manifest['accumulation'] = json.loads((args.frozen/'accumulation.json').read_text())
     manifest['refinement'] = refinement
