@@ -1,1 +1,1 @@
-retry V10 contract tests after isolating pure fusion rule
+retry V10 contract tests after strict-margin assertion fix
