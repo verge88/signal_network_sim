@@ -40,6 +40,7 @@ from experiments.distributed_5g.temporal_graph_v6 import PermutationInvariantGro
 from experiments.distributed_5g.temporal_graph_v7 import StableSetGroupDetector
 from experiments.distributed_5g.temporal_graph_v8 import PairSensitiveStableSetDetector
 from experiments.distributed_5g.temporal_graph_v9 import PairMedianStableRescue, FixedKStableRescue
+from experiments.distributed_5g.v10_fusion import v10_fusion_margin
 
 KEYS = ["run_id", "window_id", "nf_id"]
 META = KEYS + ["timestamp"]
@@ -1572,22 +1573,6 @@ def load_frozen(path):
         raise ValueError("Unsupported protocol version")
     bundle["manifest"] = manifest
     return bundle
-
-
-def v10_fusion_margin(v4_ratio, group_ratio, pair_ratio, k4_ratio, k5_ratio,
-                      group_floor=1.08, v4_floor=1.25):
-    """Return the frozen V10 confidence-gated fusion margin.
-
-    Positive values are alarms. Inputs are normalized raw-score / threshold
-    ratios, so the guard values are comparable across fresh calibration runs.
-    """
-    return np.maximum.reduce([
-        np.asarray(group_ratio,dtype=float)-float(group_floor),
-        np.asarray(v4_ratio,dtype=float)-float(v4_floor),
-        np.asarray(pair_ratio,dtype=float)-1.0,
-        np.asarray(k4_ratio,dtype=float)-1.0,
-        np.asarray(k5_ratio,dtype=float)-1.0,
-    ])
 
 
 def score_frame(bundle, frame):
