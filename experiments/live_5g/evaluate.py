@@ -53,7 +53,7 @@ TAIL_METHODS = ["robust_tail", "hybrid_tail_without_KIE", "hybrid_tail"]
 TAIL_FEATURES = ["request_count", "error_rate", "update_count"]
 MODEL_FEATURES = {"IF_SBI": SBI, "IF_CONTEXT": CONTEXT, "IF_FULL": FULL}
 PROTOCOL_VERSION = "live-5g-v2-tail"
-DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2", "temporal_graph_v3", "temporal_graph_v4", "temporal_graph_v5", "temporal_graph_v6", "temporal_graph_v7", "temporal_graph_v8", "temporal_graph_v9")
+DETECTOR_CHOICES = ("iforest", "ocsvm_rbf", "lof", "elliptic", "eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised", "temporal_graph", "temporal_graph_v2", "temporal_graph_v3", "temporal_graph_v4", "temporal_graph_v5", "temporal_graph_v6", "temporal_graph_v7", "temporal_graph_v8", "temporal_graph_v9", "temporal_graph_v10")
 DIRECT_ANOMALY_SCORE_DETECTORS = {"eif", "knn", "ecod", "dvmad", "aderh", "sead_adaptive", "rf_supervised"}
 
 
@@ -1431,6 +1431,117 @@ def fit_temporal_graph_v9(train_directory, cal_directory, development_directorie
     return manifest
 
 
+def fit_temporal_graph_v10(train_directory, cal_directory, development_directories,
+                            reference_calibration_directories, output, seed=7143,
+                            point_alpha=0.001, graph_alpha=0.00015,
+                            cluster_order=2, decay=0.75,
+                            accumulator_multiplier=1.50,
+                            group_alpha=0.00015, v6_group_decay=0.75,
+                            stable_decay=0.25, stable_threshold_floor=0.65,
+                            pair_decay=0.55,
+                            v9_pair_decay=0.75,
+                            v9_pair_floor=0.65,
+                            v9_pair_support=0.62,
+                            v9_k4_floor=0.91,
+                            v9_k5_floor=0.65,
+                            v10_group_ratio_floor=1.08,
+                            v10_v4_ratio_floor=1.25):
+    """Freeze a V10 confidence-gated fusion selected on consumed V9 evidence.
+
+    V10 does not refit the learned model or change any V8/V9 branch threshold.
+    It changes only fusion: the low-FPR V8 group branch is accepted with a
+    modest confidence reserve, the V9 specialized pair/k4/k5 branches remain
+    direct, and the historically noisier V4 core is accepted only at a high
+    normalized score ratio.  Seeds 90801-90806 are consumed development data;
+    fresh 909xx observations are reserved for prospective confirmation.
+    """
+    fit_temporal_graph_v9(
+        train_directory, cal_directory, development_directories,
+        reference_calibration_directories, output, seed=seed,
+        point_alpha=point_alpha, graph_alpha=graph_alpha,
+        cluster_order=cluster_order, decay=decay,
+        accumulator_multiplier=accumulator_multiplier,
+        group_alpha=group_alpha, v6_group_decay=v6_group_decay,
+        stable_decay=stable_decay, stable_threshold_floor=stable_threshold_floor,
+        pair_decay=pair_decay,
+        v9_pair_decay=v9_pair_decay, v9_pair_floor=v9_pair_floor,
+        v9_pair_support=v9_pair_support, v9_k4_floor=v9_k4_floor,
+        v9_k5_floor=v9_k5_floor)
+    out=Path(output)
+    bundle=joblib.load(out/"model.joblib")
+    manifest=json.loads((out/"manifest.json").read_text())
+
+    bundle["v10_group_ratio_floor"]=float(v10_group_ratio_floor)
+    bundle["v10_v4_ratio_floor"]=float(v10_v4_ratio_floor)
+    bundle["ml_method"]="TG_V10"
+
+    manifest["detector"]="temporal_graph_logistic_v10"
+    manifest["ml_method"]="TG_V10"
+    manifest["temporal_graph_v10"]={
+        "architecture":"confidence-gated fusion of frozen V8/V9 branches; no branch retraining",
+        "fusion":{
+            "v8_group":"TG_V8_GROUP raw / TG_V8_GROUP threshold > group_ratio_floor",
+            "v4_high_confidence":"TG_V4 raw / TG_V4 threshold > v4_ratio_floor",
+            "pair_direct":"TG_V9_PAIR raw / pair threshold > 1",
+            "k4_direct":"TG_V9_K4 raw / k4 threshold > 1",
+            "k5_direct":"TG_V9_K5 raw / k5 threshold > 1",
+            "group_ratio_floor":float(v10_group_ratio_floor),
+            "v4_ratio_floor":float(v10_v4_ratio_floor),
+            "final_margin":"max(v8_group_ratio-group_floor, v4_ratio-v4_floor, pair_ratio-1, k4_ratio-1, k5_ratio-1)",
+        },
+        "development_selection":{
+            "consumed_v9_seeds":[90801,90802,90803,90804,90805,90806],
+            "future_v10_test_used":False,
+            "selection_grid":{
+                "group_ratio_floor":"1.00..1.20 step 0.01",
+                "v4_ratio_floor":"1.00..2.00 step 0.05",
+                "pair_ratio_floor":1.0,
+            },
+            "selection_rule":"maximize mean NF-window recall subject to FPR <= 0.001 on every consumed seed and recall > frozen V9 on every consumed seed",
+            "selected_group_ratio_floor":float(v10_group_ratio_floor),
+            "selected_v4_ratio_floor":float(v10_v4_ratio_floor),
+            "screen_per_seed_recall":[0.60625,0.6760416666666667,0.621875,0.61875,0.65625,0.646875],
+            "screen_per_seed_fpr":[0.0009794776119402984,0.0006529850746268657,0.0006063432835820895,0.0009794776119402984,0.0005597014925373135,0.0006063432835820895],
+            "screen_pooled_recall":0.6376736111111111,
+            "screen_pooled_fpr":0.0007307213930348259,
+            "screen_precision":0.9750464560658348,
+            "screen_episode_detection":{"k2":"24/24","k3":"12/12","k4":"12/12","k5":"12/12"},
+            "screen_mean_window_recall":{"k2":0.46805555555555556,"k3":0.6703703703703704,"k4":0.6833333333333333,"k5":0.7172222222222222},
+            "screen_note":"908xx were prospective V9 evidence and are consumed development evidence for V10 only; they are not V10 confirmation",
+        },
+        "heldout_v10_test_used_for_selection":False,
+    }
+    manifest["development_disclosure"]+=(
+        " V10 was designed only after V9 seeds 90801-90806 were consumed. "
+        "The redesign removes unconditional V4 fusion, admits V4 only above a "
+        "1.25 normalized threshold ratio, admits the frozen V8 group branch above "
+        "a 1.08 normalized threshold ratio, and directly retains the V9 pair/k4/k5 "
+        "specialized branches. All future 909xx observations are unavailable during selection."
+    )
+    bundle["manifest"]=manifest
+
+    cal,cal_labels,_=read_dataset(cal_directory)
+    if cal_labels.attack.any():
+        raise ValueError("V10 fresh calibration must remain normal-only")
+    calibration_bundle=copy.deepcopy(bundle)
+    for name in ("temporal_graph_v4","v6_group_rescue","v7_group_rescue",
+                 "v8_group_rescue","v9_pair_rescue","v9_k4_rescue","v9_k5_rescue"):
+        if name in calibration_bundle:
+            calibration_bundle[name].reset()
+    cal_predictions=score_frame(calibration_bundle,cal)
+    manifest["calibration_alarm_rate"]=cal_predictions.groupby("method").alarm.mean().to_dict()
+
+    for name in ("temporal_graph_v4","v6_group_rescue","v7_group_rescue",
+                 "v8_group_rescue","v9_pair_rescue","v9_k4_rescue","v9_k5_rescue"):
+        if name in bundle:
+            bundle[name].reset()
+    joblib.dump(bundle,out/"model.joblib")
+    manifest["model_sha256"]=sha256(out/"model.joblib")
+    dump_json(out/"manifest.json",manifest)
+    cal_predictions.to_csv(out/"calibration_predictions.csv",index=False)
+    return manifest
+
+
 def load_frozen(path):
     root = Path(path)
     manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
@@ -1567,6 +1678,22 @@ def score_frame(bundle, frame):
         margins["TG_V9"]=np.maximum.reduce([
             v4_ratio-1.0,pair_supported,k4_ratio-1.0,k5_ratio-1.0])
         methods += ["TG_V9_PAIR","TG_V9_K4","TG_V9_K5","TG_V9"]
+        if "v10_group_ratio_floor" in bundle:
+            group_threshold=bundle["thresholds"].get("TG_V8_GROUP")
+            if group_threshold is None or not math.isfinite(group_threshold) or group_threshold <= 0:
+                raise ValueError("TG_V10 requires positive finite frozen TG_V8_GROUP threshold")
+            if "TG_V8_GROUP" not in margins:
+                raise ValueError("TG_V10 requires frozen TG_V8_GROUP branch")
+            group_ratio=1.0 + margins["TG_V8_GROUP"]/group_threshold
+            group_floor=float(bundle["v10_group_ratio_floor"])
+            v4_floor=float(bundle["v10_v4_ratio_floor"])
+            margins["TG_V10"]=np.maximum.reduce([
+                group_ratio-group_floor,
+                v4_ratio-v4_floor,
+                pair_ratio-1.0,
+                k4_ratio-1.0,
+                k5_ratio-1.0])
+            methods.append("TG_V10")
     if "tail_model" in bundle:
         threshold = bundle["thresholds"]["robust_tail"]
         margins["robust_tail"] = (tail_scores(bundle["tail_model"], frame) - threshold
