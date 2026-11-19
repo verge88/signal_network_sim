@@ -183,6 +183,20 @@ def main():
     assert len(durations) == args.windows
     if not args.include_if_context:
         alerts.pop(hybrid_method)
+    if args.v10_structure_experiment:
+        scope='Fresh V10 confidence-gated fusion on the unchanged S9 structural schedule on one physical runner with five network namespaces.'
+    elif args.v9_structure_experiment:
+        scope='Fresh V9 specialized-fusion structural schedule on one physical runner with five network namespaces.'
+    elif args.v8_structure_experiment:
+        scope='Fresh V8 pair-sensitive structural schedule on one physical runner with five network namespaces.'
+    elif args.v7_structure_experiment:
+        scope='Fresh V7 stable-set FPR-constrained structural schedule on one physical runner with five network namespaces.'
+    elif args.v6_structure_experiment:
+        scope='Fresh V6 variable-k/permuted structural schedule on one physical runner with five network namespaces.'
+    elif args.normal_smoke:
+        scope='Fresh normal Open5GS SBI observations. Short engineering smoke on one physical runner.'
+    else:
+        scope='Full prospective scenario schedule on one physical runner with five network namespaces.'
     report = dict(windows=args.windows, nf_windows=args.windows * args.actors, processes=37,
         network_namespaces=holder.get('namespaces'), alerts=alerts,
         ml_method=args.ml_method,
@@ -193,19 +207,7 @@ def main():
         confirmation_fraction=args.confirmation_fraction,
         transport_seconds=dict(median=statistics.median(durations), maximum=max(durations)),
         manifest_sha256=sha256(args.out/'manifest.json'), model_sha256=sha256(args.frozen/'model.joblib'),
-        zone_models_sha256=sha256(args.zone_models),
-        scope=('Fresh V10 confidence-gated fusion on the unchanged S9 structural schedule on one physical runner with five network namespaces.'
-               if args.v10_structure_experiment else
-               ('Fresh V9 specialized-fusion structural schedule on one physical runner with five network namespaces.'
-                if args.v9_structure_experiment else
-                ('Fresh V8 pair-sensitive structural schedule on one physical runner with five network namespaces.'
-                 if args.v8_structure_experiment else
-                 ('Fresh V7 stable-set FPR-constrained structural schedule on one physical runner with five network namespaces.'
-                  if args.v7_structure_experiment else
-                  ('Fresh V6 variable-k/permuted structural schedule on one physical runner with five network namespaces.'
-                   if args.v6_structure_experiment else
-                   ('Fresh normal Open5GS SBI observations. Short engineering smoke on one physical runner.'
-                    if args.normal_smoke else 'Full prospective scenario schedule on one physical runner with five network namespaces.'))))))
+        zone_models_sha256=sha256(args.zone_models), scope=scope)
     (args.out/'smoke_report.json').write_text(json.dumps(report, indent=2))
     if args.load_experiment:
         report['recover_normal'] = args.recover_normal
