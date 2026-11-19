@@ -20,7 +20,7 @@ from experiments.distributed_5g.v8_design import v8_attack_schedule, v8_members,
 from experiments.distributed_5g.v7_design import v7_attack_schedule, v7_members, V7_WINDOWS
 from experiments.robustness_5g.design import attack_schedule, s5_members, s5_count
 from experiments.distributed_5g.v6_design import v6_attack_schedule, v6_members, v6_count
-from experiments.live_5g.evaluate import v10_fusion_margin
+from experiments.distributed_5g.v10_fusion import v10_fusion_margin
 
 
 def frame(windows=16, run_id="normal"):
