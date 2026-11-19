@@ -1574,6 +1574,22 @@ def load_frozen(path):
     return bundle
 
 
+def v10_fusion_margin(v4_ratio, group_ratio, pair_ratio, k4_ratio, k5_ratio,
+                      group_floor=1.08, v4_floor=1.25):
+    """Return the frozen V10 confidence-gated fusion margin.
+
+    Positive values are alarms. Inputs are normalized raw-score / threshold
+    ratios, so the guard values are comparable across fresh calibration runs.
+    """
+    return np.maximum.reduce([
+        np.asarray(group_ratio,dtype=float)-float(group_floor),
+        np.asarray(v4_ratio,dtype=float)-float(v4_floor),
+        np.asarray(pair_ratio,dtype=float)-1.0,
+        np.asarray(k4_ratio,dtype=float)-1.0,
+        np.asarray(k5_ratio,dtype=float)-1.0,
+    ])
+
+
 def score_frame(bundle, frame):
     frame = pd.DataFrame(frame).copy()
     validate_features(frame)
@@ -1687,12 +1703,9 @@ def score_frame(bundle, frame):
             group_ratio=1.0 + margins["TG_V8_GROUP"]/group_threshold
             group_floor=float(bundle["v10_group_ratio_floor"])
             v4_floor=float(bundle["v10_v4_ratio_floor"])
-            margins["TG_V10"]=np.maximum.reduce([
-                group_ratio-group_floor,
-                v4_ratio-v4_floor,
-                pair_ratio-1.0,
-                k4_ratio-1.0,
-                k5_ratio-1.0])
+            margins["TG_V10"]=v10_fusion_margin(
+                v4_ratio,group_ratio,pair_ratio,k4_ratio,k5_ratio,
+                group_floor=group_floor,v4_floor=v4_floor)
             methods.append("TG_V10")
     if "tail_model" in bundle:
         threshold = bundle["thresholds"]["robust_tail"]
