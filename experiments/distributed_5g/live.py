@@ -48,6 +48,7 @@ def main():
     parser.add_argument('--v7-structure-experiment', action='store_true')
     parser.add_argument('--v8-structure-experiment', action='store_true')
     parser.add_argument('--v9-structure-experiment', action='store_true')
+    parser.add_argument('--v10-structure-experiment', action='store_true')
     parser.add_argument('--recover-normal', action='store_true')
     args=parser.parse_args()
     if args.load_experiment:
@@ -70,10 +71,15 @@ def main():
         if not args.confirm_if_context or args.ml_method != 'TG_V8':
             parser.error('V8 structural experiment requires confirmation with --ml-method TG_V8')
     if args.v9_structure_experiment:
-        if args.v6_structure_experiment or args.v7_structure_experiment or args.v8_structure_experiment or args.load_experiment or args.smoke_windows is not None:
-            parser.error('V9 structural experiment cannot be combined with V6/V7/V8/load/smoke modes')
+        if args.v6_structure_experiment or args.v7_structure_experiment or args.v8_structure_experiment or args.v10_structure_experiment or args.load_experiment or args.smoke_windows is not None:
+            parser.error('V9 structural experiment cannot be combined with V6/V7/V8/V10/load/smoke modes')
         if not args.confirm_if_context or args.ml_method != 'TG_V9':
             parser.error('V9 structural experiment requires confirmation with --ml-method TG_V9')
+    if args.v10_structure_experiment:
+        if args.v6_structure_experiment or args.v7_structure_experiment or args.v8_structure_experiment or args.v9_structure_experiment or args.load_experiment or args.smoke_windows is not None:
+            parser.error('V10 structural experiment cannot be combined with V6/V7/V8/V9/load/smoke modes')
+        if not args.confirm_if_context or args.ml_method != 'TG_V10':
+            parser.error('V10 structural experiment requires confirmation with --ml-method TG_V10')
     if args.confirm_if_context and not args.include_if_context:
         parser.error('--confirm-if-context requires --include-if-context')
     if not 0 < args.confirmation_fraction <= 1:
@@ -86,7 +92,7 @@ def main():
         parser.error('--smoke-windows must be between 1 and 600')
     args.phase='test'
     args.normal_smoke = args.smoke_windows is not None
-    args.windows = 700 if (args.v8_structure_experiment or args.v9_structure_experiment) else (600 if (args.v6_structure_experiment or args.v7_structure_experiment) else (args.smoke_windows if args.normal_smoke else 3600))
+    args.windows = 700 if (args.v8_structure_experiment or args.v9_structure_experiment or args.v10_structure_experiment) else (600 if (args.v6_structure_experiment or args.v7_structure_experiment) else (args.smoke_windows if args.normal_smoke else 3600))
     args.actors=32
     args.window_seconds=1.
     args.skip_native_restart=args.normal_smoke
@@ -188,10 +194,18 @@ def main():
         transport_seconds=dict(median=statistics.median(durations), maximum=max(durations)),
         manifest_sha256=sha256(args.out/'manifest.json'), model_sha256=sha256(args.frozen/'model.joblib'),
         zone_models_sha256=sha256(args.zone_models),
-        scope=(('Fresh V9 specialized-fusion structural schedule on one physical runner with five network namespaces.' if args.v9_structure_experiment else ('Fresh V8 pair-sensitive structural schedule on one physical runner with five network namespaces.' if args.v8_structure_experiment else ('Fresh V7 stable-set FPR-constrained structural schedule on one physical runner with five network namespaces.' if args.v7_structure_experiment else 'Fresh V6 variable-k/permuted structural schedule on one physical runner with five network namespaces.')))
-               if args.v6_structure_experiment else
-               ('Fresh normal Open5GS SBI observations. Short engineering smoke on one physical runner.'
-                if args.normal_smoke else 'Full prospective scenario schedule on one physical runner with five network namespaces.')))
+        scope=('Fresh V10 confidence-gated fusion on the unchanged S9 structural schedule on one physical runner with five network namespaces.'
+               if args.v10_structure_experiment else
+               ('Fresh V9 specialized-fusion structural schedule on one physical runner with five network namespaces.'
+                if args.v9_structure_experiment else
+                ('Fresh V8 pair-sensitive structural schedule on one physical runner with five network namespaces.'
+                 if args.v8_structure_experiment else
+                 ('Fresh V7 stable-set FPR-constrained structural schedule on one physical runner with five network namespaces.'
+                  if args.v7_structure_experiment else
+                  ('Fresh V6 variable-k/permuted structural schedule on one physical runner with five network namespaces.'
+                   if args.v6_structure_experiment else
+                   ('Fresh normal Open5GS SBI observations. Short engineering smoke on one physical runner.'
+                    if args.normal_smoke else 'Full prospective scenario schedule on one physical runner with five network namespaces.'))))))
     (args.out/'smoke_report.json').write_text(json.dumps(report, indent=2))
     if args.load_experiment:
         report['recover_normal'] = args.recover_normal
