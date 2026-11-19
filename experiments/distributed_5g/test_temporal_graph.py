@@ -20,6 +20,7 @@ from experiments.distributed_5g.v8_design import v8_attack_schedule, v8_members,
 from experiments.distributed_5g.v7_design import v7_attack_schedule, v7_members, V7_WINDOWS
 from experiments.robustness_5g.design import attack_schedule, s5_members, s5_count
 from experiments.distributed_5g.v6_design import v6_attack_schedule, v6_members, v6_count
+from experiments.live_5g.evaluate import v10_fusion_margin
 
 
 def frame(windows=16, run_id="normal"):
@@ -552,3 +553,26 @@ def test_v9_schedule_has_four_pairs_and_two_each_other_k():
     assert sizes==[2,2,2,2,3,3,4,4,5,5]
     assert all(e[2]=="S9" and e[1]-e[0]==30 for e in schedule)
     assert any(max(v9_members(e))-min(v9_members(e))+1 != len(v9_members(e)) for e in schedule)
+
+
+def test_v10_confidence_gated_fusion_filters_weak_v4_and_keeps_specialists():
+    margin=v10_fusion_margin(
+        v4_ratio=np.asarray([1.10,1.26,1.00,1.00,1.00,1.00]),
+        group_ratio=np.asarray([1.05,1.00,1.09,1.00,1.00,1.00]),
+        pair_ratio=np.asarray([1.00,1.00,1.00,1.01,1.00,1.00]),
+        k4_ratio=np.asarray([1.00,1.00,1.00,1.00,1.01,1.00]),
+        k5_ratio=np.asarray([1.00,1.00,1.00,1.00,1.00,1.01]),
+        group_floor=1.08,v4_floor=1.25)
+    assert margin[0] < 0.0
+    assert np.all(margin[1:] > 0.0)
+
+
+def test_v10_fusion_boundary_is_strictly_positive():
+    margin=v10_fusion_margin(
+        v4_ratio=np.asarray([1.25]),
+        group_ratio=np.asarray([1.08]),
+        pair_ratio=np.asarray([1.0]),
+        k4_ratio=np.asarray([1.0]),
+        k5_ratio=np.asarray([1.0]),
+        group_floor=1.08,v4_floor=1.25)
+    assert np.isclose(margin[0],0.0,rtol=0,atol=1e-12)
