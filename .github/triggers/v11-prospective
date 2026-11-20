@@ -1,0 +1,6 @@
+V11 prospective S9 staircase confirmation trigger
+Preregistered method: .github/preregistrations/v11-causal-window-recall-20261120.txt
+Required fresh seeds: 91001, 91002, 91003, 91004, 91005, 91006
+This trigger was committed after method freeze, six development contract tests and consumed 909xx screen.
+No prospective 910xx data used to select detector parameters.
+Merge gate: six complete prospective reports, recall >= 0.90, each-seed FPR <= 0.001, improvement over same-run TG_V10.
