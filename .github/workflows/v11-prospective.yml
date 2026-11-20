@@ -157,7 +157,7 @@ jobs:
           mkdir -p evidence/v11-summary
           sudo journalctl --no-pager -u 'open5gs-*' > evidence/v11-summary/services.log
           cp evidence/source_commit.txt evidence/v11-summary/ || true
-          cp .github/preregistrations/v10-fpr-window-recall-20261119.txt evidence/v11-summary/preregistration.txt || true
+          cp .github/preregistrations/v11-causal-window-recall-20261120.txt evidence/v11-summary/preregistration.txt || true
           cp evidence/frozen/manifest.json evidence/v11-summary/model_manifest.json || true
           cp evidence/frozen_manifest_before_test.json evidence/v11-summary/ || true
           python - <<'PY'
