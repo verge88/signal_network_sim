@@ -1,0 +1,38 @@
+V9 independent six-seed post-rollback replication
+date=2026-11-21
+purpose=Re-test the frozen V9 detector on entirely new S9 random seeds after explicit rollback from V10-V12.
+branch=experiment/current-v9
+v9_source_frozen_commit=7d8289a88976bb5e886f7e130921e1468ec942ae
+phase=prospective_fresh_912xx
+source_method=unchanged TG_V9 from original Nov 18 V9 branch
+new_seed_set=91201,91202,91203,91204,91205,91206
+previously_used_heldout_seeds=90801-90806 (V9), 90901-90906 (V10), 91001-91006 (V11), 91101-91106 (V12)
+fresh_912xx_data_used_for_tuning=false
+no_parameter_changes=true
+no_method_source_modifications=true
+topology=32 NF, 4 zones with 8 NF each
+traffic_scenario=S9 frozen 700-window 10-episode seed-defined schedule
+group_sizes=2,2,2,2,3,3,4,4,5,5
+duration=30 windows per episode
+historical_training_sources=89901,89902,89903,90001,90002,90003,90101,90102,90103
+normal_train_and_calibration=fresh generated current-seed separate normal captures before test
+detector=temporal_graph_v9
+model_preparation=unchanged V9 freeze and threshold calibration before S9 test
+online_method=TG_V9
+confirmation_mode=direct
+accumulator_multiplier=1.50
+per_run_audit=unchanged v9_structural_trial.py validating online/replay agreement, S9 label schedule, freeze-before-heldout and thresholds
+independent_aggregate=original V9 aggregate, plus explicit exact 912xx seed check before interpretation
+primary_fpr_gate=TG_V9 FPR<=0.001 on each of six seeds
+primary_k2_episode_gate=all 24 of 24 k2 episodes detected
+primary_k2_window_gate=mean k2 attack-NF-window recall>=0.30
+primary_k3_k4_k5_gate=at least 10/12 episodes per group size detected
+primary_pooled_recall_gate=pooled attack-NF-window recall>=0.50
+primary_k2_gain_gate=mean paired seed k2 NF-window recall TG_V9 > TG_V8
+scientific_success=all six original V9 preregistered scientific gates true, no relaxed criteria
+additional_user_interest=report pooled overall NF-window recall in %; >=0.90 is NOT a preregistered V9 success requirement and cannot be promised
+secondary_metrics=full per-seed confusion matrices precision FPR, per-group k NF-window recall and detection, same-run TG_V8/TG_V4, archived raw evidence and provenance
+controls=fail closed on missing historical artifacts, missing trial reports, wrong seed set, training-after-test leakage or unverified method code hash
+frozen_blobs=temporal_graph_v9:618d30115bc49da979d5098c12d9758bf1d8a8d5;v9_design:63c479d357343e055568a3152daee4615080ede3;v9_trial:5bb15a5a6b6c695d4d7057066c702320e250272f;full_experiment:08e7be46bf0edd795b95430ebcfba8f3c93d7d3d;live:815fd8640ad0970aa299805a26ed0cb636a7270f;evaluate:679697bda72acd24e2cdb33cc2966dc7a5bd1688;namespace_smoke:3339f47269e07ea4ba891267093bc52a2fec6f60
+limitations=Only this synthetic S9 workload; not proof of production FPR or general 5G anomaly recall
+negative_result_policy=Report unfavorable results and do not retune V9 using the 912xx confirmation set
