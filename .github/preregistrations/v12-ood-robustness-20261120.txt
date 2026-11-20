@@ -1,0 +1,19 @@
+V12 out-of-distribution robustness diagnostic; frozen detector only
+date=2026-11-20
+branch=experiment/v12-out-of-distribution-audit-20261120
+base_sha=ddf57c2648cbf6fedbf456159183a4c7754ece9e
+scope=posthoc diagnostic of generalization, NOT an additional independent S9 confirmation
+algorithm_frozen=experiments/distributed_5g/v12_staircase.py
+algorithm_sha_base=ddf57c2648cbf6fedbf456159183a4c7754ece9e
+no_detector_tuning=true
+source=2026-11-13 V5 final archival Open5GS NRF acquisitions
+input_seed_artifacts=90401:14049128601;90402:14049887852;90405:14050881142
+expected_windows_per_seed=3600
+expected_actors_per_seed=32
+source_scenarios=S1,S2,S3,S4,S5,C,D,F,G,R and benign N1, as originally labeled
+trial=read test/features.csv before test/labels.csv, replay identical frozen zone mapping/streaming V11 and V12 before audit labels
+per_seed=whole-run TP FP FN TN recall FPR, per-scenario positive NF-window recall, per-episode detection
+aggregate=exactly three source seeds and combined confusion matrices, per-scenario detection, source file hashes
+success_gate=none; report all observed losses and false alarms, do not optimize for S5 or other scenarios
+counterfactuals=single-NF anomaly; benign exact waveform mimic; non-S9 count-wave shape alteration
+scientific_caveat=the S9-specific waveform detector is not a general anomaly detector; successful S9 confirmation does not imply generalization
