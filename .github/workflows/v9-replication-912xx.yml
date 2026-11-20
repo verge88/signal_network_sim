@@ -1,0 +1,242 @@
+name: V9 frozen rollback new-seed prospective replication 912xx
+
+on:
+  push:
+    branches: ['experiment/current-v9']
+    paths:
+      - '.github/triggers/v9-replication-912xx'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  prospective:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 140
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        seed: [91201, 91202, 91203, 91204, 91205, 91206]
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports: ['27017:27017']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verify preregistration is present
+        run: |
+          cat .github/preregistrations/v9-replication-912xx-20261121.txt
+          test -f experiments/distributed_5g/temporal_graph_v9.py
+          test -f experiments/distributed_5g/v9_design.py
+          test -f experiments/distributed_5g/v9_structural_trial.py
+
+      - name: Verify exact frozen V9 source blobs
+        run: |
+          set -euo pipefail
+          for spec in \
+            "experiments/distributed_5g/temporal_graph_v9.py:618d30115bc49da979d5098c12d9758bf1d8a8d5" \
+            "experiments/distributed_5g/v9_design.py:63c479d357343e055568a3152daee4615080ede3" \
+            "experiments/distributed_5g/v9_structural_trial.py:5bb15a5a6b6c695d4d7057066c702320e250272f" \
+            "experiments/distributed_5g/full_experiment.py:08e7be46bf0edd795b95430ebcfba8f3c93d7d3d" \
+            "experiments/distributed_5g/live.py:815fd8640ad0970aa299805a26ed0cb636a7270f" \
+            "experiments/accumulation_5g/collect.py:62cad97034fc0cf3b7da070e03b3af293a8cb45a" \
+            "experiments/live_5g/evaluate.py:679697bda72acd24e2cdb33cc2966dc7a5bd1688" \
+            "experiments/distributed_5g/namespace_smoke.sh:3339f47269e07ea4ba891267093bc52a2fec6f60"; do
+            path="${spec%%:*}"
+            expected="${spec##*:}"
+            got="$(git hash-object "$path")"
+            test "$got" = "$expected" || { echo "V9 frozen code mismatch: $path $got" >&2; exit 1; }
+          done
+
+      - name: Install experiment stack
+        env:
+          NO_LONG_DOUBLE: '1'
+        run: python -m pip install -r experiments/live_5g/requirements.txt
+
+      - name: Scientific contract tests
+        run: python -m pytest experiments/distributed_5g/test_temporal_graph.py -q
+
+      - name: Retrieve hash-pinned non-ML inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/verge88/signal_network_sim/actions/artifacts/13785795564/zip > measured.zip
+          gh api repos/verge88/signal_network_sim/actions/artifacts/13836367435/zip > zonal.zip
+          echo 'c76c4ed6a865dc5c37803dbc46e6cd05c62ebe803f398fe409dd2f1090910129  measured.zip' | sha256sum -c
+          echo '8aa7e697e674b68b22e9cf7980e653a93f0060ad6469101f651c4c67a6607f0b  zonal.zip' | sha256sum -c
+          unzip -q measured.zip 'frozen/model.joblib' 'frozen/manifest.json' 'frozen/accumulation.json' 'frozen/extensions.json' 'frozen/refinement.json'
+          unzip -q zonal.zip zone_models.json
+
+      - name: Retrieve consumed V4 development and normal references
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p historical development
+          download_one() {
+            spec="$1"
+            seed="${spec%%:*}"
+            artifact="${spec##*:}"
+            mkdir -p "historical/${seed}" "development/${seed}"
+            gh api "repos/verge88/signal_network_sim/actions/artifacts/${artifact}/zip" > "historical/${seed}/artifact.zip"
+            unzip -q "historical/${seed}/artifact.zip" -d "historical/${seed}"
+            unzip -q "historical/${seed}/full-evidence.zip" \
+              'test/features.csv' 'test/labels.csv' \
+              'cal/features.csv' 'cal/labels.csv' \
+              -d "development/${seed}"
+          }
+          pids=()
+          for spec in \
+            "89901:13967200654" "89902:13966557271" "89903:13966467216" \
+            "90001:13977466681" "90002:13976814586" "90003:13977925621" \
+            "90101:13985819940" "90102:13989515036" "90103:13988990036"; do
+            download_one "$spec" &
+            pids+=("$!")
+          done
+          for pid in "${pids[@]}"; do
+            wait "$pid" || { echo "Failed historical download $pid" >&2; exit 1; }
+          done
+          for seed in 89901 89902 89903 90001 90002 90003 90101 90102 90103; do
+            for phase in test cal; do
+              test -s "development/$seed/$phase/features.csv"
+              test -s "development/$seed/$phase/labels.csv"
+            done
+          done
+
+      - uses: actions/cache/restore@v4
+        id: cache
+        with:
+          path: open5gs-2.7.6.tar.gz
+          key: open5gs-d9d3abdd-ubuntu22-build-v1
+
+      - if: steps.cache.outputs.cache-hit != 'true'
+        run: bash experiments/live_5g/setup_open5gs.sh build
+
+      - if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: open5gs-2.7.6.tar.gz
+          key: open5gs-d9d3abdd-ubuntu22-build-v1
+
+      - run: bash experiments/live_5g/setup_open5gs.sh runtime
+
+      - name: Collect fresh normal train and calibration
+        run: |
+          mkdir -p evidence
+          git rev-parse HEAD > evidence/source_commit.txt
+          cp zone_models.json evidence/zone_models.json
+          python -m experiments.live_5g.collect \
+            --phase train --seed $(( ${{ matrix.seed }} + 1000 )) \
+            --out evidence/train --windows 600 --actors 32
+          python -m experiments.live_5g.collect \
+            --phase cal --seed $(( ${{ matrix.seed }} + 2000 )) \
+            --out evidence/cal --windows 600 --actors 32
+
+      - name: Freeze V9 before held-out specialized-fusion traffic
+        run: |
+          python -m experiments.distributed_5g.full_experiment prepare evidence \
+            --previous frozen --seed ${{ matrix.seed }} --detector temporal_graph_v9 \
+            --development \
+              development/89901/test development/89902/test development/89903/test \
+              development/90001/test development/90002/test development/90003/test \
+              development/90101/test development/90102/test development/90103/test \
+            --reference-calibration \
+              development/89901/cal development/89902/cal development/89903/cal \
+              development/90001/cal development/90002/cal development/90003/cal \
+              development/90101/cal development/90102/cal development/90103/cal \
+            --v4-cluster-order 2 --v4-decay 0.75 --v4-alpha 0.00015 \
+            --v4-accumulator-multiplier 1.50
+          cp evidence/frozen/manifest.json evidence/frozen_manifest_before_test.json
+
+      - name: Run fresh held-out specialized-fusion schedule
+        run: |
+          bash experiments/distributed_5g/namespace_smoke.sh \
+            --seed ${{ matrix.seed }} --out evidence/test --frozen evidence/frozen \
+            --zone-models evidence/zone_models.json --include-if-context --confirm-if-context \
+            --ml-method TG_V9 --ml-confirmation-mode direct \
+            --accumulator-multiplier 1.50 --recover-normal \
+            --v9-structure-experiment
+
+      - name: Audit V9 prospective evidence
+        run: |
+          python -m experiments.distributed_5g.v9_structural_trial audit \
+            evidence evidence/v9-summary
+
+      - name: Collect reproducibility evidence
+        if: always()
+        run: |
+          mkdir -p evidence/v9-summary
+          sudo journalctl --no-pager -u 'open5gs-*' > evidence/v9-summary/services.log
+          cp evidence/source_commit.txt evidence/v9-summary/ || true
+          cp .github/preregistrations/v9-replication-912xx-20261121.txt evidence/v9-summary/preregistration.txt || true
+          cp evidence/frozen/manifest.json evidence/v9-summary/model_manifest.json || true
+          cp evidence/frozen_manifest_before_test.json evidence/v9-summary/ || true
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile
+          root=Path('evidence')
+          with zipfile.ZipFile('v9-full-evidence.zip','w',zipfile.ZIP_DEFLATED) as archive:
+              for p in root.rglob('*'):
+                  if p.is_file() and 'hierarchy' not in p.parts:
+                      archive.write(p,p.relative_to(root))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v9-replication-summary-${{ matrix.seed }}-${{ github.run_id }}
+          path: evidence/v9-summary/
+          retention-days: 90
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v9-replication-evidence-${{ matrix.seed }}-${{ github.run_id }}
+          path: v9-full-evidence.zip
+          retention-days: 90
+
+  aggregate:
+    needs: prospective
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==1.26.4 pandas==2.2.3 scipy==1.14.1
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: v9-replication-summary-*
+          path: v9-replication-inputs
+      - name: Require six exactly preregistered fresh 912xx seeds
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          expected = {91201, 91202, 91203, 91204, 91205, 91206}
+          reports = [json.loads(p.read_text()) for p in Path('v9-replication-inputs').rglob('report.json')]
+          if len(reports) != len(expected) or {int(r['seed']) for r in reports} != expected:
+              raise SystemExit('Missing/duplicated/wrong seed reports; must have exactly 91201..91206')
+          if not all(r.get('prospective') is True and r.get('heldout_after_freeze') is True for r in reports):
+              raise SystemExit('Non-prospective or unconfirmed frozen model evidence')
+          print('All six fresh 912xx reports and freeze-before-test checks verified')
+          PY
+
+      - name: Aggregate preregistered V9 statistics
+        run: |
+          python -m experiments.distributed_5g.v9_structural_trial aggregate \
+            v9-replication-inputs v9-replication-confirmation
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v9-replication-confirmation-${{ github.run_id }}
+          path: v9-replication-confirmation/
+          retention-days: 90
