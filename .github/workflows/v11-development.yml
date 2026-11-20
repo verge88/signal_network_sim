@@ -1,0 +1,72 @@
+name: V11 causal S9 staircase development screen
+
+on:
+  push:
+    branches: ['experiment/v11-causal-window-recall-20261120']
+    paths:
+      - 'experiments/distributed_5g/v11_*'
+      - 'experiments/distributed_5g/test_v11_staircase.py'
+      - '.github/workflows/v11-development.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  development:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install reproducible replay dependencies
+        run: python -m pip install numpy==1.26.4 pandas==2.2.3 pytest==8.3.4
+      - name: Test causal method contracts
+        run: python -m pytest experiments/distributed_5g/test_v11_staircase.py -q
+      - name: Recheck consumed 909xx development evidence
+        env:
+          GH_TOKEN: \${{ github.token }}
+        run: |
+          set -euo pipefail
+          for item in \
+            "90901 14555406463" \
+            "90902 14556748065" \
+            "90903 14555397013" \
+            "90904 14555770681" \
+            "90905 14554598791"; do
+            set -- $item
+            seed="$1"
+            artifact="$2"
+            mkdir -p "development/$seed" "reports/$seed"
+            gh api "repos/verge88/signal_network_sim/actions/artifacts/$artifact/zip" > artifact.zip
+            unzip -p artifact.zip v10-full-evidence.zip > full.zip
+            unzip -q full.zip \
+              test/features.csv test/labels.csv test/manifest.json \
+              test/online_predictions.csv frozen/manifest.json \
+              -d "development/$seed"
+            test -s "development/$seed/test/features.csv"
+            test -s "development/$seed/test/online_predictions.csv"
+            python -m experiments.distributed_5g.v11_staircase_trial audit \
+              "development/$seed" "reports/$seed" --phase development
+            rm -f artifact.zip full.zip
+          done
+          python -m experiments.distributed_5g.v11_staircase_trial aggregate \
+            reports development-summary --phase development
+      - name: Retain development metrics and provenance
+        if: always()
+        run: |
+          mkdir -p development-summary
+          git rev-parse HEAD > development-summary/source_commit.txt
+          cp .github/preregistrations/v11-causal-window-recall-20261120.txt \
+            development-summary/preregistration.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v11-consumed-development-\${{ github.run_id }}
+          path: |
+            reports/
+            development-summary/
+          retention-days: 90
