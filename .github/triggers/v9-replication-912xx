@@ -1,0 +1,10 @@
+V9 rollback independent replication trigger
+date=2026-11-21
+frozen_method_commit=7d8289a88976bb5e886f7e130921e1468ec942ae
+preregistration=.github/preregistrations/v9-replication-912xx-20261121.txt
+workflow=.github/workflows/v9-replication-912xx.yml
+new_heldout_seeds=91201,91202,91203,91204,91205,91206
+non_tuning=true
+original_V9_scientific_gates_unchanged=true
+original_V9_code_blob_shas_checked_at_runtime=true
+freeze_training_before_test=true
