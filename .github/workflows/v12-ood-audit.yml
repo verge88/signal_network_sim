@@ -27,6 +27,7 @@ jobs:
         run: |
           set -euo pipefail
           cat .github/preregistrations/v12-ood-robustness-20261120.txt
+          git fetch --no-tags --depth=1 origin ddf57c2648cbf6fedbf456159183a4c7754ece9e
           git diff --exit-code ddf57c2648cbf6fedbf456159183a4c7754ece9e HEAD -- \
             experiments/distributed_5g/v12_staircase.py \
             experiments/distributed_5g/v11_staircase.py
