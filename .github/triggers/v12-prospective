@@ -1,0 +1,15 @@
+V12 fresh independent prospective trigger
+date=2026-11-20
+preregistered=.github/preregistrations/v12-confirmed-window-recall-20261120.txt
+method=experiments/distributed_5g/v12_staircase.py
+trial=experiments/distributed_5g/v12_staircase_trial.py
+development_screen_run=44777697167
+development_screen_seeds=91001..91006
+development_screen_pooled_recall=0.900000000000
+development_screen_pooled_fpr=0.00002332089552238806
+development_screen_false_positives=3/128640
+development_screen_all_seed_fpr_at_most_0.001=true
+prospective_seeds=91101,91102,91103,91104,91105,91106
+fresh_test_data_not_used_for_design=true
+scientific_gates=pooled_recall>=0.90;per_seed_fpr<=0.001;pooled_fpr<v11;pooled_recall>v10
+No parameter tuning on fresh 911xx after this commit. Green GitHub Actions does NOT imply scientific success.
