@@ -1,0 +1,43 @@
+V12 causal-confirmed S9 window-recall prospective experiment
+date=2026-11-20
+branch=experiment/v12-confirmed-window-recall-20261120
+base=experiment/v11-causal-window-recall-20261120
+status=method_frozen_before_911xx_acquisition
+scope=synthetic S9 temporal staircase ONLY, not general 5G intrusion detection
+
+why=V11 achieved 0.934895833 NF-window recall on six held-out 910xx but exceeded FPR 0.001 on seeds 91002 and 91003; prior V11 gate scientific_success=false
+source_v11_run=44762423517
+source_v11_seed_range=91001..91006
+consumed_for_v12_development=91001,91002,91003,91004,91005,91006
+not_v12_confirmation=all 910xx observations are development once inspected
+
+hypothesis=V11 unconfirmed provisional alerts at the third unchanged window are a material source of false positives
+algorithm=V11 same-zone causal pattern with provisional alarm suppressed
+candidate_rule=at least two NFs in a single known topology zone with distinct unchanged request_count values in [2,4] over three consecutive windows
+confirmation=on the next consecutive window at least two of those NFs must rise exactly +1
+alarm=only starting on the confirmation window, never on provisional third window
+active_tracing=unchanged V11 per-NF frozen S9 3-window [0,1,1,2,1,0] step signature
+lifetime=unchanged 30 windows from inferred onset, no retroactive decisions
+mismatch=unchanged immediate drop of mismatching NFs; cancel when fewer than two remain
+causal_no_future=true
+no_test_labels_for_prediction=true
+no_absolute_nf_identity_in_detection=true
+max_ideal_recall=27/30=0.90 per attacked NF for a 30-window episode; boundary-sensitive
+no_parameter_search_from_fresh_911xx=true
+
+development_screen=standalone CI replay of original 910xx V11 evidence with unchanged features and labels read strictly after streaming prediction
+development_source_artifact_ids=14647766890,14647526866,14647958307,14647703611,14647336562,14648498619
+prior_reference=V11 910xx pooled TP 5385/5760=0.934896, FPR 90/128640=0.0006996, but 2/6 seeds violate 0.001
+
+fresh_confirmation_seed_range=91101,91102,91103,91104,91105,91106
+fresh_confirmation_topology=unchanged S9 700 windows x 32 NF per seed
+fresh_confirmation_workload=unchanged V9 S9 randomly placed within-zone 2..5 member groups and fixed low-and-slow count waveform
+fresh_confirmation_baselines=frozen TG_V10 fitted before heldout test and same-run replayed TG_V11, both evaluated identically
+primary_success=V12 pooled NF-window recall >= 0.90
+fpr_guard=V12 FPR <= 0.001 on every one of six fresh seeds
+false_positive_improvement=V12 pooled FPR < V11 same-run pooled FPR
+same_run_model_baseline=V12 pooled recall > TG_V10 same-run pooled recall
+scientific_success=all four above criteria AND all six complete reports must hold
+test_data_policy=never tune on 911xx outcomes; report gate failures even if workflow succeeds
+secondary=per-seed confusion matrices, precision, per-k episode detection, paired V11 and V10 comparisons, provenance hashes, exact source commit
+limitations=detector encodes S9 deterministic temporal signature; evaluation restricted to synthetic simulator and not production claims
