@@ -1,0 +1,86 @@
+name: V12 frozen detector out-of-distribution V5 archive audit
+
+on:
+  push:
+    branches: ['experiment/v12-out-of-distribution-audit-20261120']
+    paths:
+      - 'experiments/distributed_5g/v12_ood_audit.py'
+      - 'experiments/distributed_5g/test_v12_ood_controls.py'
+      - '.github/workflows/v12-ood-audit.yml'
+      - '.github/triggers/v12-ood-audit'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  ood:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Record preregistration and frozen V12 provenance
+        run: |
+          set -euo pipefail
+          cat .github/preregistrations/v12-ood-robustness-20261120.txt
+          git diff --exit-code ddf57c2648cbf6fedbf456159183a4c7754ece9e HEAD -- \
+            experiments/distributed_5g/v12_staircase.py \
+            experiments/distributed_5g/v11_staircase.py
+          git rev-parse HEAD
+
+      - name: Install diagnostic dependencies
+        run: python -m pip install numpy==1.26.4 pandas==2.2.3 pytest==8.3.4
+
+      - name: Execute counterfactual robustness contracts
+        run: |
+          python -m pytest experiments/distributed_5g/test_v12_staircase.py \
+            experiments/distributed_5g/test_v12_ood_controls.py -q
+
+      - name: Replay archival V5 attacks S1-S5, C, D, F, G, R
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p inputs reports /tmp/v12-ood
+          for spec in \
+            "90401:14049128601" \
+            "90402:14049887852" \
+            "90405:14050881142"; do
+            seed="${spec%%:*}"
+            artifact="${spec##*:}"
+            echo "Auditing archived V5 seed ${seed}"
+            mkdir -p "inputs/${seed}" "reports/${seed}"
+            gh api "repos/verge88/signal_network_sim/actions/artifacts/${artifact}/zip" \
+              > /tmp/v12-ood/artifact.zip
+            unzip -p /tmp/v12-ood/artifact.zip full-evidence.zip \
+              > /tmp/v12-ood/full-evidence.zip
+            unzip -q /tmp/v12-ood/full-evidence.zip \
+              'test/features.csv' 'test/labels.csv' 'test/manifest.json' \
+              -d "inputs/${seed}"
+            test -s "inputs/${seed}/test/features.csv"
+            test -s "inputs/${seed}/test/labels.csv"
+            python -m experiments.distributed_5g.v12_ood_audit audit \
+              "inputs/${seed}" "reports/${seed}"
+            rm -f /tmp/v12-ood/artifact.zip /tmp/v12-ood/full-evidence.zip
+          done
+
+      - name: Publish complete non-S9 diagnostic without posthoc gate
+        run: |
+          python -m experiments.distributed_5g.v12_ood_audit aggregate \
+            reports diagnostic-summary
+          cp .github/preregistrations/v12-ood-robustness-20261120.txt \
+            diagnostic-summary/preregistration.txt
+          git rev-parse HEAD > diagnostic-summary/source_commit.txt
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v12-ood-v5-archive-diagnostic-${{ github.run_id }}
+          path: |
+            reports/
+            diagnostic-summary/
+          retention-days: 90
