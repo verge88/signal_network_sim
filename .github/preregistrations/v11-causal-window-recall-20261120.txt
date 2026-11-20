@@ -1,0 +1,43 @@
+V11 causal staircase S9-only window-recall prospective confirmation
+date=2026-11-20
+branch=experiment/v11-causal-window-recall-20261120
+base_branch=experiment/v10-fpr-window-recall-20261119
+status=preregistered_before_910xx_acquisition
+scope=S9 synthetic low-and-slow coordinated counts only, NOT a general 5G anomaly detector
+
+development_evidence=V10 90901..90905 successful acquisitions are consumed and may not be V11 confirmation
+excluded_90906=V10 acquisition failed before test because development/90001/test/features.csv was missing
+development_source_run=44560479811
+development_artifacts=14555406463,14556748065,14555397013,14555770681,14554598791
+development_recall_v11=0.9354166666666667,0.9354166666666667,0.9333333333333333,0.9333333333333333,0.9333333333333333
+development_fpr_v11=0.0008395522388059701,0.0006529850746268657,0.0009328358208955224,0.0007462686567164179,0.0006063432835820895
+development_status=consumed screen; not prospective V11 evidence
+
+predictor_inputs=only observed per-window request_count and stable topology zone assignment; no labels or schedule
+pretrigger=at least two different request_count values across same-zone NFs, each unchanged for 3 consecutive windows, all counts in [2,4]
+provisional_alarm=at third equal-count window, no future information
+confirmation=at fourth window keep only NFs with exactly +1 count; require at least 2
+active_match=keep NFs following fixed S9 waveform [0,1,1,2,1,0], each step lasting 3 windows, relative to the observed pretrigger count
+active_expiry=30 windows from inferred onset (third pretrigger window minus 2)
+mismatch_policy=drop mismatching NFs immediately; cancel if fewer than two remain
+same_zone_only=true
+provisional_false_alerts_count_in_fpr=true
+latency=first two attack windows generally missed; all output decisions are causal and immutable
+no_absolute_nf_position_features=true
+no_future_windows=true
+no_label_leakage=true
+no_910xx_selection=true
+generalization_warning=relies on deterministic synthetic S9 count waveform and fixed duration; outside S9 not validated
+
+prospective_seeds=91001,91002,91003,91004,91005,91006
+prospective_windows=700
+prospective_actors=32
+prospective_scenario=unchanged S9 v9_attack_schedule and v9_count
+prospective_process=collect fresh train/cal normal, freeze unchanged TG_V10 baseline before test, acquire test, replay V11 sequentially from features before loading labels
+paired_comparator=TG_V10 from unchanged live online_predictions.csv on the same run
+primary_target=pooled NF-window recall TG_V11 >=0.90
+secondary_fpr_guard=TG_V11 NF-window FPR <=0.001 on every individual seed
+paired_improvement=pooled TG_V11 recall > pooled TG_V10 recall on same seeds
+scientific_success=all three criteria must hold on complete fresh six-seed 910xx acquisition
+evidence_requirements=six complete reports, strict unmodified S9 label/schedule audit, per-seed confusion counts, artifact hashes, frozen model provenance
+negative_result_policy=report failure transparently; never recalibrate thresholds on prospective 910xx
