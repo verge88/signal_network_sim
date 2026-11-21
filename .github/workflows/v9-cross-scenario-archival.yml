@@ -1,0 +1,93 @@
+name: V9 frozen out-of-scenario retrospective 904xx replay
+
+on:
+  push:
+    branches: ['experiment/v9-cross-scenario-audit-20261121']
+    paths:
+      - 'experiments/distributed_5g/v9_cross_scenario_audit.py'
+      - '.github/workflows/v9-cross-scenario-archival.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  archival:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify source method and preregistration
+        run: |
+          set -euo pipefail
+          cat .github/preregistrations/v9-cross-scenario-20261121.txt
+          test "$(git hash-object experiments/distributed_5g/temporal_graph_v9.py)" = 618d30115bc49da979d5098c12d9758bf1d8a8d5
+          test "$(git hash-object experiments/live_5g/evaluate.py)" = 679697bda72acd24e2cdb33cc2966dc7a5bd1688
+          test "$(git hash-object experiments/accumulation_5g/collect.py)" = 62cad97034fc0cf3b7da070e03b3af293a8cb45a
+
+      - name: Install exact V9 stack
+        env:
+          NO_LONG_DOUBLE: '1'
+        run: python -m pip install -r experiments/live_5g/requirements.txt
+
+      - name: Retrieve exact frozen pre-test 91201 V9 bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p model
+          gh api repos/verge88/signal_network_sim/actions/artifacts/14663407567/zip > /tmp/v9-91201-artifact.zip
+          unzip -p /tmp/v9-91201-artifact.zip v9-full-evidence.zip > /tmp/v9-91201-full.zip
+          unzip -q /tmp/v9-91201-full.zip frozen/model.joblib frozen/manifest.json -d model
+          test -s model/frozen/model.joblib
+          python - <<'PY'
+          from experiments.live_5g.evaluate import load_frozen
+          b=load_frozen('model/frozen')
+          assert b['manifest']['ml_method']=='TG_V9'
+          assert b['manifest']['seed']==91201
+          assert b['manifest']['temporal_graph_v9']['heldout_v9_test_used_for_selection'] is False
+          print('Exact source frozen model sha256:',b['manifest']['model_sha256'])
+          PY
+
+      - name: Replay archived V5 captures on same original S1-S5 and C/D/F/G/R evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p inputs reports
+          for spec in \
+            "90401:14049128601" \
+            "90402:14049887852" \
+            "90405:14050881142"; do
+            seed="${spec%%:*}"
+            artifact="${spec##*:}"
+            mkdir -p "inputs/$seed" "reports/$seed"
+            gh api "repos/verge88/signal_network_sim/actions/artifacts/$artifact/zip" > /tmp/v9-ood-archive.zip
+            unzip -p /tmp/v9-ood-archive.zip full-evidence.zip > /tmp/v9-ood-test.zip
+            unzip -q /tmp/v9-ood-test.zip \
+              test/features.csv test/labels.csv test/manifest.json \
+              -d "inputs/$seed"
+            python -m experiments.distributed_5g.v9_cross_scenario_audit audit \
+              "inputs/$seed" "reports/$seed" --phase archival --frozen model/frozen
+            rm -f /tmp/v9-ood-archive.zip /tmp/v9-ood-test.zip
+          done
+
+      - name: Aggregate historical diagnostic (NOT independent confirmation)
+        run: |
+          python -m experiments.distributed_5g.v9_cross_scenario_audit aggregate \
+            reports summary --phase archival
+          cp .github/preregistrations/v9-cross-scenario-20261121.txt summary/protocol.txt
+          git rev-parse HEAD > summary/source_commit.txt
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v9-cross-scenario-archival-${{ github.run_id }}
+          path: |
+            reports/
+            summary/
+          retention-days: 90

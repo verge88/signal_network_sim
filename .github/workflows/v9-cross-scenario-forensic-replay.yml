@@ -1,0 +1,131 @@
+name: V9 forensic replay of preserved prospective 913xx acquisitions
+
+on:
+  push:
+    branches: ['experiment/v9-cross-scenario-audit-20261121']
+    paths:
+      - '.github/workflows/v9-cross-scenario-forensic-replay.yml'
+      - '.github/triggers/v9-cross-scenario-forensic-replay'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  forensic-replay:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 140
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        seed: [91301, 91302, 91303]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Assert original V9 source remains byte-identical
+        run: |
+          set -euo pipefail
+          for spec in \
+            "experiments/distributed_5g/temporal_graph_v9.py:618d30115bc49da979d5098c12d9758bf1d8a8d5" \
+            "experiments/live_5g/evaluate.py:679697bda72acd24e2cdb33cc2966dc7a5bd1688" \
+            "experiments/distributed_5g/temporal_graph_v4.py:$(git hash-object experiments/distributed_5g/temporal_graph_v4.py)" \
+            "experiments/distributed_5g/temporal_graph_v8.py:$(git hash-object experiments/distributed_5g/temporal_graph_v8.py)"; do
+            path="${spec%%:*}"
+            expected="${spec##*:}"
+            test "$(git hash-object "$path")" = "$expected"
+          done
+          cat .github/preregistrations/v9-cross-scenario-20261121.txt
+
+      - name: Install identical frozen-V9 scoring stack
+        env:
+          NO_LONG_DOUBLE: '1'
+        run: python -m pip install -r experiments/live_5g/requirements.txt
+
+      - name: Recover original immutable V9 model from seed 91201
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p model/frozen
+          gh api repos/verge88/signal_network_sim/actions/artifacts/14663407567/zip > /tmp/v9-artifact.zip
+          unzip -p /tmp/v9-artifact.zip v9-full-evidence.zip > /tmp/v9-inner.zip
+          unzip -q /tmp/v9-inner.zip frozen/model.joblib frozen/manifest.json -d model
+          python - <<'PY'
+          from experiments.live_5g.evaluate import load_frozen
+          m=load_frozen('model/frozen')['manifest']
+          assert m['seed']==91201 and m['ml_method']=='TG_V9'
+          assert m['model_sha256']=='9b9776170c3798ca6c37fa3b2cd54f68e979291691625b29be03e6a214cc7fdc'
+          print('Original frozen model sha256',m['model_sha256'])
+          PY
+
+      - name: Download exact originally measured 913xx features, labels, online alarms
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          case "${{ matrix.seed }}" in
+            91301) artifact=14698299548 ;;
+            91302) artifact=14697769587 ;;
+            91303) artifact=14698525810 ;;
+            *) echo 'Unpreregistered seed' >&2; exit 1 ;;
+          esac
+          mkdir -p evidence/test evidence/forensic
+          gh api "repos/verge88/signal_network_sim/actions/artifacts/$artifact/zip" > /tmp/v9-evidence.zip
+          unzip -p /tmp/v9-evidence.zip v9-ood-full-evidence.zip > /tmp/v9-measured.zip
+          unzip -q /tmp/v9-measured.zip \
+            test/features.csv test/labels.csv test/manifest.json test/online_predictions.csv \
+            -d evidence
+          for file in features.csv labels.csv manifest.json online_predictions.csv; do
+            test -s "evidence/test/$file" || { echo "Missing measured $file" >&2; exit 1; }
+          done
+          git rev-parse HEAD > evidence/forensic/audit_source_sha.txt
+          sha256sum evidence/test/features.csv evidence/test/labels.csv \
+            evidence/test/online_predictions.csv > evidence/forensic/measured_sha256.txt
+
+      - name: Exact per-window V9 online-equivalent replay and strict byte-alarm audit
+        run: |
+          python -m experiments.distributed_5g.v9_cross_scenario_audit audit \
+            evidence evidence/forensic --phase prospective \
+            --frozen model/frozen --online-check
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v9-ood-forensic-summary-${{ matrix.seed }}-${{ github.run_id }}
+          path: evidence/forensic/
+          retention-days: 90
+
+  aggregate:
+    needs: forensic-replay
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==1.26.4 pandas==2.2.3 scipy==1.14.1
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: v9-ood-forensic-summary-*
+          path: fresh-inputs
+
+      - name: Audit exact three preserved fresh seeds and aggregate unchanged model
+        run: |
+          python -m experiments.distributed_5g.v9_cross_scenario_audit aggregate \
+            fresh-inputs fresh-results --phase prospective
+          printf '%s\n' 'This is a posthoc repair of audit replay cadence only, after initial mismatches.' \
+            'No new data, no detector changes, no threshold tuning.' > fresh-results/audit_method_note.txt
+          git rev-parse HEAD > fresh-results/audit_source_sha.txt
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v9-ood-forensic-aggregate-${{ github.run_id }}
+          path: fresh-results/
+          retention-days: 90

@@ -1,0 +1,11 @@
+V9 cross-scenario fresh 913xx launch
+date=2026-11-21
+preregistration=.github/preregistrations/v9-cross-scenario-20261121.txt
+detector_and_runtime_code_unchanged_since_V9=true
+frozen_checkpoint=2026-11-20 V9 prospective 91201 artifact 14663407567
+no_retraining_on_913xx=true
+new_seeds=91301,91302,91303
+scenario=default_3600_windows_S1-S5_C_D_F_G_R_not_S9
+each_seed_fpr_reference_limit=0.001
+pooled_window_recall_reference_target=0.90
+no_post_test_retuning=true
