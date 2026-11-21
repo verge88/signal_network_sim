@@ -1,0 +1,77 @@
+name: V10 multithreat + node compromise contracts
+
+on:
+  push:
+    branches: ['experiment/v10-node-compromise-multithreat-20261121']
+    paths:
+      - 'experiments/distributed_5g/v10_design.py'
+      - 'experiments/distributed_5g/v10_model.py'
+      - 'experiments/distributed_5g/v10_audit.py'
+      - 'experiments/distributed_5g/test_v10_compromise.py'
+      - 'experiments/live_5g/evaluate.py'
+      - 'experiments/accumulation_5g/collect.py'
+      - 'experiments/distributed_5g/live.py'
+      - '.github/workflows/v10-compromise-contracts.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  v10-contracts:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install existing frozen V9/V10 environment
+        env:
+          NO_LONG_DOUBLE: '1'
+        run: python -m pip install -r experiments/live_5g/requirements.txt
+      - name: Syntax compile
+        run: |
+          python -m compileall -q experiments/distributed_5g/v10_design.py \
+            experiments/distributed_5g/v10_model.py \
+            experiments/distributed_5g/v10_audit.py \
+            experiments/distributed_5g/test_v10_compromise.py \
+            experiments/live_5g/evaluate.py \
+            experiments/accumulation_5g/collect.py \
+            experiments/distributed_5g/live.py
+      - name: Test all V10 lab threats, trust and package constraints
+        run: |
+          python -m pytest experiments/distributed_5g/test_v10_compromise.py -q
+          python -m pytest experiments/distributed_5g/test_temporal_graph.py -q
+      - name: Derive real frozen V10 model from immutable V9 91201 checkpoint
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p baseline
+          gh api repos/verge88/signal_network_sim/actions/artifacts/14663407567/zip > /tmp/v9-baseline-artifact.zip
+          unzip -p /tmp/v9-baseline-artifact.zip v9-full-evidence.zip > /tmp/v9-baseline.zip
+          unzip -q /tmp/v9-baseline.zip frozen/model.joblib frozen/manifest.json -d baseline
+          python -m experiments.distributed_5g.v10_model \
+            --source-v9 baseline/frozen --out v10-frozen
+          python - <<'PY'
+          # Critical regression: this must load in a separate interpreter
+          # *before* importing the V10 class into the __main__ namespace.
+          from experiments.live_5g.evaluate import load_frozen
+          b=load_frozen('v10-frozen')
+          m=b['manifest']
+          assert m['ml_method']=='TG_V10'
+          assert type(b['v10_multithreat']).__module__ == 'experiments.distributed_5g.v10_model'
+          assert m['temporal_graph_v10']['parent_frozen_model_sha256']==\
+            '9b9776170c3798ca6c37fa3b2cd54f68e979291691625b29be03e6a214cc7fdc'
+          assert m['temporal_graph_v10']['new_training'] is False
+          assert m['temporal_graph_v10']['new_calibration'] is False
+          print('V10 frozen model ready; original V9 model was not changed')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: v10-derived-frozen-contract-${{ github.run_id }}
+          path: v10-frozen/
+          retention-days: 90
