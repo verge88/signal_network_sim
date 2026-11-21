@@ -365,10 +365,15 @@ def run(args):
     v7_structure=bool(getattr(args,'v7_structure_experiment',False))
     v8_structure=bool(getattr(args,'v8_structure_experiment',False))
     v9_structure=bool(getattr(args,'v9_structure_experiment',False))
-    if sum(map(bool,(v6_structure,v7_structure,v8_structure,v9_structure)))>1:
-        raise ValueError("V6, V7, V8 and V9 structural modes are mutually exclusive")
+    v10_compromise=bool(getattr(args,'v10_compromise_experiment',False))
+    if sum(map(bool,(v6_structure,v7_structure,v8_structure,v9_structure,v10_compromise)))>1:
+        raise ValueError("V6-V10 structural/compromise trial modes are mutually exclusive")
     if smoke:
         schedule=[]
+    elif v10_compromise:
+        from experiments.distributed_5g.v10_design import (
+            v10_attack_schedule, v10_members, v10_count, s10_control_mode)
+        schedule=v10_attack_schedule(args.windows, args.seed)
     elif v9_structure:
         from experiments.distributed_5g.v9_design import v9_attack_schedule, v9_members, v9_count
         schedule=v9_attack_schedule(args.windows,args.seed)
@@ -389,14 +394,14 @@ def run(args):
             return ()
         if entry[2]=='S5':
             return s5_members(entry)
-        if entry[2]=='S6' and v6_structure:
-            return v6_members(entry)
-        if entry[2]=='S7' and v7_structure:
-            return v7_members(entry)
-        if entry[2]=='S8' and v8_structure:
-            return v8_members(entry)
-        if entry[2]=='S9' and v9_structure:
-            return v9_members(entry)
+        if entry[2]=='S6' and (v6_structure or v10_compromise):
+            return v10_members(entry) if v10_compromise else v6_members(entry)
+        if entry[2]=='S7' and (v7_structure or v10_compromise):
+            return v10_members(entry) if v10_compromise else v7_members(entry)
+        if entry[2]=='S8' and (v8_structure or v10_compromise):
+            return v10_members(entry) if v10_compromise else v8_members(entry)
+        if entry[2]=='S9' and (v9_structure or v10_compromise):
+            return v10_members(entry) if v10_compromise else v9_members(entry)
         return ()
     frozen = None
     if args.phase == 'test':
@@ -404,6 +409,8 @@ def run(args):
             raise ValueError('Test acquisition requires a frozen model directory')
         # Validate before any live registration or witness process is created.
         frozen = load_frozen(args.frozen)
+        if v10_compromise and "v10_multithreat" not in frozen:
+            raise ValueError("V10 compromise experiment requires a separately derived frozen V10 model")
     args.out.mkdir(parents=True, exist_ok=True)
     if (args.out / 'features.csv').exists():
         raise FileExistsError('Refusing to overwrite a previously acquired run')
@@ -432,6 +439,8 @@ def run(args):
     integrated = (args.out/'integrated_predictions.jsonl').open('w')
     resilient = (args.out/'resilient_predictions.jsonl').open('w')
     refined_file = (args.out/'refined_predictions.jsonl').open('w')
+    v10_security_file = ((args.out/'v10_secure_decisions.jsonl').open('w')
+                         if v10_compromise else None)
     refinement = None
     refined_engine = None
     grants_file = (args.out/'load_grants.jsonl').open('w')
@@ -564,10 +573,18 @@ def run(args):
                 append_json(interventions, {'kind': 'attack_start', 'scenario': current[2], 'slot': slot,
                                             'members': [f'slot-{x}' for x in coordinated_members(current)] if current[2] in ('S5','S6','S7','S8','S9') else [slot],
                                             'onset': begin, 'applied': time.time(),
-                                            'episode_id': f'{run_id}-{current[2]}-{current[0]}'})
+                                            'episode_id': f'{run_id}-{current[2]}-{current[0]}',
+                                            'variant': current[5]})
             active = current
             old_port = control.ready['port']
-            control.prepare(window, active[2] if active is not None and active[3] == 4 and active[2] not in ('S6','S7','S8','S9') else 'N1')
+            requested_control = (active[2] if active is not None and active[3] == 4
+                                 and active[2] not in ('S6','S7','S8','S9') else 'N1')
+            # The compromised research NF really changes its *lab* config.
+            # The tamper variant also corrupts the local delivered control
+            # report after signing; the independent signing key is not stolen.
+            if requested_control == 'S10':
+                requested_control = s10_control_mode(active[5])
+            control.prepare(window, requested_control)
             if old_port != control.ready['port']:
                 bind_control_profile()
                 witness.update('slot-4', profile=profiles['slot-4'], route=route_address(profiles['slot-4']))
@@ -596,17 +613,22 @@ def run(args):
                     count = growth_count(active,window)
                 if scenario == 'S5':
                     count = s5_count(active, window, regime(window), index)
-                if scenario == 'S6':
-                    count = v6_count(active, window, index)
-                if scenario == 'S7':
-                    count = v7_count(active, window, index)
-                if scenario == 'S8':
-                    count = v8_count(active, window, index)
-                if scenario == 'S9':
-                    count = v9_count(active, window, index)
+                if scenario in ('S6','S7','S8','S9') and v10_compromise:
+                    count = v10_count(active, window, index)
+                else:
+                    if scenario == 'S6':
+                        count = v6_count(active, window, index)
+                    if scenario == 'S7':
+                        count = v7_count(active, window, index)
+                    if scenario == 'S8':
+                        count = v8_count(active, window, index)
+                    if scenario == 'S9':
+                        count = v9_count(active, window, index)
                 benign_error = count >= 12 and rng.random() < .15
                 for number in range(count):
-                    target_type = 'UDM' if scenario == 'S2' else 'NSSF'
+                    target_type = ('UDM' if scenario == 'S2' or (
+                        scenario == 'S10' and active[5] == 'node_sbi_abuse'
+                        and number == 0) else 'NSSF')
                     path = f'/nnrf-disc/v1/nf-instances?target-nf-type={target_type}&requester-nf-type=AMF'
                     if scenario == 'S4' and number % 3 == 0:
                         path = '/nnrf-nfm/v1/nf-instances/' + str(uuid.UUID(int=0))
@@ -682,6 +704,18 @@ def run(args):
                         c = control_observation
                         states = combine(base, c['delivered'], c['nonce'], c['expected'],
                                          c['instance'], control.key, now)
+                        if v10_security_file is not None:
+                            v10_slot = predictions.loc[
+                                (predictions.method == 'TG_V10') &
+                                (predictions.nf_id == 'slot-4')]
+                            if len(v10_slot) != 1:
+                                raise RuntimeError("Missing single-NF TG_V10 traffic score")
+                            from experiments.distributed_5g.v10_model import V10MultiThreatFusion
+                            assessment = frozen["v10_multithreat"].assess_external(
+                                bool(v10_slot.alarm.iloc[0]), c, control.key, now)
+                            append_json(v10_security_file, dict(
+                                run_id=run_id, window_id=window, nf_id='slot-4',
+                                decision_time=now, **assessment))
                     append_json(integrated, {'run_id': run_id, 'window_id': window,
                         'nf_id': pred.nf_id, 'decision_time': now, 'base_alarm': base, 'states': states})
                     enhanced = engine.step(rows_by_slot[pred.nf_id],states['K'],
@@ -712,6 +746,8 @@ def run(args):
             integrated.close()
             resilient.close()
             refined_file.close()
+            if v10_security_file is not None:
+                v10_security_file.close()
             grants_file.close()
             for handle in (raw, interventions, feature_file, label_file):
                 handle.close()
@@ -740,7 +776,10 @@ def run(args):
             'The current signed witness reports operator policy; report_mismatch is redundant with profile_policy_violation in this protocol.',
             'N1 transitions are operator-authorized and policy is updated before subsequent observation.',
             'S2/S4 originate from registered software NF clients; no UE/RAN/PDU traffic is generated.',
-            'S3 is a separate research consumer cache fault; not a native AUSF vulnerability reproduction.']
+            'S3 is a separate research consumer cache fault; not a native AUSF vulnerability reproduction.',
+            'V10 S10 alters only an isolated research-NF config and optionally its local report / SBI requests.',
+            'V10 S10 does not compromise the OS, native Open5GS processes, independent observer or signing keys.',
+            'V10 secure control decision is restricted to research NF slot-4; unknown is not a security alarm.']
         (args.out / 'manifest.json').write_text(json.dumps(manifest, indent=2))
     hashes = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in args.out.iterdir() if p.is_file()}
     (args.out / 'sha256.json').write_text(json.dumps(hashes, indent=2))
