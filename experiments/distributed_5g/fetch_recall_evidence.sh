@@ -1,18 +1,28 @@
 #!/usr/bin/env bash
 # Extract only the archived telemetry and decisions used by the recall comparison.
 set -euo pipefail
+receipts=false
+if [[ ${1:-} == --receipts ]]; then receipts=true; shift; fi
 dest=$1
 shift
 temp=$(mktemp -d)
 trap 'rm -f "$temp/outer.zip" "$temp/capture.zip"; rmdir "$temp"' EXIT
 for seed in "$@"; do
     case "$seed" in
+        90201) id=14024131175; hash=9e23df16bf639daf8a1eccfcc5b3f659b9a1a9b4837a704406dec32a97255457 ;;
+        90202) id=14024792433; hash=90d69ea9d25aa9d620f09d1d61a987bf503d5a37917c2738e32ef9f7565137ad ;;
+        90203) id=14022859273; hash=fee19c9a0699260cd2e5098ea23ce391db6d77f90b5668d6c4d371837e67375f ;;
+        90301) id=14032857996; hash=b4360d1c754f00e8a24be4756dd601d9908eef1871b79ce1382e2c1ec88cebeb ;;
+        90302) id=14032843397; hash=52ff702267237c313e026a06dc65d96ec57f4602da46d4646b552ba07acc42a8 ;;
+        90303) id=14032712112; hash=0ac191ad121540796b9852fc37043c7c78eacca00fc12218b5d4aa9cf6861023 ;;
         90401) id=14049128601; hash=cdbf09797a8db64963fe62627710aa618440a14beae527cb647cc7d0913674ef ;;
         90402) id=14049887852; hash=454c064539ce036dc386013b03eaa6cdc1b0cf9685d31c15634d4250f5742b4c ;;
         90405) id=14050881142; hash=00f2483c3001f64754ac8050af8f9fc52927d5cfde4f618e3fe71f872df25214 ;;
         90406) id=14048993238; hash=5dff3dee20bb74e9e8130d0972aef28eeb4f55b64c8d9ce7d7514202836b495d ;;
         90407) id=14049407530; hash=251b1dc6efef077eeaccfc3af374ec9dc0b27defa8713dd14e14cdb1b6ddbf9c ;;
         90408) id=14048857700; hash=90904a7a9b5c590771e1cf27958c9bb029ae91c891c3b4e80b01da3f3f81c548 ;;
+        90409) id=14049716184; hash=c1636eb317549b6a52cf84f43e5c1973ac56da6f33c5c87c752c53e8cf584981 ;;
+        90410) id=14049337789; hash=1fe13eeefc57f4ce4d6d8951f9322331674800075ab3c3c393c83c7fd9620cd7 ;;
         91301) id=14698299548; hash=78c2110487a6a2266d45053519780fd3df31dbaa875b333bd95478b7f625941a ;;
         91302) id=14697769587; hash=418a681ba88a78ce7cbbe641756b56777de96ff563b2de958ac7b09cc472eecf ;;
         91303) id=14698525810; hash=1d8acb14f08fc0a3a04a43794911052e588d76f01a03e0b60d0aadd73a0c6c55 ;;
@@ -21,7 +31,11 @@ for seed in "$@"; do
     inner=full-evidence.zip
     files=(test/manifest.json test/features.csv test/labels.csv test/distributed_predictions.jsonl)
     if [[ $seed == 913* ]]; then inner=v9-ood-full-evidence.zip; fi
-    if [[ $seed == 913* || $seed == 90408 ]]; then files+=(test/online_predictions.csv); fi
+    if [[ $receipts == true ]]; then
+        files+=(test/control_events.jsonl)
+    elif [[ $seed == 913* || $seed == 90408 ]]; then
+        files+=(test/online_predictions.csv)
+    fi
     gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" > "$temp/outer.zip"
     echo "$hash  $temp/outer.zip" | sha256sum --check --status
     unzip -p "$temp/outer.zip" "$inner" > "$temp/capture.zip"
