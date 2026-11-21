@@ -30,6 +30,8 @@ def main():
     parser.add_argument('--seed',type=int,required=True)
     parser.add_argument('--out',type=Path,required=True)
     parser.add_argument('--frozen',type=Path,required=True)
+    parser.add_argument('--cross-scenario-model', type=Path,
+                        help='Also score each completed window with a calibrated cross-scenario model')
     parser.add_argument('--zone-models',type=Path,required=True)
     parser.add_argument('--nrf',default='http://127.0.0.10:7777')
     parser.add_argument('--base-port',type=int,default=18800)
@@ -50,6 +52,12 @@ def main():
     parser.add_argument('--v9-structure-experiment', action='store_true')
     parser.add_argument('--recover-normal', action='store_true')
     args=parser.parse_args()
+    cross_scorer = None
+    if args.cross_scenario_model is not None:
+        from experiments.distributed_5g.cross_scenario_detector import METHOD, WindowScorer
+        from experiments.distributed_5g.cross_scenario_replay import load_model
+        cross_model, cross_manifest = load_model(args.cross_scenario_model)
+        cross_scorer = WindowScorer(cross_model)
     if args.load_experiment:
         from experiments.distributed_5g.load_trial import SEEDS
         if args.seed not in SEEDS or args.smoke_windows != 180 or not args.confirm_if_context:
@@ -149,6 +157,12 @@ def main():
                                           rss_bytes=process.memory_info().rss))
                 result['process_resources'] = resources
             assert result['complete'] and set(result['decisions']) == set(observations)
+            if cross_scorer is not None:
+                alarms = cross_scorer.score(rows, result['decisions'])
+                for nf, alarm in alarms.items():
+                    result['decisions'][nf][METHOD] = alarm
+                result['cross_scenario_decision_time'] = time.time()
+                alerts[METHOD] = alerts.get(METHOD, 0) + sum(alarms.values())
             durations.append(time.monotonic() - started)
             for method in ('rules', 'IF_SBI', 'IF_CONTEXT'):
                 alerts[method] += int(predictions.loc[predictions.method == method, 'alarm'].sum())
@@ -192,6 +206,8 @@ def main():
                if args.v6_structure_experiment else
                ('Fresh normal Open5GS SBI observations. Short engineering smoke on one physical runner.'
                 if args.normal_smoke else 'Full prospective scenario schedule on one physical runner with five network namespaces.')))
+    if cross_scorer is not None:
+        report['cross_scenario_model_sha256'] = cross_manifest['model_sha256']
     (args.out/'smoke_report.json').write_text(json.dumps(report, indent=2))
     if args.load_experiment:
         report['recover_normal'] = args.recover_normal

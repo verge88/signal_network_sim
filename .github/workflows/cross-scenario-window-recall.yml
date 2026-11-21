@@ -1,0 +1,120 @@
+name: Cross-scenario NF-window recall on recorded telemetry
+
+on:
+  push:
+    branches: ['codex/cross-scenario-window-recall']
+    paths:
+      - '.github/workflows/cross-scenario-window-recall.yml'
+      - 'experiments/distributed_5g/*cross_scenario*'
+      - 'experiments/distributed_5g/fetch_recall_evidence.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  OMP_NUM_THREADS: '2'
+  OPENBLAS_NUM_THREADS: '1'
+  MODULE: experiments.distributed_5g.cross_scenario_replay
+  PACKAGES: numpy==1.26.4 pandas==2.2.3 scipy==1.14.1 scikit-learn==1.5.2 joblib==1.5.2
+
+jobs:
+  fit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install $PACKAGES pytest==8.3.4
+      - run: python -m pytest -q experiments/distributed_5g/test_cross_scenario_recall.py
+      - name: Recover three development and two separate calibration captures
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash experiments/distributed_5g/fetch_recall_evidence.sh data 90401 90402 90405 90406 90407
+      - name: Fit the classifier and freeze the threshold
+        run: python -m "$MODULE" fit --train data/90401 data/90402 data/90405 --calibration data/90406 data/90407 --output frozen
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cross-scenario-frozen-model
+          path: frozen/
+          if-no-files-found: error
+      - name: Score an additional archival development check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bash experiments/distributed_5g/fetch_recall_evidence.sh data 90408
+          python -m "$MODULE" evaluate frozen data/90408 --reference TG_V5 --output development.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cross-scenario-development-check
+          path: development.json
+
+  paired:
+    needs: fit
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [91301, 91302, 91303]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install $PACKAGES
+      - uses: actions/download-artifact@v4
+        with:
+          name: cross-scenario-frozen-model
+          path: frozen
+      - name: Evaluate the frozen detector and recorded baselines on identical windows
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SEED: ${{ matrix.seed }}
+        run: |
+          bash experiments/distributed_5g/fetch_recall_evidence.sh data "$SEED"
+          python -m "$MODULE" evaluate frozen "data/$SEED" --reference TG_V9 --output "paired-$SEED.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paired-${{ matrix.seed }}
+          path: paired-*.json
+          if-no-files-found: error
+
+  results:
+    needs: paired
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install $PACKAGES
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: paired-*
+          merge-multiple: true
+          path: paired
+      - run: python -m "$MODULE" aggregate paired/*.json --seeds 91301 91302 91303 --output aggregate.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cross-scenario-paired-results
+          path: |
+            aggregate.json
+            paired/
+      - name: Check the recall gain and per-capture false-alarm budget
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result = json.loads(Path('aggregate.json').read_text())
+          scores = result['totals']
+          print('CROSS_SCENARIO / full hierarchy / isolated V9 recall:',
+                *(scores[m]['recall'] for m in ('CROSS_SCENARIO', 'FULL_HYBRID', 'TG_V9')))
+          if not result['all_seeds_fpr_within_budget']:
+              raise SystemExit('FPR exceeds 0.1% in at least one capture')
+          if scores['CROSS_SCENARIO']['recall'] <= scores['TG_V9']['recall']:
+              raise SystemExit('No paired recall improvement over TG_V9')
+          PY

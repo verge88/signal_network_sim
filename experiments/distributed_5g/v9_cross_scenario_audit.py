@@ -15,7 +15,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from experiments.live_5g.evaluate import load_frozen, score_frame
 
 SCENARIOS = ("S1", "S2", "S3", "S4", "S5", "C", "D", "F", "G", "R")
 METHODS = ("TG_V4", "TG_V8", "TG_V9")
@@ -46,6 +45,9 @@ def metrics(truth, pred):
 
 
 def summarize(root, frozen, output, phase, online_check=False):
+    # Aggregating completed reports only needs NumPy and pandas.
+    from experiments.live_5g.evaluate import load_frozen, score_frame
+
     root, frozen, output = Path(root), Path(frozen), Path(output)
     expected = ARCHIVED if phase == "archival" else PROSPECTIVE
     manifest = json.loads((root / "test" / "manifest.json").read_text())
