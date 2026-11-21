@@ -1,0 +1,139 @@
+name: V10 controlled node-compromise full Open5GS engineering trial
+
+on:
+  push:
+    branches: ['experiment/v10-node-compromise-multithreat-20261121']
+    paths:
+      - '.github/triggers/v10-node-compromise-engineering'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  v10-engineering:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 210
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports: ['27017:27017']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Print frozen experiment protocol
+        run: |
+          cat .github/preregistrations/v10-node-compromise-20261121.txt
+          python -m compileall -q experiments/distributed_5g/v10_design.py \
+            experiments/distributed_5g/v10_model.py \
+            experiments/distributed_5g/v10_audit.py
+      - name: Install V10 contract and Open5GS requirements
+        env:
+          NO_LONG_DOUBLE: '1'
+        run: python -m pip install -r experiments/live_5g/requirements.txt
+      - name: Verify new S10 and old scenario contract tests
+        run: |
+          python -m pytest experiments/distributed_5g/test_v10_compromise.py -q
+          python -m pytest experiments/distributed_5g/test_temporal_graph.py -q
+      - name: Obtain immutable V9 checkpoint, produce independent V10 bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p prior
+          gh api repos/verge88/signal_network_sim/actions/artifacts/14663407567/zip > /tmp/v9-base-artifact.zip
+          unzip -p /tmp/v9-base-artifact.zip v9-full-evidence.zip > /tmp/v9-base-inner.zip
+          unzip -q /tmp/v9-base-inner.zip \
+            frozen/model.joblib frozen/manifest.json \
+            frozen/accumulation.json frozen/extensions.json frozen/refinement.json \
+            zone_models.json -d prior
+          python -m experiments.distributed_5g.v10_model \
+            --source-v9 prior/frozen --out evidence/frozen
+          cp prior/frozen/accumulation.json prior/frozen/extensions.json \
+             prior/frozen/refinement.json evidence/frozen/
+          cp prior/zone_models.json evidence/zone_models.json
+          python - <<'PY'
+          from experiments.live_5g.evaluate import load_frozen
+          bundle=load_frozen('evidence/frozen')
+          manifest=bundle['manifest']
+          assert manifest['ml_method']=='TG_V10'
+          assert manifest['temporal_graph_v10']['parent_frozen_model_sha256']==\
+            '9b9776170c3798ca6c37fa3b2cd54f68e979291691625b29be03e6a214cc7fdc'
+          print('Frozen V10 before test', manifest['model_sha256'])
+          PY
+          cp .github/preregistrations/v10-node-compromise-20261121.txt evidence/preregistration.txt
+          git rev-parse HEAD > evidence/source_commit.txt
+
+      - uses: actions/cache/restore@v4
+        id: open5gs_cache
+        with:
+          path: open5gs-2.7.6.tar.gz
+          key: open5gs-d9d3abdd-ubuntu22-build-v1
+      - if: steps.open5gs_cache.outputs.cache-hit != 'true'
+        run: bash experiments/live_5g/setup_open5gs.sh build
+      - if: steps.open5gs_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: open5gs-2.7.6.tar.gz
+          key: open5gs-d9d3abdd-ubuntu22-build-v1
+      - name: Start native Open5GS NRF and NSSF
+        run: bash experiments/live_5g/setup_open5gs.sh runtime
+
+      - name: Fresh 91401 S1-S10,C,D,F,G,R with live isolated research NF compromise
+        run: |
+          bash experiments/distributed_5g/namespace_smoke.sh \
+            --seed 91401 --out evidence/test \
+            --frozen evidence/frozen \
+            --zone-models evidence/zone_models.json \
+            --v10-compromise-experiment \
+            --include-if-context --confirm-if-context \
+            --ml-method TG_V10 --ml-confirmation-mode direct \
+            --accumulator-multiplier 1.50 --recover-normal
+
+      - name: Independent 59-episode V10 evidence and cryptographic replay audit
+        run: |
+          python -m experiments.distributed_5g.v10_audit \
+            --root evidence --frozen evidence/frozen --out evidence/audit
+          python - <<'PY'
+          import json
+          r=json.load(open('evidence/audit/report.json'))
+          assert r['all_alarm_replays_equal']
+          assert r['all_external_hmac_checks_equal']
+          assert r['total_nf_windows']==115200
+          assert len(r['s10_variants_secure'])==3
+          print('Published actual V10 scientific gates (pass or fail):',r['criteria_observed'])
+          PY
+
+      - name: Retain all original 91401 evidence even if quality/replay fails
+        if: always()
+        run: |
+          set +e
+          mkdir -p evidence/audit
+          cp .github/preregistrations/v10-node-compromise-20261121.txt evidence/audit/preregistration.txt
+          git rev-parse HEAD > evidence/audit/source_commit.txt
+          sudo journalctl --no-pager -u 'open5gs-*' > evidence/audit/services.log || true
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile
+          root=Path('evidence')
+          with zipfile.ZipFile('v10-compromise-complete.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for p in root.rglob('*'):
+                  if p.is_file() and 'hierarchy' not in p.parts:
+                      z.write(p,p.relative_to(root))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v10-compromise-summary-${{ github.run_id }}
+          path: evidence/audit/
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v10-compromise-full-evidence-${{ github.run_id }}
+          path: v10-compromise-complete.zip
+          retention-days: 90
