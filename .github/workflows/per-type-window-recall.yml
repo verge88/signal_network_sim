@@ -1,0 +1,143 @@
+name: Per-type NF-window recall on recorded telemetry
+on:
+  push:
+    branches: ['codex/per-type-window-recall']
+    paths:
+      - '.github/workflows/per-type-window-recall.yml'
+      - 'experiments/distributed_5g/*per_type*'
+      - 'experiments/distributed_5g/fetch_recall_evidence.sh'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  OMP_NUM_THREADS: '2'
+  OPENBLAS_NUM_THREADS: '1'
+  MODULE: experiments.distributed_5g.per_type_replay
+  PACKAGES: numpy==1.26.4 pandas==2.2.3 scipy==1.14.1 scikit-learn==1.5.2 joblib==1.5.2
+jobs:
+  development:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    outputs:
+      passes: ${{ steps.screen.outputs.passes }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install $PACKAGES pytest==8.3.4
+      - run: python -m pytest -q experiments/distributed_5g/test_{cross_scenario,per_type}_recall.py
+      - uses: actions/download-artifact@v4
+        with:
+          name: cross-scenario-frozen-model
+          github-token: ${{ github.token }}
+          run-id: 44892115520
+          path: previous
+      - name: Recover development and calibration observations
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo '9842edf570bc73164799585f8e45151fcc9c264f8a8232a250a07038037d7213  previous/model.joblib' | sha256sum --check --status
+          bash experiments/distributed_5g/fetch_recall_evidence.sh --receipts data 90401 90402 90405 90406 90407
+      - name: Train and calibrate for the weakest attack type
+        run: python -m "$MODULE" fit --train data/90401 data/90402 data/90405 --calibration data/90406 data/90407 --output frozen
+      - uses: actions/upload-artifact@v4
+        with:
+          name: per-type-frozen-model
+          path: frozen/
+          if-no-files-found: error
+      - name: Screen a separate development run before opening any validation inputs
+        id: screen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bash experiments/distributed_5g/fetch_recall_evidence.sh --receipts data 90408
+          python -m "$MODULE" evaluate frozen previous data/90408 screen-90408.json
+          python -m "$MODULE" aggregate screen-90408.json --seeds 90408 --output development.json
+          echo "passes=$(jq -r .passes development.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: per-type-development
+          path: |
+            screen-90408.json
+            development.json
+  paired:
+    needs: development
+    if: needs.development.outputs.passes == 'true'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [90409, 90410, 91301, 91302, 91303]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install $PACKAGES
+      - uses: actions/download-artifact@v4
+        with:
+          name: cross-scenario-frozen-model
+          github-token: ${{ github.token }}
+          run-id: 44892115520
+          path: previous
+      - uses: actions/download-artifact@v4
+        with:
+          name: per-type-frozen-model
+          path: frozen
+      - name: Compare the two frozen detectors on identical NF windows
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SEED: ${{ matrix.seed }}
+        run: |
+          echo '9842edf570bc73164799585f8e45151fcc9c264f8a8232a250a07038037d7213  previous/model.joblib' | sha256sum --check --status
+          bash experiments/distributed_5g/fetch_recall_evidence.sh --receipts data "$SEED"
+          python -m "$MODULE" evaluate frozen previous "data/$SEED" "paired-$SEED.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: per-type-paired-${{ matrix.seed }}
+          path: paired-*.json
+          if-no-files-found: error
+  results:
+    needs: paired
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install $PACKAGES
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: per-type-paired-*
+          merge-multiple: true
+          path: reports
+      - name: Report new validation archives and the prior benchmark separately
+        run: |
+          python -m "$MODULE" aggregate reports/paired-904*.json --seeds 90409 90410 --output new-archives.json
+          python -m "$MODULE" aggregate reports/paired-913*.json --seeds 91301 91302 91303 --output benchmark.json
+          python -m "$MODULE" aggregate reports/*.json --seeds 90409 90410 91301 91302 91303 --output all-archives.json
+          python - <<'PY'
+          import json, os
+          items = [json.load(open(p)) for p in ('new-archives.json','benchmark.json')]
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as summary:
+              print('## Полнота по типам атак\n', file=summary)
+              print('| Тип | Прежняя, 90409–10 | Новая, 90409–10 | Прежняя, 91301–03 | Новая, 91301–03 |', file=summary)
+              print('|---|---:|---:|---:|---:|', file=summary)
+              for name in items[0]['by_type']:
+                  cells = [f"{r['by_type'][name]['recall'][m]:.2%}" for r in items for m in ('CROSS_SCENARIO','PER_TYPE_RECALL')]
+                  print('| ' + ' | '.join([name,*cells]) + ' |', file=summary)
+              print('\nМаксимальный FPR отдельного прогона — ' + f"{max(r['max_seed_fpr'] for r in items):.4%}.", file=summary)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: per-type-results
+          path: |
+            new-archives.json
+            benchmark.json
+            all-archives.json
+            reports/
+      - name: Check each type and the per-run false alarm budget
+        run: jq -es 'all(.[]; .passes)' new-archives.json benchmark.json

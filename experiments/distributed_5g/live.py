@@ -32,6 +32,8 @@ def main():
     parser.add_argument('--frozen',type=Path,required=True)
     parser.add_argument('--cross-scenario-model', type=Path,
                         help='Also score each completed window with a calibrated cross-scenario model')
+    parser.add_argument('--per-type-model', type=Path,
+                        help='Score measured control receipts and peer traffic with a frozen per-type detector')
     parser.add_argument('--zone-models',type=Path,required=True)
     parser.add_argument('--nrf',default='http://127.0.0.10:7777')
     parser.add_argument('--base-port',type=int,default=18800)
@@ -58,6 +60,12 @@ def main():
         from experiments.distributed_5g.cross_scenario_replay import load_model
         cross_model, cross_manifest = load_model(args.cross_scenario_model)
         cross_scorer = WindowScorer(cross_model)
+    per_type_scorer = None
+    if args.per_type_model is not None:
+        from experiments.distributed_5g.per_type_detector import METHOD as PER_TYPE_METHOD, OnlineScorer
+        from experiments.distributed_5g.per_type_replay import load_model as load_per_type
+        per_type_model, per_type_manifest = load_per_type(args.per_type_model)
+        per_type_scorer = OnlineScorer(per_type_model)
     if args.load_experiment:
         from experiments.distributed_5g.load_trial import SEEDS
         if args.seed not in SEEDS or args.smoke_windows != 180 or not args.confirm_if_context:
@@ -163,6 +171,12 @@ def main():
                     result['decisions'][nf][METHOD] = alarm
                 result['cross_scenario_decision_time'] = time.time()
                 alerts[METHOD] = alerts.get(METHOD, 0) + sum(alarms.values())
+            if per_type_scorer is not None:
+                alarms = per_type_scorer.score(rows, result['decisions'], control, result['decision_time'])
+                for nf, alarm in alarms.items():
+                    result['decisions'][nf][PER_TYPE_METHOD] = alarm
+                result['per_type_decision_time'] = time.time()
+                alerts[PER_TYPE_METHOD] = alerts.get(PER_TYPE_METHOD, 0) + sum(alarms.values())
             durations.append(time.monotonic() - started)
             for method in ('rules', 'IF_SBI', 'IF_CONTEXT'):
                 alerts[method] += int(predictions.loc[predictions.method == method, 'alarm'].sum())
@@ -208,6 +222,8 @@ def main():
                 if args.normal_smoke else 'Full prospective scenario schedule on one physical runner with five network namespaces.')))
     if cross_scorer is not None:
         report['cross_scenario_model_sha256'] = cross_manifest['model_sha256']
+    if per_type_scorer is not None:
+        report['per_type_model_sha256'] = per_type_manifest['model_sha256']
     (args.out/'smoke_report.json').write_text(json.dumps(report, indent=2))
     if args.load_experiment:
         report['recover_normal'] = args.recover_normal
