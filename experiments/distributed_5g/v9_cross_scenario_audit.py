@@ -96,11 +96,31 @@ def summarize(root, frozen, output, phase, online_check=False):
         if float(features.timestamp.max()) >= float(frozen_manifest["created_at"]):
             raise ValueError("Expected archival V5 sample predating V9 freeze")
 
-    # Run full chronological inference before any labels are opened.
-    features = features.sort_values(["run_id", "window_id", "nf_id"]).reset_index(drop=True)
-    predictions = score_frame(bundle, features)
-    prediction_frame = predictions.loc[predictions.method.isin(METHODS),
-                                       KEYS + ["method", "alarm"]]
+    # Forensic replay MUST match live acquisition's actual invocation pattern.
+    # Original live collector calls score_frame() once per 32-NF window, with
+    # the slot-0..slot-31 input order. The previous auditor sorted nf_id as
+    # text (slot-0,slot-1,slot-10,...,slot-2) and evaluated all 3600 windows
+    # in one batch. Neither reordering nor large-batch model evaluation is
+    # guaranteed to preserve stateful V4/V8/V9 decisions, especially with
+    # tied probability ranks and near-threshold numerical differences.
+    # Preserve original CSV row order, verify coverage and stream exactly.
+    if not features.window_id.is_monotonic_increasing:
+        raise ValueError("Source feature rows are not chronological")
+    expected_nfs = [f"slot-{i}" for i in range(ACTORS)]
+    replayed = []
+    for window, one_window in features.groupby("window_id", sort=True):
+        if int(window) != len(replayed):
+            raise ValueError("Missing or out-of-order window in live replay")
+        if len(one_window) != ACTORS or one_window.nf_id.tolist() != expected_nfs:
+            raise ValueError("Per-window NF order differs from original online stream")
+        # Identical 32-row invocation cadence as the frozen live collector.
+        predictions = score_frame(bundle, one_window.reset_index(drop=True))
+        part = predictions.loc[predictions.method.isin(METHODS),
+                               KEYS + ["method", "alarm"]]
+        if len(part) != ACTORS * len(METHODS):
+            raise ValueError("Incomplete single-window replay")
+        replayed.append(part)
+    prediction_frame = pd.concat(replayed, ignore_index=True)
     if (set(prediction_frame.method) != set(METHODS)
             or len(prediction_frame) != len(features) * len(METHODS)
             or prediction_frame.duplicated(KEYS + ["method"]).any()):
@@ -115,9 +135,18 @@ def summarize(root, frozen, output, phase, online_check=False):
         original = online.loc[online.method.isin(METHODS)]
         joined = prediction_frame.merge(original, on=KEYS + ["method"],
                                         validate="one_to_one", suffixes=("_replay", "_online"))
-        if len(joined) != len(prediction_frame) or not (
-            joined.alarm_replay.astype(int) == joined.alarm_online.astype(int)).all():
-            raise ValueError("Prospective online/offline V9 alarm mismatch")
+        if len(joined) != len(prediction_frame):
+            raise ValueError("Missing/extra online V4/V8/V9 alarm rows")
+        different = joined.loc[joined.alarm_replay.astype(int) !=
+                               joined.alarm_online.astype(int)]
+        if len(different):
+            first = different.iloc[0]
+            counts = different.groupby("method").size().to_dict()
+            raise ValueError(
+                "Prospective online/offline V9 alarm mismatch: "
+                f"counts={counts}; first_window={first.window_id}, "
+                f"nf={first.nf_id}, method={first.method}, "
+                f"replay={first.alarm_replay}, online={first.alarm_online}")
 
     # Only now are attack truth and scenario IDs opened.
     labels_path = root / "test" / "labels.csv"
@@ -163,6 +192,8 @@ def summarize(root, frozen, output, phase, online_check=False):
         "fpr_all_methods_below_0_001": all(totals[m]["fpr"] <= 0.001 for m in METHODS),
         "v9_fpr_below_0_001": totals["TG_V9"]["fpr"] <= 0.001,
         "heldout_after_freeze": phase == "prospective",
+        "replay_method": "exact 32-NF online-style per-window streaming; no detector source change",
+        "audit_revision": "posthoc-forensic-repair-after_91301_91302_batch_replay_disagreement",
         "scope": "S1-S5, C,D,F,G,R across 3600x32; independent only for prospective 913xx",
     }
     (output / "report.json").write_text(json.dumps(report, indent=2, allow_nan=False)+"\n")
