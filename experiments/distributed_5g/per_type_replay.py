@@ -48,54 +48,61 @@ class Observations:
 
 
 def thresholds(scores, normal):
-    # Include both sides of ties. Every pair is subsequently checked as a complete alarm.
     rates = np.linspace(0, .0012, 25)
-    cuts = [np.quantile(s[m], 1 - rates, method="higher") for s, m in zip(scores, normal)]
+    cuts = [np.quantile(s[m], 1 - rates, method="higher") for s, m in zip(scores, normal, strict=True)]
     boundary = np.max(cuts, axis=0)
     return np.unique(np.r_[1., boundary, np.nextafter(boundary, -np.inf)])
 
 
+def alarm_grid(cuts, scores, fixed, labels):
+    """Exact alarm counts for each triple of strict thresholds, including tied scores."""
+    shape = tuple(len(c) for c in cuts)
+    bins = [np.searchsorted(c, s, side="left") for c, s in zip(cuts, scores, strict=True)]
+    flat = np.ravel_multi_index(tuple(bins), shape)
+    for name in ("N1", *SCENARIOS):
+        selected = labels == name
+        n = int(selected.sum())
+        if not n:
+            raise ValueError(f"Missing calibration exposure for {name}")
+        counts = np.bincount(flat[selected & ~fixed], minlength=int(np.prod(shape))).reshape(shape)
+        silent = counts.cumsum(axis=0).cumsum(axis=1).cumsum(axis=2)
+        yield name, n, n - silent
+
+
 def choose_cuts(model, calibration):
-    sets = []
+    populations = []
     for obs in calibration:
-        c = obs.capture
-        graph, profile = model.score_panel(c.values, c.allowed)
-        label = obs.annotated()
-        if not set(SCENARIOS) <= set(np.unique(label)):
-            raise ValueError("Calibration must cover every attack type")
-        sets.append((c.local | obs.loss, c.allowed, graph, profile, label))
-    graph_cuts = thresholds([s[2] for s in sets], [(s[4] == "N1") & ~s[0] & ~s[1] for s in sets])
-    profile_cuts = thresholds([s[3] for s in sets], [(s[4] == "N1") & ~s[0] for s in sets])
-    # Computing the complete decisions on positives and counting the benign union
-    # separately avoids ever flattening away a rare class or a single acquisition.
-    cached = []
-    for fixed, grant, graph, profile, label in sets:
-        normal = label == "N1"
-        positives = ~normal
-        codes = np.array([SCENARIOS.index(s) for s in label[positives]])
-        support = np.bincount(codes, minlength=len(SCENARIOS))
-        graph_alarms = [fixed | (~grant & (graph > cut)) for cut in graph_cuts]
-        profile_alarms = [profile > cut for cut in profile_cuts]
-        cached.append((normal, positives, codes, support, graph_alarms, profile_alarms))
-    best, selected = None, None
-    for i, graph_cut in enumerate(graph_cuts):
-        for j, profile_cut in enumerate(profile_cuts):
-            rates, fprs = [], []
-            for normal, positive, codes, support, graph, profile in cached:
-                alarm = graph[i] | profile[j]
-                fpr = np.count_nonzero(alarm & normal) / np.count_nonzero(normal)
-                if fpr > CALIBRATION_FPR:
-                    break
-                rates.append(np.bincount(codes, weights=alarm[positive], minlength=len(support)) / support)
-                fprs.append(fpr)
-            if len(rates) == len(cached):
-                rank = (np.min(rates), np.min(np.mean(rates, axis=0)), np.mean(rates), -max(fprs))
-                if best is None or rank > best:
-                    best, selected = rank, (float(graph_cut), float(profile_cut))
-    if selected is None:
+        cap = obs.capture
+        graph, profile, cohort = model.score_panel(cap.values, cap.allowed)
+        scores = (np.where(cap.allowed, -1., graph), profile, cohort)
+        populations.append((scores, cap.local | obs.loss, obs.annotated()))
+    normal = [(label == "N1") & ~fixed for _, fixed, label in populations]
+    cuts = [thresholds([scores[d] for scores, _, _ in populations], normal) for d in range(3)]
+    shape = tuple(len(c) for c in cuts)
+    worst = np.ones(shape)
+    max_fpr = np.zeros(shape)
+    hits = {s: np.zeros(shape, dtype=int) for s in SCENARIOS}
+    support = dict.fromkeys(SCENARIOS, 0)
+    for scores, fixed, labels in populations:
+        for name, n, alarms in alarm_grid(cuts, scores, fixed, labels):
+            if name == "N1":
+                np.maximum(max_fpr, alarms / n, out=max_fpr)
+            else:
+                np.minimum(worst, alarms / n, out=worst)
+                hits[name] += alarms
+                support[name] += n
+    feasible = max_fpr <= CALIBRATION_FPR
+    if not feasible.any():
         raise ValueError("Even the fixed evidence exceeds the calibration FPR budget")
-    return *selected, dict(worst_type_and_seed=float(best[0]), worst_pooled_type=float(best[1]),
-                           macro_recall=float(best[2]), max_fpr=float(-best[3]))
+    rates = np.stack([hits[s] / support[s] for s in SCENARIOS])
+    pooled_min, macro = rates.min(axis=0), rates.mean(axis=0)
+    for criterion in (worst, pooled_min, macro, -max_fpr):
+        feasible &= criterion == criterion[feasible].max()
+    index = np.unravel_index(np.flatnonzero(feasible)[-1], shape)
+    selected = tuple(float(c[i]) for c, i in zip(cuts, index, strict=True))
+    quality = dict(worst_type_and_seed=float(worst[index]), worst_pooled_type=float(pooled_min[index]),
+                   macro_recall=float(macro[index]), max_fpr=float(max_fpr[index]))
+    return selected, quality
 
 
 def fit(train_paths, calibration_paths, output):
@@ -122,13 +129,14 @@ def fit(train_paths, calibration_paths, output):
     classifier.fit(np.concatenate(matrices), np.concatenate(targets), sample_weight=np.concatenate(weights))
     model = PerTypeModel(classifier, profiles, 1., 1., tuple(x.capture.run for x in train),
                          tuple(x.capture.run for x in cal))
-    model.graph_cut, model.profile_cut, criterion = choose_cuts(model, cal)
+    (model.graph_cut, model.profile_cut, model.cohort_cut), criterion = choose_cuts(model, cal)
     out = Path(output)
     out.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, out / "model.joblib", compress=3)
     meta = dict(method=METHOD, model_sha256=sha256(out / "model.joblib"), train_runs=model.fit_runs,
                 calibration_runs=model.calibration_runs, consumed_seeds=sorted(c.seed for c in captures),
-                graph_cut=model.graph_cut, profile_cut=model.profile_cut, repeated_paths=len(profiles.paths),
+                graph_cut=model.graph_cut, profile_cut=model.profile_cut, cohort_cut=model.cohort_cut,
+                repeated_paths=len(profiles.paths), repeated_cohorts=len(profiles.cohorts),
                 selection=criterion, calibration_fpr_cap=CALIBRATION_FPR, recall_target=RECALL_TARGET)
     write_json(out / "manifest.json", meta)
     print(json.dumps(meta), flush=True)
@@ -141,7 +149,8 @@ def load_model(directory):
         raise ValueError("Unexpected per-type checkpoint or digest")
     model = joblib.load(root / "model.joblib")
     if (tuple(meta["train_runs"]) != model.fit_runs or tuple(meta["calibration_runs"]) != model.calibration_runs
-            or (meta["graph_cut"], meta["profile_cut"]) != (model.graph_cut, model.profile_cut)):
+            or (meta["graph_cut"], meta["profile_cut"], meta.get("cohort_cut", 1.)) !=
+               (model.graph_cut, model.profile_cut, model.cohort_cut)):
         raise ValueError("Per-type manifest and checkpoint differ")
     return model, meta
 
@@ -167,13 +176,14 @@ def evaluate(model_path, previous_path, root, output):
             or c.run in model.fit_runs + model.calibration_runs
             or c.run in baseline.fit_runs + baseline.calibration_runs):
         raise ValueError("Refusing to evaluate an acquisition used in model selection")
-    graph, profile = model.score_panel(c.values, c.allowed)
-    candidate = model.decide(c.local, obs.loss, c.allowed, graph, profile)
+    graph, profile, cohort = model.score_panel(c.values, c.allowed)
+    candidate = model.decide(c.local, obs.loss, c.allowed, graph, profile, cohort)
     confirm_stream(model, obs, candidate)
     old = baseline.decide(baseline.score_features(feature_panel(c.values)), c.local, c.allowed)
     alarms = {METHOD: candidate, PREVIOUS: old, "FULL_HYBRID": c.full,
               "RECEIPT_ONLY": obs.loss, "PROFILE_ONLY": profile > model.profile_cut,
-              "GRAPH_ONLY": ~c.allowed & (graph > model.graph_cut)}
+              "GRAPH_ONLY": ~c.allowed & (graph > model.graph_cut),
+              "COHORT_ONLY": cohort > model.cohort_cut}
     # The only access to held-out labels follows both batch and exact per-window inference.
     truth, label = c.labels()
     if set(np.unique(label[truth])) != set(SCENARIOS):

@@ -3,8 +3,9 @@ import pytest
 
 from experiments.distributed_5g.cross_scenario_detector import MEASUREMENTS, SLOTS
 from experiments.distributed_5g.per_type_detector import (
-    CONTROL_NF, OnlineScorer, PerTypeModel, ProfileModel, missing_live_receipt, shape_panel,
+    CONTROL_NF, OnlineScorer, PerTypeModel, PrefixTracker, ProfileModel, missing_live_receipt, shape_panel,
 )
+from experiments.distributed_5g.per_type_replay import SCENARIOS, alarm_grid
 
 
 def test_process_health_and_receipt_are_both_required():
@@ -32,17 +33,22 @@ def test_stream_reorder_grants_run_reset_and_batch_parity():
     grant = rng.random((132,32)) < .15
     labels = np.full((132,32), "N1")
     labels[4:10,2] = "G"
-    labels[25:32,3] = "S5"
+    labels[25:32,1:4] = "S5"
     profiles = ProfileModel.fit([(data[:,:,0],grant,labels), (data[:,:,0],grant,labels)])
-    assert len(profiles.paths) == 2
-    model = PerTypeModel(ScorerFixture(), profiles, .95, .3, (), ())
+    assert len(profiles.paths) == 4
+    assert len(profiles.cohorts) == 1
+    model = PerTypeModel(ScorerFixture(), profiles, .95, .3, (), (), cohort_cut=.25)
     loc = np.zeros_like(grant)
     loss = np.zeros_like(grant)
     loss[::9,SLOTS.index(CONTROL_NF)] = True
-    graph, profile = model.score_panel(data, grant)
-    expected = model.decide(loc,loss,grant,graph,profile)
+    graph, profile, cohort = model.score_panel(data, grant)
+    expected = model.decide(loc,loss,grant,graph,profile,cohort)
     perm = np.arange(32).reshape(4,8)[:,::-1].ravel()
     np.testing.assert_allclose(shape_panel(data[:,perm]),shape_panel(data)[:,perm],atol=1e-12)
+    pg, pp, pc = model.score_panel(data[:,perm], grant[:,perm])
+    np.testing.assert_allclose(pg, graph[:,perm], atol=1e-12)
+    np.testing.assert_array_equal(pp, profile[:,perm])
+    np.testing.assert_array_equal(pc, cohort[:,perm])
     scorer = OnlineScorer(model)
     for w, values in enumerate(data):
         rows = [dict(run_id="one",window_id=w,nf_id=nf,**dict(zip(MEASUREMENTS, val)))
@@ -56,3 +62,31 @@ def test_stream_reorder_grants_run_reset_and_batch_parity():
     for row in rows:
         row.update(run_id="next",window_id=0)
     assert scorer.score(rows,decisions,None,0.) == OnlineScorer(model).score(rows,decisions,None,0.)
+
+
+def test_group_requires_distinct_peers_in_one_zone_at_the_same_stage():
+    tracker = PrefixTracker([(1, 2), (1, 3)], [(0, 1, 1)])
+    row = np.full(32, 9)
+    row[[0, 2, 5, 8, 9, 16]] = 1
+    tracker.advance(row, np.zeros(32, bool))
+    nf, _, _ = next(tracker.simultaneous_members())
+    assert set(nf) == {0, 2, 5}
+    row[[0, 2, 5, 8, 9, 16]] = [3, 2, 3, 3, 2, 3]
+    tracker.advance(row, np.zeros(32, bool))
+    nf, stage, _ = next(tracker.simultaneous_members())
+    assert set(nf[stage == 1]) == {0, 2, 5}
+
+
+def test_threshold_grid_equals_direct_strict_alarms_at_ties():
+    labels = np.repeat(["N1", *SCENARIOS], 3)
+    rng = np.random.default_rng(99)
+    scores = [rng.choice([-.1, 0., .4, .7, 1.], len(labels)) for _ in range(3)]
+    cuts = [np.array([0., .4, 1.]), np.array([.4, .7, 1.]), np.array([0., 1.])]
+    fixed = rng.random(len(labels)) < .2
+    for name, support, measured in alarm_grid(cuts, scores, fixed, labels):
+        assert support == 3
+        for ix in np.ndindex(measured.shape):
+            alarm = fixed.copy()
+            for d in range(3):
+                alarm |= scores[d] > cuts[d][ix[d]]
+            assert measured[ix] == np.count_nonzero(alarm & (labels == name))

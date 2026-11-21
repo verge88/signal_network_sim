@@ -62,6 +62,8 @@ jobs:
           path: |
             screen-90408.json
             development.json
+      - name: Require the per-type recall and FPR targets on development
+        run: jq -e '.passes' development.json
   paired:
     needs: development
     if: needs.development.outputs.passes == 'true'
