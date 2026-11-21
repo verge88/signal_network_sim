@@ -37,7 +37,7 @@ def test_stream_reorder_grants_run_reset_and_batch_parity():
     profiles = ProfileModel.fit([(data[:,:,0],grant,labels), (data[:,:,0],grant,labels)])
     assert len(profiles.paths) == 4
     assert len(profiles.cohorts) == 1
-    model = PerTypeModel(ScorerFixture(), profiles, .95, .3, (), (), cohort_cut=.25)
+    model = PerTypeModel(ScorerFixture(), profiles, .95, .3, (), (), cohort_cut=.25, support_weight=.65)
     loc = np.zeros_like(grant)
     loss = np.zeros_like(grant)
     loss[::9,SLOTS.index(CONTROL_NF)] = True
@@ -69,12 +69,14 @@ def test_group_requires_distinct_peers_in_one_zone_at_the_same_stage():
     row = np.full(32, 9)
     row[[0, 2, 5, 8, 9, 16]] = 1
     tracker.advance(row, np.zeros(32, bool))
-    nf, _, _ = next(tracker.simultaneous_members())
+    nf, _, _, inclusion = next(tracker.simultaneous_members())
     assert set(nf) == {0, 2, 5}
+    assert np.all(inclusion == 1)
     row[[0, 2, 5, 8, 9, 16]] = [3, 2, 3, 3, 2, 3]
     tracker.advance(row, np.zeros(32, bool))
-    nf, stage, _ = next(tracker.simultaneous_members())
+    nf, stage, _, inclusion = next(tracker.simultaneous_members())
     assert set(nf[stage == 1]) == {0, 2, 5}
+    assert np.all(inclusion[stage == 1] == 1)
 
 
 def test_threshold_grid_equals_direct_strict_alarms_at_ties():
@@ -90,3 +92,18 @@ def test_threshold_grid_equals_direct_strict_alarms_at_ties():
             for d in range(3):
                 alarm |= scores[d] > cuts[d][ix[d]]
             assert measured[ix] == np.count_nonzero(alarm & (labels == name))
+
+
+def test_group_inclusion_quantifies_ambiguous_members():
+    tracker = PrefixTracker([(1, 2), (1, 3)], [(0, 1, 1)])
+    counts = np.full(32, 7)
+    counts[:4] = 1
+    tracker.advance(counts, np.zeros(32, bool))
+    indices, _, _, inclusion = next(tracker.simultaneous_members())
+    assert indices.tolist() == [0, 1, 2, 3]
+    np.testing.assert_allclose(inclusion, .75)
+    counts[:4] = [2, 3, 3, 3]
+    tracker.advance(counts, np.zeros(32, bool))
+    indices, _, _, inclusion = next(tracker.simultaneous_members())
+    assert indices.tolist() == [0, 1, 2, 3]
+    np.testing.assert_allclose(inclusion, [1., 2/3, 2/3, 2/3])

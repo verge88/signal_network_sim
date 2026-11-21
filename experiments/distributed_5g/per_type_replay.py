@@ -15,7 +15,7 @@ from .per_type_detector import CONTROL_NF, METHOD, OnlineScorer, PerTypeModel, P
 from .v9_cross_scenario_audit import SCENARIOS, metrics
 
 
-CALIBRATION_FPR = .00085
+CALIBRATION_FPR = .0006
 FPR_LIMIT = .001
 RECALL_TARGET = .90
 PREVIOUS = "CROSS_SCENARIO"
@@ -69,13 +69,7 @@ def alarm_grid(cuts, scores, fixed, labels):
         yield name, n, n - silent
 
 
-def choose_cuts(model, calibration):
-    populations = []
-    for obs in calibration:
-        cap = obs.capture
-        graph, profile, cohort = model.score_panel(cap.values, cap.allowed)
-        scores = (np.where(cap.allowed, -1., graph), profile, cohort)
-        populations.append((scores, cap.local | obs.loss, obs.annotated()))
+def operating_point(populations):
     normal = [(label == "N1") & ~fixed for _, fixed, label in populations]
     cuts = [thresholds([scores[d] for scores, _, _ in populations], normal) for d in range(3)]
     shape = tuple(len(c) for c in cuts)
@@ -105,6 +99,25 @@ def choose_cuts(model, calibration):
     return selected, quality
 
 
+def choose_cuts(model, calibration):
+    panels = [model.raw_panel(obs.capture.values, obs.capture.allowed) for obs in calibration]
+    labels = [obs.annotated() for obs in calibration]
+    choices = []
+    for weight in (0., .65, 1.):
+        model.support_weight = weight
+        populations = []
+        for obs, (raw, single, group, support), label in zip(calibration, panels, labels, strict=True):
+            cap = obs.capture
+            graph = np.where(cap.allowed, -1., model.corroborated_graph(raw, support))
+            populations.append(((graph, single, group), cap.local | obs.loss, label))
+        cuts, quality = operating_point(populations)
+        rank = (quality["worst_type_and_seed"], quality["worst_pooled_type"], quality["macro_recall"],
+                -quality["max_fpr"], -weight)
+        choices.append((rank, weight, cuts, quality))
+    _, model.support_weight, cuts, quality = max(choices, key=lambda x: x[0])
+    return cuts, quality
+
+
 def fit(train_paths, calibration_paths, output):
     train = [Observations(p) for p in train_paths]
     cal = [Observations(p) for p in calibration_paths]
@@ -127,6 +140,7 @@ def fit(train_paths, calibration_paths, output):
                                                 min_samples_leaf=18, l2_regularization=2.,
                                                 early_stopping=False, random_state=731)
     classifier.fit(np.concatenate(matrices), np.concatenate(targets), sample_weight=np.concatenate(weights))
+    del matrices, targets, weights
     model = PerTypeModel(classifier, profiles, 1., 1., tuple(x.capture.run for x in train),
                          tuple(x.capture.run for x in cal))
     (model.graph_cut, model.profile_cut, model.cohort_cut), criterion = choose_cuts(model, cal)
@@ -136,6 +150,7 @@ def fit(train_paths, calibration_paths, output):
     meta = dict(method=METHOD, model_sha256=sha256(out / "model.joblib"), train_runs=model.fit_runs,
                 calibration_runs=model.calibration_runs, consumed_seeds=sorted(c.seed for c in captures),
                 graph_cut=model.graph_cut, profile_cut=model.profile_cut, cohort_cut=model.cohort_cut,
+                graph_support_weight=model.support_weight,
                 repeated_paths=len(profiles.paths), repeated_cohorts=len(profiles.cohorts),
                 selection=criterion, calibration_fpr_cap=CALIBRATION_FPR, recall_target=RECALL_TARGET)
     write_json(out / "manifest.json", meta)
@@ -149,8 +164,9 @@ def load_model(directory):
         raise ValueError("Unexpected per-type checkpoint or digest")
     model = joblib.load(root / "model.joblib")
     if (tuple(meta["train_runs"]) != model.fit_runs or tuple(meta["calibration_runs"]) != model.calibration_runs
-            or (meta["graph_cut"], meta["profile_cut"], meta.get("cohort_cut", 1.)) !=
-               (model.graph_cut, model.profile_cut, model.cohort_cut)):
+            or (meta["graph_cut"], meta["profile_cut"], meta.get("cohort_cut", 1.),
+                meta.get("graph_support_weight", 0.)) !=
+               (model.graph_cut, model.profile_cut, model.cohort_cut, model.support_weight)):
         raise ValueError("Per-type manifest and checkpoint differ")
     return model, meta
 

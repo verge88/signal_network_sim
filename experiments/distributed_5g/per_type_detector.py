@@ -25,12 +25,12 @@ def missing_live_receipt(record, window, decision_time):
     return record["observer_alive"] and record["delivered"] is None
 
 
-def repeated_trajectories(captures):
+def repeated_trajectories(captures, classes=("G", "S5")):
     """Only trajectories seen in at least two distinct development acquisitions."""
     support = {}
     for counts, scenarios in captures:
         seen = set()
-        for scenario in ("G", "S5"):
+        for scenario in classes:
             active = scenarios == scenario
             for column in np.flatnonzero(active.any(axis=0)):
                 mask = active[:, column]
@@ -100,19 +100,24 @@ class PrefixTracker:
         offset = 0
         for slices in self.cohort_stages:
             roles = [self.active[:, s].reshape(4, 8, -1) for s in slices]
-            matched = np.zeros_like(roles[0])
+            ways = np.zeros(roles[0].shape, dtype=int)
             for i, own in enumerate(roles):
                 b, c = roles[(i+1) % 3], roles[(i+2) % 3]
-                # After taking this NF out, two distinct peers must cover the other roles.
-                either = b | c
-                matched |= (own & (b.sum(axis=1, keepdims=True) > b)
-                            & (c.sum(axis=1, keepdims=True) > c)
-                            & (either.sum(axis=1, keepdims=True) > 1 + either.astype(int)))
+                # Count assignments of the two other roles to distinct peers.
+                overlap = b & c
+                options = ((b.sum(axis=1, keepdims=True) - b) * (c.sum(axis=1, keepdims=True) - c)
+                           - (overlap.sum(axis=1, keepdims=True) - overlap))
+                assignments = own * options
+                if i == 0:
+                    total = assignments.sum(axis=1)
+                ways += assignments
+            matched = ways > 0
             zone, slot, stage = np.nonzero(matched)
             size = matched.sum(axis=1)
             active_zones = (size > 0).sum(axis=0)
             context = np.searchsorted([3, 4, 7], size[zone, stage]) * 4 + active_zones[stage] - 1
-            yield zone*8 + slot, offset + stage, context
+            inclusion = ways[zone, slot, stage] / total[zone, stage]
+            yield zone*8 + slot, offset + stage, context, inclusion
             offset += matched.shape[-1]
 
 
@@ -122,18 +127,22 @@ class ProfileModel:
     scores: np.ndarray
     cohorts: tuple = ()
     cohort_scores: np.ndarray | None = None
+    individual_stages: np.ndarray | None = None
 
     @classmethod
     def fit(cls, sets):
-        paths = repeated_trajectories([(counts, labels) for counts, _, labels in sets])
+        annotated = [(counts, labels) for counts, _, labels in sets]
+        paths = repeated_trajectories(annotated)
         if not paths:
             return cls([], np.empty((0, 60)))
         cohorts = repeated_cohorts(sets, paths)
+        individual_paths = set(repeated_trajectories(annotated, classes=("G",)))
+        individual_stages = np.repeat([p in individual_paths for p in paths], [len(p) for p in paths])
         tracker = PrefixTracker(paths, cohorts)
         benign_hits = np.zeros((len(tracker.expected), 20))
         conditional_hits = np.zeros((len(tracker.expected), 60))
         ages = np.array([j for group in cohorts for j in range(1, len(paths[group[0]])+1)])
-        cohort_hits = np.zeros((len(ages), 16))
+        cohort_hits = np.zeros((len(ages), 32))
         for counts, allowed, labels in sets:
             tracker = PrefixTracker(paths, cohorts)
             for window, (row, permit) in enumerate(zip(counts, allowed)):
@@ -142,8 +151,9 @@ class ProfileModel:
                 np.add.at(benign_hits, (stage[normal], context[normal]), 1)
                 detail = rate_context(row, nf, context)
                 np.add.at(conditional_hits, (stage[normal], detail[normal]), 1)
-                for nf, stage, context in tracker.simultaneous_members():
+                for nf, stage, context, inclusion in tracker.simultaneous_members():
                     normal = labels[window, nf] == "N1"
+                    context = 2 * context + (inclusion == 1.)
                     np.add.at(cohort_hits, (stage[normal], context[normal]), 1)
         # Score sustained matches by how often healthy NFs produced the same match
         # under comparable concurrent peer traffic and authorization.
@@ -152,18 +162,29 @@ class ProfileModel:
         scores = support / np.sqrt(1 + hits / len(sets))
         scores[tracker.first] = 0
         cohort_scores = (1 - np.exp(-ages[:, None] / 2)) / np.sqrt(1 + cohort_hits / len(sets))
-        return cls(paths, scores, cohorts, cohort_scores)
+        return cls(paths, scores, cohorts, cohort_scores, individual_stages)
 
     def score_window(self, tracker, counts, allowed):
-        result, grouped = np.zeros(32), np.zeros(32)
+        result, grouped, support = np.zeros(32), np.zeros(32), np.zeros(32)
         if tracker is not None:
             nf, stage, context = tracker.advance(counts, allowed)
             if self.scores.shape[1] == 60:
                 context = rate_context(counts, nf, context)
-            np.maximum.at(result, nf, self.scores[stage, context])
-            for nf, stage, context in tracker.simultaneous_members():
-                np.maximum.at(grouped, nf, self.cohort_scores[stage, context])
-        return result, grouped
+            scalar = self.scores[stage, context]
+            np.maximum.at(support, nf, scalar)
+            if self.individual_stages is None:
+                result[:] = support
+            else:
+                direct = self.individual_stages[stage]
+                np.maximum.at(result, nf[direct], scalar[direct])
+            for nf, stage, context, inclusion in tracker.simultaneous_members():
+                if self.cohort_scores.shape[1] == 32:
+                    context = 2 * context + (inclusion == 1.)
+                    score = self.cohort_scores[stage, context] * np.sqrt(inclusion)
+                else:
+                    score = self.cohort_scores[stage, context]
+                np.maximum.at(grouped, nf, score)
+        return result, grouped, np.maximum(support, grouped)
 
     def tracker(self):
         return PrefixTracker(self.paths, self.cohorts) if self.paths else None
@@ -221,16 +242,24 @@ class PerTypeModel:
     fit_runs: tuple
     calibration_runs: tuple
     cohort_cut: float = 1.
+    support_weight: float = 0.
 
     def graph_scores(self, matrix):
         return self.classifier.predict_proba(matrix.reshape(-1, matrix.shape[-1]))[:, 1].reshape(matrix.shape[:-1])
 
-    def score_panel(self, values, allowed):
+    def raw_panel(self, values, allowed):
         scores = self.graph_scores(shape_panel(values))
         tracker = self.profiles.tracker()
         profiles = np.stack([self.profiles.score_window(tracker, row[:, 0], grant)
                              for row, grant in zip(values, allowed, strict=True)])
-        return scores, profiles[:, 0], profiles[:, 1]
+        return scores, profiles[:, 0], profiles[:, 1], profiles[:, 2]
+
+    def corroborated_graph(self, raw, support):
+        return raw * (1. - self.support_weight + self.support_weight * np.sqrt(support))
+
+    def score_panel(self, values, allowed):
+        raw, profile, cohort, support = self.raw_panel(values, allowed)
+        return self.corroborated_graph(raw, support), profile, cohort
 
     def decide(self, local, loss, allowed, graph, profile, cohort):
         return (local | loss | (~allowed & (graph > self.graph_cut))
@@ -263,7 +292,8 @@ class OnlineScorer:
         matrix, previous = shape_block(values, None if new else self.previous)
         graph = self.model.graph_scores(matrix)[0]
         tracker = self.model.profiles.tracker() if new else self.tracker
-        profile, cohort = self.model.profiles.score_window(tracker, values[0, :, 0], allowed)
+        profile, cohort, support = self.model.profiles.score_window(tracker, values[0, :, 0], allowed)
+        graph = self.model.corroborated_graph(graph, support)
         alarms = self.model.decide(local, loss, allowed, graph, profile, cohort)
         self.run, self.last, self.previous, self.tracker = run, window, previous, tracker
         return dict(zip(SLOTS, alarms.tolist()))

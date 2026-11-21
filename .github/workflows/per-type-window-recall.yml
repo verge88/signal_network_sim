@@ -39,9 +39,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo '9842edf570bc73164799585f8e45151fcc9c264f8a8232a250a07038037d7213  previous/model.joblib' | sha256sum --check --status
-          bash experiments/distributed_5g/fetch_recall_evidence.sh --receipts data 90401 90402 90405 90406 90407
+          bash experiments/distributed_5g/fetch_recall_evidence.sh --receipts data 90201 90202 90401 90402 90405 90203 90406 90407
       - name: Train and calibrate for the weakest attack type
-        run: python -m "$MODULE" fit --train data/90401 data/90402 data/90405 --calibration data/90406 data/90407 --output frozen
+        run: python -m "$MODULE" fit --train data/90201 data/90202 data/90401 data/90402 data/90405 --calibration data/90203 data/90406 data/90407 --output frozen
       - uses: actions/upload-artifact@v4
         with:
           name: per-type-frozen-model
@@ -72,7 +72,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        seed: [90409, 90410, 91301, 91302, 91303]
+        seed: [90301, 90302, 90303, 90409, 90410, 91301, 91302, 91303]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -118,16 +118,17 @@ jobs:
           path: reports
       - name: Report new validation archives and the prior benchmark separately
         run: |
-          python -m "$MODULE" aggregate reports/paired-904*.json --seeds 90409 90410 --output new-archives.json
-          python -m "$MODULE" aggregate reports/paired-913*.json --seeds 91301 91302 91303 --output benchmark.json
-          python -m "$MODULE" aggregate reports/*.json --seeds 90409 90410 91301 91302 91303 --output all-archives.json
+          python -m "$MODULE" aggregate reports/paired-903*.json --seeds 90301 90302 90303 --output independent-903xx.json
+          python -m "$MODULE" aggregate reports/paired-904*.json --seeds 90409 90410 --output benchmark-904xx.json
+          python -m "$MODULE" aggregate reports/paired-913*.json --seeds 91301 91302 91303 --output benchmark-913xx.json
+          python -m "$MODULE" aggregate reports/*.json --seeds 90301 90302 90303 90409 90410 91301 91302 91303 --output all-archives.json
           python - <<'PY'
           import json, os
-          items = [json.load(open(p)) for p in ('new-archives.json','benchmark.json')]
+          items = [json.load(open(p)) for p in ('independent-903xx.json','benchmark-904xx.json','benchmark-913xx.json')]
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as summary:
               print('## Полнота по типам атак\n', file=summary)
-              print('| Тип | Прежняя, 90409–10 | Новая, 90409–10 | Прежняя, 91301–03 | Новая, 91301–03 |', file=summary)
-              print('|---|---:|---:|---:|---:|', file=summary)
+              print('| Тип | Прежняя, 90301–03 | Новая, 90301–03 | Прежняя, 90409–10 | Новая, 90409–10 | Прежняя, 91301–03 | Новая, 91301–03 |', file=summary)
+              print('|---|---:|---:|---:|---:|---:|---:|', file=summary)
               for name in items[0]['by_type']:
                   cells = [f"{r['by_type'][name]['recall'][m]:.2%}" for r in items for m in ('CROSS_SCENARIO','PER_TYPE_RECALL')]
                   print('| ' + ' | '.join([name,*cells]) + ' |', file=summary)
@@ -137,9 +138,10 @@ jobs:
         with:
           name: per-type-results
           path: |
-            new-archives.json
-            benchmark.json
+            independent-903xx.json
+            benchmark-904xx.json
+            benchmark-913xx.json
             all-archives.json
             reports/
       - name: Check each type and the per-run false alarm budget
-        run: jq -es 'all(.[]; .passes)' new-archives.json benchmark.json
+        run: jq -es 'all(.[]; .passes)' independent-903xx.json benchmark-904xx.json benchmark-913xx.json
