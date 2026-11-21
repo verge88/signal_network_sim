@@ -56,12 +56,13 @@ jobs:
           python -m experiments.distributed_5g.v10_model \
             --source-v9 baseline/frozen --out v10-frozen
           python - <<'PY'
+          # Critical regression: this must load in a separate interpreter
+          # *before* importing the V10 class into the __main__ namespace.
           from experiments.live_5g.evaluate import load_frozen
-          from experiments.distributed_5g.v10_model import V10MultiThreatFusion
           b=load_frozen('v10-frozen')
           m=b['manifest']
           assert m['ml_method']=='TG_V10'
-          assert isinstance(b['v10_multithreat'],V10MultiThreatFusion)
+          assert type(b['v10_multithreat']).__module__ == 'experiments.distributed_5g.v10_model'
           assert m['temporal_graph_v10']['parent_frozen_model_sha256']==\
             '9b9776170c3798ca6c37fa3b2cd54f68e979291691625b29be03e6a214cc7fdc'
           assert m['temporal_graph_v10']['new_training'] is False
