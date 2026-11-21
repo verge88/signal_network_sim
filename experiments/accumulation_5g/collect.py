@@ -671,7 +671,13 @@ def run(args):
                 row = {'run_id': run_id, 'window_id': window, 'nf_id': slot, 'timestamp': completed, **values}
                 rows.append(row)
                 if slot == 'slot-4':
-                    acquisition.at_slot(window, scenario)
+                    # Late-acquisition control must see the actual emulated
+                    # S10 mode, not the S10 scenario label: F corrupts only
+                    # the delivered report, while the signer remains trusted.
+                    control_variant = (s10_control_mode(active[5]) if
+                                       v10_compromise and scenario == 'S10'
+                                       else scenario)
+                    acquisition.at_slot(window, control_variant)
                 label = {'run_id': run_id, 'window_id': window, 'nf_id': slot,
                     'attack': int(is_target), 'scenario': scenario, 'onset': onsets.get(scenario, ''),
                     'load_regime':regime(window),'variant':active[5] if is_target else 'normal',
