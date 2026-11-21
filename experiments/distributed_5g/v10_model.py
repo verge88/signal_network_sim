@@ -148,4 +148,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # pickle/joblib must not capture V10MultiThreatFusion as __main__.Class:
+    # the engineering runner loads it from a fresh, unrelated Python process.
+    # Invoke the canonical importable module instead of creating a __main__
+    # instance whose type cannot be found when evaluating later.
+    from experiments.distributed_5g.v10_model import main as canonical_main
+    canonical_main()
