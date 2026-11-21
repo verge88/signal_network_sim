@@ -1567,6 +1567,14 @@ def score_frame(bundle, frame):
         margins["TG_V9"]=np.maximum.reduce([
             v4_ratio-1.0,pair_supported,k4_ratio-1.0,k5_ratio-1.0])
         methods += ["TG_V9_PAIR","TG_V9_K4","TG_V9_K5","TG_V9"]
+    if "v10_multithreat" in bundle:
+        if "TG_V9" not in margins:
+            raise ValueError("TG_V10 requires the unchanged frozen TG_V9 core")
+        # V10 is a separate opt-in frozen bundle; every old V9 bundle retains
+        # identical behaviour and output. No labels/schedules enter inference.
+        margins["TG_V10"] = bundle["v10_multithreat"].combine_traffic(
+            margins["TG_V9"], frame)
+        methods.append("TG_V10")
     if "tail_model" in bundle:
         threshold = bundle["thresholds"]["robust_tail"]
         margins["robust_tail"] = (tail_scores(bundle["tail_model"], frame) - threshold
