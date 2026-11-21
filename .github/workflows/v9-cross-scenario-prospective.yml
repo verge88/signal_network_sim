@@ -1,0 +1,166 @@
+name: V9 frozen cross-scenario fresh 913xx Open5GS trial
+
+on:
+  push:
+    branches: ['experiment/v9-cross-scenario-audit-20261121']
+    paths:
+      - '.github/triggers/v9-cross-scenario-prospective'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  prospective:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 210
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        seed: [91301, 91302, 91303]
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports: ['27017:27017']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check preregistered seeds and exact original V9 code hashes
+        run: |
+          set -euo pipefail
+          cat .github/preregistrations/v9-cross-scenario-20261121.txt
+          test "$(git hash-object experiments/distributed_5g/temporal_graph_v9.py)" = 618d30115bc49da979d5098c12d9758bf1d8a8d5
+          test "$(git hash-object experiments/live_5g/evaluate.py)" = 679697bda72acd24e2cdb33cc2966dc7a5bd1688
+          test "$(git hash-object experiments/distributed_5g/live.py)" = 815fd8640ad0970aa299805a26ed0cb636a7270f
+          test "$(git hash-object experiments/accumulation_5g/collect.py)" = 62cad97034fc0cf3b7da070e03b3af293a8cb45a
+          test "$(git hash-object experiments/distributed_5g/namespace_smoke.sh)" = 3339f47269e07ea4ba891267093bc52a2fec6f60
+
+      - name: Install V9 stack
+        env:
+          NO_LONG_DOUBLE: '1'
+        run: python -m pip install -r experiments/live_5g/requirements.txt
+
+      - name: Scientific V9 contracts
+        run: python -m pytest experiments/distributed_5g/test_temporal_graph.py -q
+
+      - name: Restore identical archived V9 checkpoint frozen BEFORE any 913xx tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p model evidence
+          gh api repos/verge88/signal_network_sim/actions/artifacts/14663407567/zip > /tmp/v9-91201-artifact.zip
+          unzip -p /tmp/v9-91201-artifact.zip v9-full-evidence.zip > /tmp/v9-91201-full.zip
+          unzip -q /tmp/v9-91201-full.zip \
+            frozen/model.joblib frozen/manifest.json frozen/accumulation.json \
+            frozen/extensions.json frozen/refinement.json zone_models.json -d model
+          test -s model/zone_models.json
+          cp model/zone_models.json evidence/zone_models.json
+          cp model/frozen/manifest.json evidence/frozen_before_test.json
+          git rev-parse HEAD > evidence/source_commit.txt
+          python - <<'PY'
+          from experiments.live_5g.evaluate import load_frozen
+          b=load_frozen('model/frozen')
+          assert b['manifest']['ml_method']=='TG_V9'
+          assert b['manifest']['seed']==91201
+          assert b['manifest']['temporal_graph_v9']['heldout_v9_test_used_for_selection'] is False
+          print('Reusing frozen model (no training):',b['manifest']['model_sha256'])
+          PY
+
+      - uses: actions/cache/restore@v4
+        id: open5gs_cache
+        with:
+          path: open5gs-2.7.6.tar.gz
+          key: open5gs-d9d3abdd-ubuntu22-build-v1
+
+      - if: steps.open5gs_cache.outputs.cache-hit != 'true'
+        run: bash experiments/live_5g/setup_open5gs.sh build
+
+      - if: steps.open5gs_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: open5gs-2.7.6.tar.gz
+          key: open5gs-d9d3abdd-ubuntu22-build-v1
+
+      - run: bash experiments/live_5g/setup_open5gs.sh runtime
+
+      - name: Collect genuine fresh 3600-window multi-attack NRF and namespace stream
+        run: |
+          bash experiments/distributed_5g/namespace_smoke.sh \
+            --seed ${{ matrix.seed }} --out evidence/test --frozen model/frozen \
+            --zone-models evidence/zone_models.json \
+            --include-if-context --confirm-if-context \
+            --ml-method TG_V9 --ml-confirmation-mode direct \
+            --accumulator-multiplier 1.50 --recover-normal
+          # No --v9-structure-experiment: default 3600-window multi-scenario schedule
+
+      - name: Independently replay archived V9 and audit all non-S9 scenario labels
+        run: |
+          python -m experiments.distributed_5g.v9_cross_scenario_audit audit \
+            evidence evidence/v9-ood-summary --phase prospective --frozen model/frozen \
+            --online-check
+
+      - name: Retain evidence and service diagnostics
+        if: always()
+        run: |
+          set +e
+          mkdir -p evidence/v9-ood-summary
+          cp model/frozen/manifest.json evidence/v9-ood-summary/ || true
+          cp evidence/frozen_before_test.json evidence/v9-ood-summary/ || true
+          cp .github/preregistrations/v9-cross-scenario-20261121.txt evidence/v9-ood-summary/preregistration.txt || true
+          sudo journalctl --no-pager -u 'open5gs-*' > evidence/v9-ood-summary/services.log || true
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile
+          root = Path('evidence')
+          with zipfile.ZipFile('v9-ood-full-evidence.zip','w',zipfile.ZIP_DEFLATED) as out:
+              for p in root.rglob('*'):
+                  if p.is_file() and 'hierarchy' not in p.parts:
+                      out.write(p,p.relative_to(root))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v9-ood-fresh-summary-${{ matrix.seed }}-${{ github.run_id }}
+          path: evidence/v9-ood-summary/
+          retention-days: 90
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v9-ood-fresh-evidence-${{ matrix.seed }}-${{ github.run_id }}
+          path: v9-ood-full-evidence.zip
+          retention-days: 90
+
+  aggregate:
+    needs: prospective
+    if: always()
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==1.26.4 pandas==2.2.3 scipy==1.14.1
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: v9-ood-fresh-summary-*
+          path: fresh-inputs
+      - name: Aggregate exactly three fresh preregistered 913xx reports
+        run: |
+          python -m experiments.distributed_5g.v9_cross_scenario_audit aggregate \
+            fresh-inputs fresh-results --phase prospective
+          git rev-parse HEAD > fresh-results/source_commit.txt
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v9-ood-fresh-confirmation-${{ github.run_id }}
+          path: fresh-results/
+          retention-days: 90
