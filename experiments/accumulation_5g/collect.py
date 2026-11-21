@@ -479,6 +479,9 @@ def run(args):
     manifest['v7_structure_experiment'] = v7_structure
     manifest['v8_structure_experiment'] = v8_structure
     manifest['v9_structure_experiment'] = v9_structure
+    manifest['v10_compromise_experiment'] = v10_compromise
+    if v10_compromise:
+        manifest['v10_emulation_scope'] = 'isolated research NF slot-4; no host or trusted external key takeover'
     manifest['unchanged_freshness_limit_seconds'] = .25
     manifest['accumulation'] = json.loads((args.frozen/'accumulation.json').read_text())
     manifest['refinement'] = refinement
