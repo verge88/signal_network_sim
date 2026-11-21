@@ -1,0 +1,14 @@
+V10 first live engineering trial after tests
+date=2026-11-21
+branch=experiment/v10-node-compromise-multithreat-20261121
+protocol=.github/preregistrations/v10-node-compromise-20261121.txt
+workflow=.github/workflows/v10-compromise-engineering.yml
+seed=91401
+phase=engineering_shakeout_not_prospective_confirmation
+original_V9_checkpoint_SHA256=9b9776170c3798ca6c37fa3b2cd54f68e979291691625b29be03e6a214cc7fdc
+V10_weights_derived_without_retraining=true
+S10_controlled_variants=node_config,node_report_tamper,node_sbi_abuse
+total_scenarios=15
+total_nonoverlapping_episodes=59
+scenario_S10_is_lab_research_NF_not_OS_takeover=true
+no_tuning_on_current_seed=true
