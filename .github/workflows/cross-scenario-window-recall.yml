@@ -108,13 +108,27 @@ jobs:
         run: |
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
           result = json.loads(Path('aggregate.json').read_text())
           scores = result['totals']
-          print('CROSS_SCENARIO / full hierarchy / isolated V9 recall:',
-                *(scores[m]['recall'] for m in ('CROSS_SCENARIO', 'FULL_HYBRID', 'TG_V9')))
+          methods = ('TG_V9', 'FULL_HYBRID', 'CROSS_SCENARIO')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as report:
+              print('## Парное сравнение на архивных прогонах 91301–91303\n', file=report)
+              print('| Метод | TP | FN | FP | Полнота | FPR | Precision |', file=report)
+              print('|---|---:|---:|---:|---:|---:|---:|', file=report)
+              for method in methods:
+                  m = scores[method]
+                  print(f"| {method} | {m['tp']} | {m['fn']} | {m['fp']} | {m['recall']:.2%} | "
+                        f"{m['fpr']:.4%} | {m['precision']:.2%} |", file=report)
+              print(f"\nСовпадений пооконного и пакетного решений: {result['streaming_matches']}.", file=report)
+              print('\n| Сценарий | Атакованных окон | TG_V9 | FULL_HYBRID | CROSS_SCENARIO |', file=report)
+              print('|---|---:|---:|---:|---:|', file=report)
+              for name, row in result['by_scenario'].items():
+                  hits = ' | '.join(str(row['tp'][method]) for method in methods)
+                  print(f"| {name} | {row['positive']} | {hits} |", file=report)
           if not result['all_seeds_fpr_within_budget']:
               raise SystemExit('FPR exceeds 0.1% in at least one capture')
-          if scores['CROSS_SCENARIO']['recall'] <= scores['TG_V9']['recall']:
-              raise SystemExit('No paired recall improvement over TG_V9')
+          if any(scores['CROSS_SCENARIO']['recall'] <= scores[m]['recall'] for m in methods[:2]):
+              raise SystemExit('Recall must improve over both recorded baselines')
           PY

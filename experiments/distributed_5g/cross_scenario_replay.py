@@ -12,7 +12,8 @@ import pandas as pd
 from sklearn.ensemble import HistGradientBoostingClassifier
 
 from .cross_scenario_detector import (
-    MEASUREMENTS, METHOD, SLOTS, CrossScenarioDetector, feature_panel, flags, operating_threshold,
+    MEASUREMENTS, METHOD, SLOTS, CrossScenarioDetector, WindowScorer, feature_panel, flags,
+    operating_threshold,
 )
 from .v9_cross_scenario_audit import KEYS, SCENARIOS, metrics
 
@@ -53,7 +54,9 @@ class Capture:
         self.allowed = np.empty_like(self.local)
         self.full = np.empty_like(self.local)
         self.recorded_ml = np.empty_like(self.local)
-        columns = ("local_security", "allowed", "security", "if_context_alarm")
+        self.availability = np.empty_like(self.local)
+        self.unknown = np.empty_like(self.local)
+        columns = ("local_security", "allowed", "security", "if_context_alarm", "availability", "unknown")
         count = 0
         with (self.path / "distributed_predictions.jsonl").open() as stream:
             for window, line in enumerate(stream):
@@ -64,7 +67,8 @@ class Capture:
                     raise ValueError("Incomplete or out-of-order hierarchy recording")
                 observations = [[decisions[nf][field] for field in columns] for nf in SLOTS]
                 block = flags(observations, (32, len(columns)))
-                self.local[window], self.allowed[window], self.full[window], self.recorded_ml[window] = block.T
+                (self.local[window], self.allowed[window], self.full[window], self.recorded_ml[window],
+                 self.availability[window], self.unknown[window]) = block.T
                 count += 1
         if count != self.windows:
             raise ValueError("Missing decision windows")
@@ -147,6 +151,19 @@ def load_model(directory):
     return model, meta
 
 
+def verify_streaming(model, capture, candidate):
+    scorer = WindowScorer(model)
+    for window, values in enumerate(capture.values):
+        rows = [dict(run_id=capture.run, window_id=window, nf_id=nf, **dict(zip(MEASUREMENTS, row)))
+                for nf, row in zip(SLOTS, values)]
+        decisions = {nf: {"local_security": local, "allowed": allowed}
+                     for nf, local, allowed in zip(SLOTS, capture.local[window], capture.allowed[window])}
+        alarms = scorer.score(rows, decisions)
+        different = [nf for nf, expected in zip(SLOTS, candidate[window]) if alarms[nf] != expected]
+        if different:
+            raise ValueError(f"Streaming replay differs in {capture.run} at window {window}: {different}")
+
+
 def evaluate(directory, root, reference, output):
     model, meta = load_model(directory)
     capture = Capture(root)
@@ -155,6 +172,7 @@ def evaluate(directory, root, reference, output):
     # Complete inference before accessing the reference decisions file or test labels.
     scores = model.score_features(feature_panel(capture.values))
     candidate = model.decide(scores, capture.local, capture.allowed)
+    verify_streaming(model, capture, candidate)
     predictions = {METHOD: candidate, "STATISTICAL_ONLY": ~capture.allowed & (scores > model.threshold),
                    "LOCAL_ONLY": capture.local, "FULL_HYBRID": capture.full,
                    reference: capture.original_alarm(reference)}
@@ -165,10 +183,12 @@ def evaluate(directory, root, reference, output):
     strata = {}
     for scenario in SCENARIOS:
         selected = truth & (scenarios == scenario)
-        strata[scenario] = dict(positive=int(selected.sum()),
+        strata[scenario] = dict(positive=int(selected.sum()), unknown=int(capture.unknown[selected].sum()),
+                                availability=int(capture.availability[selected].sum()),
                                 tp={name: int(alarm[selected].sum()) for name, alarm in predictions.items()})
     report = dict(seed=capture.seed, run_id=capture.run, model_sha256=meta["model_sha256"],
-                  windows=capture.windows, comparison=reference, totals=totals, by_scenario=strata,
+                  windows=capture.windows, streaming_matches=int(candidate.size),
+                  comparison=reference, totals=totals, by_scenario=strata,
                   fpr_pass=totals[METHOD]["fpr"] <= .001,
                   sources={name: sha256(capture.path / name) for name in
                            ("features.csv", "labels.csv", "distributed_predictions.jsonl", "online_predictions.csv")})
@@ -183,7 +203,8 @@ def aggregate(paths, seeds, output):
             or {r["seed"] for r in reports} != set(seeds)
             or len({r["run_id"] for r in reports}) != len(reports)
             or len({r["model_sha256"] for r in reports}) != 1
-            or any(r["comparison"] != "TG_V9" or r["windows"] != 3600 for r in reports)):
+            or any(r["comparison"] != "TG_V9" or r["windows"] != 3600
+                   or r["streaming_matches"] != 32 * r["windows"] for r in reports)):
         raise ValueError("Expected a single frozen model and all distinct 3600-window V9 recordings")
     totals = {}
     for method in reports[0]["totals"]:
@@ -194,10 +215,12 @@ def aggregate(paths, seeds, output):
     strata = {}
     for scenario in SCENARIOS:
         rows = [r["by_scenario"][scenario] for r in reports]
-        strata[scenario] = dict(positive=sum(r["positive"] for r in rows),
+        strata[scenario] = dict(positive=sum(r["positive"] for r in rows), unknown=sum(r["unknown"] for r in rows),
+                                availability=sum(r["availability"] for r in rows),
                                 tp={m: sum(r["tp"][m] for r in rows) for m in totals})
     result = dict(model_sha256=reports[0]["model_sha256"], seeds=seeds, totals=totals, by_scenario=strata,
                   per_seed={r["seed"]: r["totals"] for r in reports},
+                  streaming_matches=sum(r["streaming_matches"] for r in reports),
                   all_seeds_fpr_within_budget=all(r["fpr_pass"] for r in reports),
                   recall_90_percent=totals[METHOD]["recall"] >= .90,
                   scope="Retrospective paired comparison on independently recorded acquisitions.")
