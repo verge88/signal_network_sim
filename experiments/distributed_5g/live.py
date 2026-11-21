@@ -196,10 +196,19 @@ def main():
         transport_seconds=dict(median=statistics.median(durations), maximum=max(durations)),
         manifest_sha256=sha256(args.out/'manifest.json'), model_sha256=sha256(args.frozen/'model.joblib'),
         zone_models_sha256=sha256(args.zone_models),
-        scope=(('V10 full 3600-window S1-S10,C,D,F,G,R plus controlled slot-4 compromise on one research Open5GS runner with five namespaces; not an OS exploit.' if args.v10_compromise_experiment else ('Fresh V9 specialized-fusion structural schedule on one physical runner with five network namespaces.' if args.v9_structure_experiment else ('Fresh V8 pair-sensitive structural schedule on one physical runner with five network namespaces.' if args.v8_structure_experiment else ('Fresh V7 stable-set FPR-constrained structural schedule on one physical runner with five network namespaces.' if args.v7_structure_experiment else 'Fresh V6 variable-k/permuted structural schedule on one physical runner with five network namespaces.')))
-               if (args.v6_structure_experiment or args.v10_compromise_experiment) else
-               ('Fresh normal Open5GS SBI observations. Short engineering smoke on one physical runner.'
-                if args.normal_smoke else 'Full prospective scenario schedule on one physical runner with five network namespaces.')))
+        scope=('V10 full S1-S10,C,D,F,G,R and controlled research NF slot-4 compromise; not OS exploitation.'
+               if args.v10_compromise_experiment else
+               'Fresh V9 specialized-fusion structural schedule.'
+               if args.v9_structure_experiment else
+               'Fresh V8 pair-sensitive structural schedule.'
+               if args.v8_structure_experiment else
+               'Fresh V7 stable-set structural schedule.'
+               if args.v7_structure_experiment else
+               'Fresh V6 variable-k structural schedule.'
+               if args.v6_structure_experiment else
+               'Normal short Open5GS engineering smoke.'
+               if args.normal_smoke else
+               'Full 3600-window original multi-scenario schedule.'))
     (args.out/'smoke_report.json').write_text(json.dumps(report, indent=2))
     if args.load_experiment:
         report['recover_normal'] = args.recover_normal
