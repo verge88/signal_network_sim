@@ -12,3 +12,7 @@ total_scenarios=15
 total_nonoverlapping_episodes=59
 scenario_S10_is_lab_research_NF_not_OS_takeover=true
 no_tuning_on_current_seed=true
+
+retry=2
+reason=Fix TG_V10 pickle canonical-module identity before first 91401 acquisition, original run aborted prior to test phase
+expected_test_seed=91401
