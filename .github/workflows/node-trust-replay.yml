@@ -1,0 +1,40 @@
+name: Replay ten archived scenarios and synthetic S10
+on:
+  push:
+    branches: [codex/per-type-node-compromise]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  replay:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      OMP_NUM_THREADS: '2'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==1.26.4 pandas==2.2.3 scipy==1.14.1 scikit-learn==1.5.2 joblib==1.5.2 pytest==8.3.4
+      - run: python -m pytest -q experiments/distributed_5g/test_{cross_scenario_recall,per_type_recall,node_trust_replay}.py
+      - uses: actions/download-artifact@v4
+        with:
+          name: per-type-frozen-model
+          github-token: ${{ github.token }}
+          run-id: 44916693762
+          path: frozen
+      - name: Replay recorded telemetry and the single-node trust lifecycle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo '0531f6cec634829303664daf75c6ae995573cfdfec9c3d007b6b9be313caed09  frozen/model.joblib' | sha256sum --check
+          bash experiments/distributed_5g/fetch_recall_evidence.sh --receipts data 90301
+          python -m experiments.distributed_5g.node_trust_replay data/90301 frozen report
+          jq -e '.recorded.totals.tp == 788 and .recorded.totals.fp == 93 and (.recorded.by_type | length) == 10 and .synthetic_S10.compromised == 10 and .synthetic_S10.detected == 6 and .synthetic_S10.unknown == 2 and .synthetic_S10.false_alarms == 0' report/report.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: node-trust-replay
+          path: report/
