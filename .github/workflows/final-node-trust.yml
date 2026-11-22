@@ -1,0 +1,44 @@
+name: Final archived Open5GS node-compromise experiment
+on:
+  push:
+    branches: [codex/per-type-node-compromise]
+    paths: ['experiments/distributed_5g/final_node_trust.py', '.github/workflows/final-node-trust.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  final:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==1.26.4 scipy==1.14.1 pandas==2.2.3 scikit-learn==1.5.2 joblib==1.5.2 pytest==8.3.4
+      - run: python -m pytest -q experiments/distributed_5g/test_{cross_scenario_recall,per_type_recall,node_trust_replay}.py
+      - uses: actions/download-artifact@v4
+        with:
+          name: per-type-frozen-model
+          run-id: 44916693762
+          github-token: ${{ github.token }}
+          path: frozen
+      - name: Verify and unpack the recorded 91401 acquisition
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo '0531f6cec634829303664daf75c6ae995573cfdfec9c3d007b6b9be313caed09  frozen/model.joblib' | sha256sum -c -
+          gh api repos/verge88/signal_network_sim/actions/artifacts/14711738441/zip > outer.zip
+          echo '3271236d2a987a4cfbb9f930fd37595a28ad607a45e4188129a0947e2d870144  outer.zip' | sha256sum -c -
+          unzip -p outer.zip v10-compromise-complete.zip > capture.zip
+          unzip -q capture.zip test/{manifest.json,features.csv,control_events.jsonl,distributed_predictions.jsonl,v10_secure_decisions.jsonl,online_predictions.csv,lab_control_key.hex,labels.csv} -d data
+      - run: python -m experiments.distributed_5g.final_node_trust
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-node-compromise-91401
+          path: final-report/
+          if-no-files-found: error
