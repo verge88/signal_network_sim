@@ -1,4 +1,4 @@
-from .node_trust_replay import CONTROL_NF, assess, episode
+from experiments.distributed_5g.node_trust_replay import CONTROL_NF, assess, episode
 
 
 def test_trust_lifecycle():
