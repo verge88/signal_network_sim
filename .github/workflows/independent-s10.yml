@@ -1,0 +1,101 @@
+name: Independent S10 Open5GS acquisitions
+on:
+  push:
+    branches: [codex/per-type-node-compromise]
+    paths: ['.github/workflows/independent-s10.yml','experiments/distributed_5g/s10_repeat_*.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '2'
+jobs:
+  acquire:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 210
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [91411, 91412, 91413]
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports: ['27017:27017']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r experiments/live_5g/requirements.txt
+        env:
+          NO_LONG_DOUBLE: '1'
+      - uses: actions/download-artifact@v4
+        with:
+          name: per-type-frozen-model
+          github-token: ${{ github.token }}
+          run-id: 44916693762
+          path: frozen
+      - name: Recover frozen parameters without historical telemetry
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo '0531f6cec634829303664daf75c6ae995573cfdfec9c3d007b6b9be313caed09  frozen/model.joblib' | sha256sum -c -
+          gh api repos/verge88/signal_network_sim/actions/artifacts/14663407567/zip > outer.zip
+          echo '38f2e06cc0d3273f18454799552fafbdeba04987cb92699cde91b18fbb7a8f7c  outer.zip' | sha256sum -c -
+          unzip -p outer.zip v9-full-evidence.zip > inner.zip
+          unzip -q inner.zip frozen/{model.joblib,manifest.json,accumulation.json,extensions.json,refinement.json} zone_models.json -d prior
+          echo '9b9776170c3798ca6c37fa3b2cd54f68e979291691625b29be03e6a214cc7fdc  prior/frozen/model.joblib' | sha256sum -c -
+      - uses: actions/cache/restore@v4
+        id: cache
+        with:
+          path: open5gs-2.7.6.tar.gz
+          key: open5gs-d9d3abdd-ubuntu22-build-v1
+      - if: steps.cache.outputs.cache-hit != 'true'
+        run: bash experiments/live_5g/setup_open5gs.sh build
+      - run: bash experiments/live_5g/setup_open5gs.sh runtime
+      - name: Collect independent one-second windows
+        run: |
+          date +%s > not_before
+          bash experiments/distributed_5g/namespace_smoke.sh --s10-repeat --seed ${{ matrix.seed }} --out fresh/test --frozen prior/frozen --zone-models prior/zone_models.json --ml-method TG_V9 --ml-confirmation-mode direct --include-if-context --confirm-if-context --accumulator-multiplier 1.50 --recover-normal --per-type-model frozen
+      - name: Audit fresh observations and online decisions
+        run: python -m experiments.distributed_5g.s10_repeat_audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: s10-fresh-evidence-${{ matrix.seed }}
+          path: |
+            not_before
+            fresh/test/events.jsonl
+            fresh/test/control_events.jsonl
+            fresh/test/lab_control_key.hex
+            fresh/test/distributed_predictions.jsonl
+            fresh/test/manifest.json
+            fresh/test/features.csv
+            fresh/test/labels.csv
+            fresh/test/interventions.jsonl
+            fresh/test/smoke_report.json
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        with:
+          name: s10-fresh-summary-${{ matrix.seed }}
+          path: summary/
+  combine:
+    needs: acquire
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy==1.26.4 pandas==2.2.3 scipy==1.14.1 scikit-learn==1.5.2 joblib==1.5.2
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: s10-fresh-summary-*
+          merge-multiple: true
+          path: results
+      - run: python -m experiments.distributed_5g.s10_repeat_audit results/*.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: independent-S10-final
+          path: combined.json

@@ -53,7 +53,14 @@ def main():
     parser.add_argument('--v8-structure-experiment', action='store_true')
     parser.add_argument('--v9-structure-experiment', action='store_true')
     parser.add_argument('--recover-normal', action='store_true')
+    parser.add_argument('--s10-repeat', action='store_true', help='Independent S10-only research-NF trial')
     args=parser.parse_args()
+    if args.s10_repeat:
+        from experiments.distributed_5g.s10_repeat_design import SEEDS
+        if (args.seed not in SEEDS or args.smoke_windows or not args.per_type_model or
+                any((args.load_experiment, args.v6_structure_experiment, args.v7_structure_experiment,
+                     args.v8_structure_experiment, args.v9_structure_experiment))):
+            parser.error('S10 repeat requires a registered seed, frozen per-type scorer and a dedicated schedule')
     cross_scorer = None
     if args.cross_scenario_model is not None:
         from experiments.distributed_5g.cross_scenario_detector import METHOD, WindowScorer
@@ -220,6 +227,8 @@ def main():
                if args.v6_structure_experiment else
                ('Fresh normal Open5GS SBI observations. Short engineering smoke on one physical runner.'
                 if args.normal_smoke else 'Full prospective scenario schedule on one physical runner with five network namespaces.')))
+    if args.s10_repeat:
+        report['scope'] = 'Fresh single-node fault observations and independent Open5GS background'
     if cross_scorer is not None:
         report['cross_scenario_model_sha256'] = cross_manifest['model_sha256']
     if per_type_scorer is not None:

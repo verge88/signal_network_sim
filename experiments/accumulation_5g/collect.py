@@ -367,7 +367,13 @@ def run(args):
     v9_structure=bool(getattr(args,'v9_structure_experiment',False))
     if sum(map(bool,(v6_structure,v7_structure,v8_structure,v9_structure)))>1:
         raise ValueError("V6, V7, V8 and V9 structural modes are mutually exclusive")
-    if smoke:
+    repeat = bool(getattr(args, 's10_repeat', False))
+    if repeat:
+        from experiments.distributed_5g.s10_repeat_design import schedule_for, Catalog
+        if smoke or v6_structure or v7_structure or v8_structure or v9_structure or args.windows != 3600:
+            raise ValueError('S10 trial requires its own full schedule')
+        schedule = schedule_for(args.seed)
+    elif smoke:
         schedule=[]
     elif v9_structure:
         from experiments.distributed_5g.v9_design import v9_attack_schedule, v9_members, v9_count
@@ -419,6 +425,7 @@ def run(args):
         profiles[f'slot-{index}'] = read['body']
     initial_native = copy.deepcopy(profiles['slot-0'])
     control = Control(args.out, profiles['slot-4']['nfInstanceId'])
+    catalog = Catalog() if repeat else None
     acquisition = Acquisition(control, args.control_acquisition)
     def bind_control_profile():
         p = copy.deepcopy(profiles['slot-4'])
@@ -567,7 +574,11 @@ def run(args):
                                             'episode_id': f'{run_id}-{current[2]}-{current[0]}'})
             active = current
             old_port = control.ready['port']
-            control.prepare(window, active[2] if active is not None and active[3] == 4 and active[2] not in ('S6','S7','S8','S9') else 'N1')
+            control_case = active[2] if active is not None and active[3] == 4 and active[2] not in ('S6','S7','S8','S9') else 'N1'
+            if repeat and active is not None:
+                # Existing isolated research-NF configuration and report-integrity fixtures.
+                control_case = 'F' if active[5] == 'report_integrity' else 'C'
+            control.prepare(window, control_case)
             if old_port != control.ready['port']:
                 bind_control_profile()
                 witness.update('slot-4', profile=profiles['slot-4'], route=route_address(profiles['slot-4']))
@@ -614,6 +625,9 @@ def run(args):
                         path = '/nnrf-nfm/v1/nf-instances/' + str(uuid.UUID(int=0))
                     event = client.request('GET', path)
                     observed_events.append(event)
+                if repeat and is_target and active[5] == 'catalog_policy':
+                    event = catalog.measure()
+                    observed_events.append(event)
                 # Actual software heartbeat. Native slot is sampled via discovery only;
                 # its autonomous heartbeat is present in the accompanying PCAP.
                 if index:
@@ -649,7 +663,7 @@ def run(args):
                 row = {'run_id': run_id, 'window_id': window, 'nf_id': slot, 'timestamp': completed, **values}
                 rows.append(row)
                 if slot == 'slot-4':
-                    acquisition.at_slot(window, scenario)
+                    acquisition.at_slot(window, control_case if repeat else scenario)
                 label = {'run_id': run_id, 'window_id': window, 'nf_id': slot,
                     'attack': int(is_target), 'scenario': scenario, 'onset': onsets.get(scenario, ''),
                     'load_regime':regime(window),'variant':active[5] if is_target else 'normal',
@@ -707,6 +721,8 @@ def run(args):
                 if slot != 'slot-0':
                     client.request('DELETE', profile_path(profile))
         finally:
+            if catalog is not None:
+                catalog.close()
             witness.close()
             control.close()
             integrated.close()
