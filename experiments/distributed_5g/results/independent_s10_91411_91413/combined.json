@@ -1,0 +1,194 @@
+{
+  "totals": {
+    "tp": 250,
+    "fn": 20,
+    "fp": 204,
+    "tn": 345126
+  },
+  "variants": {
+    "config": 82,
+    "report_integrity": 78,
+    "catalog_policy": 90
+  },
+  "target_fp": 5,
+  "normal_target": 10530,
+  "runs": [
+    {
+      "seed": 91411,
+      "run": "test-91411-nf32",
+      "started": 1795344463.6172223,
+      "ended": 1795348180.966666,
+      "frozen": "0531f6cec634829303664daf75c6ae995573cfdfec9c3d007b6b9be313caed09",
+      "source": "fab67d6f51b6930b11543ad076b3db1141372024ba6304d085c2d145bd878e82",
+      "controls": "01676876587e90bb727425291951b6dd8367179b99acb17dd68d06aa29a77531",
+      "node_windows": 115200,
+      "normal_target": 3510,
+      "target_fp": 2,
+      "base": {
+        "tp": 78,
+        "fn": 12,
+        "fp": 89,
+        "tn": 115021,
+        "recall": 0.8666666666666667,
+        "fpr": 0.000773173486230562,
+        "precision": 0.46706586826347307
+      },
+      "fused": {
+        "tp": 78,
+        "fn": 12,
+        "fp": 89,
+        "tn": 115021,
+        "recall": 0.8666666666666667,
+        "fpr": 0.000773173486230562,
+        "precision": 0.46706586826347307
+      },
+      "variants": {
+        "catalog_policy": {
+          "n": 30,
+          "tp": 30,
+          "first_offset": 0,
+          "base_tp": 30,
+          "unknown": 10,
+          "external_tp": 20,
+          "modified_envelopes": 0
+        },
+        "report_integrity": {
+          "n": 30,
+          "tp": 22,
+          "first_offset": 0,
+          "base_tp": 22,
+          "unknown": 8,
+          "external_tp": 22,
+          "modified_envelopes": 22
+        },
+        "config": {
+          "n": 30,
+          "tp": 26,
+          "first_offset": 0,
+          "base_tp": 26,
+          "unknown": 13,
+          "external_tp": 17,
+          "modified_envelopes": 0
+        }
+      }
+    },
+    {
+      "seed": 91412,
+      "run": "test-91412-nf32",
+      "started": 1795344535.9430947,
+      "ended": 1795348353.9982316,
+      "frozen": "0531f6cec634829303664daf75c6ae995573cfdfec9c3d007b6b9be313caed09",
+      "source": "ac6a0aa159194997985d51b15aeb4fb3366f31526978916c0c5489e821626a64",
+      "controls": "9936d649a97ca271601462965aa4fe952c93e06d12ae6b771f684fbd6dc71daf",
+      "node_windows": 115200,
+      "normal_target": 3510,
+      "target_fp": 2,
+      "base": {
+        "tp": 82,
+        "fn": 8,
+        "fp": 48,
+        "tn": 115062,
+        "recall": 0.9111111111111111,
+        "fpr": 0.0004169924420119885,
+        "precision": 0.6307692307692307
+      },
+      "fused": {
+        "tp": 82,
+        "fn": 8,
+        "fp": 48,
+        "tn": 115062,
+        "recall": 0.9111111111111111,
+        "fpr": 0.0004169924420119885,
+        "precision": 0.6307692307692307
+      },
+      "variants": {
+        "catalog_policy": {
+          "n": 30,
+          "tp": 30,
+          "first_offset": 0,
+          "base_tp": 30,
+          "unknown": 11,
+          "external_tp": 19,
+          "modified_envelopes": 0
+        },
+        "config": {
+          "n": 30,
+          "tp": 26,
+          "first_offset": 0,
+          "base_tp": 26,
+          "unknown": 12,
+          "external_tp": 18,
+          "modified_envelopes": 0
+        },
+        "report_integrity": {
+          "n": 30,
+          "tp": 26,
+          "first_offset": 0,
+          "base_tp": 26,
+          "unknown": 4,
+          "external_tp": 26,
+          "modified_envelopes": 26
+        }
+      }
+    },
+    {
+      "seed": 91413,
+      "run": "test-91413-nf32",
+      "started": 1795344546.4320357,
+      "ended": 1795348295.1072655,
+      "frozen": "0531f6cec634829303664daf75c6ae995573cfdfec9c3d007b6b9be313caed09",
+      "source": "d9aeb9f20805a7269480cde92eb403a1f49951d9839692f9a6ddb211763eb196",
+      "controls": "760e18930bcea27772ad6017e37d14b0d19a23ddfcfb1c603677c74d6742e64b",
+      "node_windows": 115200,
+      "normal_target": 3510,
+      "target_fp": 1,
+      "base": {
+        "tp": 90,
+        "fn": 0,
+        "fp": 67,
+        "tn": 115043,
+        "recall": 1,
+        "fpr": 0.0005820519503084006,
+        "precision": 0.5732484076433121
+      },
+      "fused": {
+        "tp": 90,
+        "fn": 0,
+        "fp": 67,
+        "tn": 115043,
+        "recall": 1,
+        "fpr": 0.0005820519503084006,
+        "precision": 0.5732484076433121
+      },
+      "variants": {
+        "report_integrity": {
+          "n": 30,
+          "tp": 30,
+          "first_offset": 0,
+          "base_tp": 30,
+          "unknown": 0,
+          "external_tp": 30,
+          "modified_envelopes": 30
+        },
+        "catalog_policy": {
+          "n": 30,
+          "tp": 30,
+          "first_offset": 0,
+          "base_tp": 30,
+          "unknown": 10,
+          "external_tp": 20,
+          "modified_envelopes": 0
+        },
+        "config": {
+          "n": 30,
+          "tp": 30,
+          "first_offset": 0,
+          "base_tp": 30,
+          "unknown": 8,
+          "external_tp": 22,
+          "modified_envelopes": 0
+        }
+      }
+    }
+  ]
+}
