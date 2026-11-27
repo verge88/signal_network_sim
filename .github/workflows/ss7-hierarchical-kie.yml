@@ -1,0 +1,43 @@
+name: SS7 hierarchical KIE multi-class
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/ss7-kie-hierarchical-multiclass
+    paths:
+      - 'ss7/hierarchical_kie.py'
+      - 'tests/test_ss7_hierarchical_kie.py'
+      - '.github/workflows/ss7-hierarchical-kie.yml'
+  pull_request:
+    paths:
+      - 'ss7/hierarchical_kie.py'
+      - 'tests/test_ss7_hierarchical_kie.py'
+      - '.github/workflows/ss7-hierarchical-kie.yml'
+permissions:
+  contents: read
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [6101, 7101, 8101]
+    env:
+      OMP_NUM_THREADS: '2'
+      OPENBLAS_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install numpy==1.26.4 pandas==2.2.3 scikit-learn==1.5.2 networkx==3.4.2
+      - run: python -m unittest discover -s tests -p test_ss7_hierarchical_kie.py -v
+      - run: python -m ss7.hierarchical_kie --seed ${{ matrix.seed }} --days 0.5 --repetitions 2 --out results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ss7-kie-${{ matrix.seed }}
+          path: results/
+          if-no-files-found: warn
