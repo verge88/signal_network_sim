@@ -1,13 +1,6 @@
 name: SS7 KIE V11 benign statistical pilot
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - codex/ss7-kie-hierarchical-multiclass
-    paths:
-      - 'ss7/hierarchical_kie_v11.py'
-      - 'tests/test_ss7_kie_v11.py'
-      - '.github/workflows/ss7-kie-v11.yml'
 permissions:
   contents: read
   actions: read

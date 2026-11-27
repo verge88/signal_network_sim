@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 import pandas as pd
-from ss7.hierarchical_kie_v11 import LOCAL,GRAPH,feature_matrix,BenignModel
+from ss7.hierarchical_kie_v11 import LOCAL,GRAPH,feature_matrix,BenignModel,merge_channels
 class V11Tests(unittest.TestCase):
     def test_feature_causality(self):
         n=100
@@ -20,4 +20,15 @@ class V11Tests(unittest.TestCase):
         np.testing.assert_allclose(m.models["SP"][3],m2.models["SP"][3])
         d.loc[0,"missing"]=1
         self.assertTrue(m.score(d,x).iloc[0].isna().all())
+    def test_merge_score_columns(self):
+        index=pd.Index([5,8,11])
+        local=pd.DataFrame({"mahal":[1.,2.,np.nan],"tail":[4.,5.,np.nan]},index=index)
+        zone=pd.DataFrame({"mahal":[2.,3.,4.],"tail":[7.,8.,9.]},index=index)
+        result=merge_channels(local,zone)
+        self.assertEqual(list(result),["mahal","tail"])
+        for name in result:
+            pd.testing.assert_series_equal(result[name]["local"],local[name],check_names=False)
+            pd.testing.assert_series_equal(result[name]["zone"],zone[name],check_names=False)
+        with self.assertRaises(ValueError):
+            merge_channels(local,zone.iloc[::-1])
 if __name__=="__main__": unittest.main()

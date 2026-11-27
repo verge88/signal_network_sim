@@ -131,6 +131,13 @@ def diagnostic(d,s,name):
                 positive=int(y.sum())))
     return rows
 
+def merge_channels(local, zone):
+    # Explicit column access: DataFrame.tail is a method, not the score column.
+    if not local.index.equals(zone.index):
+        raise ValueError("local and zone score index mismatch")
+    return {name: pd.DataFrame({"local":local[name],"zone":zone[name]})
+            for name in ("mahal","tail")}
+
 def assess(args):
     out=Path(args.out); out.mkdir(parents=True,exist_ok=True)
     d=read_worlds(args)
@@ -143,8 +150,7 @@ def assess(args):
     def score(x):
         l=local.score(x,feature_matrix(x,LOCAL))
         g=zone.score(x,feature_matrix(x,GRAPH,True))
-        return {"mahal":pd.DataFrame({"local":l.mahal,"zone":g.mahal}),
-                "tail":pd.DataFrame({"local":l.tail,"zone":g.tail})}
+        return merge_channels(l,g)
     rr,rv=score(ref),score(val)
     stats={k:role_reference(ref,v) for k,v in rr.items()}
     v={k:causal_scores(val,normalize(val,x,stats[k])) for k,x in rv.items()}
