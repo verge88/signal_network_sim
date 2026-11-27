@@ -1,0 +1,42 @@
+name: SS7 KIE V10 cached heterogeneous diagnostic
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/ss7-kie-hierarchical-multiclass
+    paths:
+      - 'ss7/hierarchical_kie_v10.py'
+      - 'tests/test_ss7_kie_v10.py'
+      - '.github/workflows/ss7-kie-v10.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      OMP_NUM_THREADS: '2'
+      OPENBLAS_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install numpy==1.26.4 pandas==2.2.3 scikit-learn==1.5.2 networkx==3.4.2
+      - run: python -m unittest discover -s tests -p 'test_ss7_kie_*.py' -v
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 46040215219
+          pattern: v8-worlds-*
+          path: worlds
+          merge-multiple: true
+      - run: timeout 8m python -m ss7.hierarchical_kie_v10 --seed 216101 --input worlds --out results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ss7-kie-v10-cached
+          path: results/
+          if-no-files-found: warn
