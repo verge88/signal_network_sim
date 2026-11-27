@@ -943,6 +943,11 @@ class Ss7Sim:
             p_ok = float(np.prod([1.0 - lstate[k][2] for k in hop_keys])) ** 2
             p_ok = 1.0 - (1.0 - p_ok) ** (1 + self.max_retry)
             closed = int(rng.binomial(cnt, np.clip(p_ok, 0.0, 1.0)))
+            # Optional synthetic measurement interface, independent RNG.
+            observer = getattr(self, "_kie_observer", None)
+            if observer is not None:
+                observer.on_batch(path, f.service, cnt, closed)
+
 
             is_h = any(h.get("path") == path and h.get("n") == cnt
                        for h in hidden.values())
