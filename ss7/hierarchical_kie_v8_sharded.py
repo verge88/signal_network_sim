@@ -118,7 +118,7 @@ def evaluate_all(args):
                         score=tm,alarm=tm>0).join(t.add_prefix("channel_")).to_csv(out/f"predictions_{name}.csv",index=False)
     resdf=pd.DataFrame(rows); resdf.to_csv(out/"metrics.csv",index=False)
     over=pd.DataFrame(overhead); over.to_csv(out/"kie_overhead.csv",index=False)
-    (out/"manifest.json").write_text(json.dumps(dict(args=vars(args),plan=plan,
+    (out/"manifest.json").write_text(json.dumps(dict(args=vars(args),plan=PLAN,
         allocation=ALLOC8,confirmation_windows=K,primary_budget=BUDGET,
         observer_capture=.98,observer_timeout_windows=3,observer_delay_prob=[.8,.15,.05],
         scope="synthetic event cohorts; independent trusted observer assumed; no real trace or intent validation"),indent=2))
