@@ -1,0 +1,66 @@
+name: SS7 KIE V12 outcome accounting and matched benign pilot
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/ss7-kie-hierarchical-multiclass
+    paths:
+      - 'ss7/hierarchical_kie_v12.py'
+      - 'tests/test_ss7_kie_v12.py'
+      - '.github/workflows/ss7-kie-v12.yml'
+permissions:
+  contents: read
+env:
+  OMP_NUM_THREADS: '2'
+  OPENBLAS_NUM_THREADS: '2'
+  MKL_NUM_THREADS: '2'
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [legacy,outcome]
+        shard: [0,1,2,3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install numpy==1.26.4 pandas==2.2.3 scikit-learn==1.5.2 networkx==3.4.2
+      - run: timeout 8m python -m ss7.hierarchical_kie_v12 --stage generate --seed 256101 --mode ${{ matrix.mode }} --shard ${{ matrix.shard }} --out worlds
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v12-worlds-${{ matrix.mode }}-${{ matrix.shard }}
+          path: worlds/
+          compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+  compare:
+    needs: generate
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [legacy,outcome]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install numpy==1.26.4 pandas==2.2.3 scikit-learn==1.5.2 networkx==3.4.2
+      - run: python -m unittest discover -s tests -p 'test_ss7_kie_*.py' -v
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: v12-worlds-${{ matrix.mode }}-*
+          path: worlds
+          merge-multiple: true
+      - run: timeout 6m python -m ss7.hierarchical_kie_v12 --stage evaluate --seed 256101 --mode ${{ matrix.mode }} --input worlds --out results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v12-${{ matrix.mode }}-results
+          path: results/
+          if-no-files-found: warn
