@@ -6,6 +6,8 @@ on:
       - codex/ss7-kie-hierarchical-multiclass
     paths:
       - 'ss7/hierarchical_kie_quick.py'
+      - 'ss7/fix.py'
+      - 'tests/test_ss7_queue_stability.py'
       - 'tests/test_ss7_hierarchical_kie_quick.py'
       - '.github/workflows/ss7-kie-quick.yml'
 permissions:
@@ -25,6 +27,7 @@ jobs:
           python-version: '3.11'
       - run: pip install numpy==1.26.4 pandas==2.2.3 scikit-learn==1.5.2 networkx==3.4.2
       - run: python -m unittest discover -s tests -p 'test_ss7_hierarchical_kie*.py' -v
+      - run: python -m unittest discover -s tests -p 'test_ss7_queue_stability.py' -v
       - run: timeout 11m python -m ss7.hierarchical_kie_quick --seed 136101 --days .16 --repetitions 2 --out results
       - uses: actions/upload-artifact@v4
         if: always()

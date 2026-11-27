@@ -351,15 +351,26 @@ def mg1_delay_ms(rho: float, mean_svc_s: float, cv2: float = 1.0) -> float:
 
 
 def mm1k_loss(rho: float, k: int) -> float:
-    """Блокировка в конечном буфере."""
+    """Вероятность блокировки M/M/1/K без переполнения степеней."""
     rho = float(max(rho, 0.0))
-    if abs(rho - 1.0) < 1e-9:
+    if k < 0:
+        raise ValueError("buffer capacity must be nonnegative")
+    if k == 0:
+        return 1.0
+    if rho == 0.0:
+        return 0.0
+    if rho == 1.0:
         return 1.0 / (k + 1)
-    if rho > 12.0:
-        return 1.0 - 1.0 / rho
-    num = (1.0 - rho) * rho ** k
-    den = 1.0 - rho ** (k + 1)
-    return float(np.clip(num / den, 0.0, 1.0))
+    if np.isposinf(rho):
+        return 1.0
+    log_rho = float(np.log(rho))
+    if rho > 1.0:
+        # Divide numerator and denominator by rho**(k+1).
+        # Every exponent is nonpositive; expm1 avoids cancellation near rho=1.
+        prob = np.expm1(-log_rho) / np.expm1(-(k + 1) * log_rho)
+    else:
+        prob = (1.0 - rho) * np.exp(k * log_rho) / (-np.expm1((k + 1) * log_rho))
+    return float(np.clip(prob, 0.0, 1.0))
 
 
 def link_state(offered_bps: float, lsx: "Linkset",
