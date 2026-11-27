@@ -96,8 +96,10 @@ def generate(seed,days,repetitions=2,loss=.01,zero=False,clean=False,transport_o
 
 
 def fit_rf(d,cols,seed,binary=None,n=140):
-    x=xmat(d,cols); med=np.nanmedian(x[d.attack.eq("normal")],axis=0)
-    med=np.where(np.isfinite(med),med,0.)
+    x=xmat(d,cols); benign=x[d.attack.eq("normal")]
+    med=np.zeros(x.shape[1],dtype=float)
+    observed=np.isfinite(benign).any(axis=0)
+    med[observed]=np.nanmedian(benign[:,observed],axis=0)
     # Missingness indicators preserve observation availability explicitly.
     xx=np.concatenate([np.where(np.isfinite(x),x,med),~np.isfinite(x)],axis=1)
     if binary is None:
